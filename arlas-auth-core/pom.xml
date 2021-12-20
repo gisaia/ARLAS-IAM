@@ -11,6 +11,13 @@
 
     <artifactId>arlas-auth-core</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-hibernate</artifactId>
+            <version>${dropwizard.version}</version>
+        </dependency>
+    </dependencies>
     <build>
         <plugins>
             <plugin>
