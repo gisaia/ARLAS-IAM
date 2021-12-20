@@ -1,0 +1,2 @@
+module arlas.auth.core {
+}

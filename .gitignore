@@ -1,0 +1,15 @@
+bin
+target
+.idea
+*.iml
+save*
+.classpath
+.project
+.settings/*
+.DS_Store
+dependency-reduced-pom.xml
+*.log
+*.versionsBackup
+*.bak
+tmp/
+release_test_logs.txt
