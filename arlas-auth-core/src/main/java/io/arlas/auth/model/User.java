@@ -50,6 +50,9 @@ public class User {
     @ManyToMany(mappedBy="users")
     private Set<Role> roles = new HashSet<>();
 
+    @ManyToMany(mappedBy="users")
+    private Set<Permission> permissions = new HashSet<>();
+
     public Integer getId() {
         return this.id;
     }
@@ -132,5 +135,21 @@ public class User {
 
     public void setGroups(Set<Group> groups) {
         this.groups = groups;
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
+
+    public Set<Permission> getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(Set<Permission> permissions) {
+        this.permissions = permissions;
     }
 }
