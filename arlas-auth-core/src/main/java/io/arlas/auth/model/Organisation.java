@@ -21,6 +21,9 @@ public class Organisation {
     @OneToMany(mappedBy = "pk.organisation")
     private Set<OrganisationMember> members = new HashSet<>();
 
+    @OneToMany(mappedBy="key.organisation")
+    private Set<Group> groups = new HashSet<>();
+
     private Organisation() {}
 
     public Integer getId() {
@@ -41,5 +44,13 @@ public class Organisation {
 
     public void setMembers(Set<OrganisationMember> members) {
         this.members = members;
+    }
+
+    public Set<Group> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(Set<Group> groups) {
+        this.groups = groups;
     }
 }

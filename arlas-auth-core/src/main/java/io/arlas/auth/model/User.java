@@ -44,6 +44,9 @@ public class User {
     @OneToMany(mappedBy = "pk.user")
     private Set<OrganisationMember> organisations = new HashSet<>();
 
+    @ManyToMany(mappedBy = "members")
+    private Set<Group> groups = new HashSet<>();
+
     public Integer getId() {
         return this.id;
     }
@@ -88,11 +91,11 @@ public class User {
         this.creationDate = creationDate;
     }
 
-    public LocalDateTime getLastUpdateDate() {
+    public LocalDateTime getUpdateDate() {
         return updateDate;
     }
 
-    public void setLastUpdateDate(LocalDateTime updateDate) {
+    public void setUpdateDate(LocalDateTime updateDate) {
         this.updateDate = updateDate;
     }
 
@@ -118,5 +121,13 @@ public class User {
 
     public void setOrganisations(Set<OrganisationMember> organisations) {
         this.organisations = organisations;
+    }
+
+    public Set<Group> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(Set<Group> groups) {
+        this.groups = groups;
     }
 }
