@@ -53,6 +53,8 @@ public class User {
     @ManyToMany(mappedBy="users")
     private Set<Permission> permissions = new HashSet<>();
 
+    public User() {}
+
     public Integer getId() {
         return this.id;
     }
@@ -61,32 +63,36 @@ public class User {
         return email;
     }
 
-    public void setEmail(String email) {
+    public User setEmail(String email) {
         this.email = email;
+        return this;
     }
 
     public String getFirstName() {
         return firstName;
     }
 
-    public void setFirstName(String firstName) {
+    public User setFirstName(String firstName) {
         this.firstName = firstName;
+        return this;
     }
 
     public String getLastName() {
         return lastName;
     }
 
-    public void setLastName(String lastName) {
+    public User setLastName(String lastName) {
         this.lastName = lastName;
+        return this;
     }
 
     public String getLocale() {
         return locale;
     }
 
-    public void setLocale(String locale) {
+    public User setLocale(String locale) {
         this.locale = locale;
+        return this;
     }
 
     public LocalDateTime getCreationDate() {
@@ -109,16 +115,18 @@ public class User {
         return isVerified;
     }
 
-    public void setVerified(boolean isVerified) {
+    public User setVerified(boolean isVerified) {
         this.isVerified = isVerified;
+        return this;
     }
 
     public boolean isActive() {
         return isActive;
     }
 
-    public void setActive(boolean isActive) {
+    public User setActive(boolean isActive) {
         this.isActive = isActive;
+        return this;
     }
 
     public Set<OrganisationMember> getOrganisations() {
