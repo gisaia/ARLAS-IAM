@@ -41,6 +41,9 @@ public class Role {
             inverseJoinColumns = @JoinColumn(name = "id_user"))
     private Set<User> users = new HashSet<>();
 
+    @ManyToMany(mappedBy="roles")
+    private Set<Permission> permissions = new HashSet<>();
+
     private Role() {}
 
     public Integer getId() {
