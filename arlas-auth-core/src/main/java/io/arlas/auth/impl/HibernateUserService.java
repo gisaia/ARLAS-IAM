@@ -1,9 +1,13 @@
 package io.arlas.auth.impl;
 
 import io.arlas.auth.core.UserService;
+import io.arlas.auth.model.Organisation;
 import io.arlas.auth.model.User;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class HibernateUserService extends AbstractDAO<User> implements UserService {
     public HibernateUserService(SessionFactory sessionFactory) {
@@ -26,9 +30,10 @@ public class HibernateUserService extends AbstractDAO<User> implements UserServi
     }
 
     @Override
-    public User deleteUser(String userId) {
+    public User deleteUser(User user) {
         // TODO: delete user resources (organisation, collections...)
-        return deleteUser(userId);
+        currentSession().delete(user);
+        return user;
     }
 
     @Override
@@ -44,5 +49,12 @@ public class HibernateUserService extends AbstractDAO<User> implements UserServi
     @Override
     public User verifyUser(String userId) {
         return persist(get(userId).setVerified(true));
+    }
+
+    @Override
+    public List<Organisation> listOrganisations(User user) {
+        return user.getOrganisations().stream()
+                .map(om -> om.getOrganisation())
+                .collect(Collectors.toList());
     }
 }
