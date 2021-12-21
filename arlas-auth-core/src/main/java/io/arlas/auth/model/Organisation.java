@@ -24,6 +24,9 @@ public class Organisation {
     @OneToMany(mappedBy="key.organisation")
     private Set<Group> groups = new HashSet<>();
 
+    @ManyToMany(mappedBy="organisations")
+    private Set<Role> roles = new HashSet<>();
+
     private Organisation() {}
 
     public Integer getId() {

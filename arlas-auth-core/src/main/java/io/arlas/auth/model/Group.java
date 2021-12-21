@@ -21,6 +21,9 @@ public class Group {
             inverseJoinColumns = @JoinColumn(name = "id_user"))
     private Set<User> members = new HashSet<>();
 
+    @ManyToMany(mappedBy="groups")
+    private Set<Role> roles = new HashSet<>();
+
     private Group() {}
 
     public Integer getId() {

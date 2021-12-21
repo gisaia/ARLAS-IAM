@@ -47,6 +47,9 @@ public class User {
     @ManyToMany(mappedBy = "members")
     private Set<Group> groups = new HashSet<>();
 
+    @ManyToMany(mappedBy="users")
+    private Set<Role> roles = new HashSet<>();
+
     public Integer getId() {
         return this.id;
     }
