@@ -1,17 +1,24 @@
 package io.arlas.auth.core;
 
+import io.arlas.auth.exceptions.NonMatchingPasswordException;
+import io.arlas.auth.exceptions.NotFoundException;
 import io.arlas.auth.model.*;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public interface AuthService {
+    User login(String email, String password) throws NotFoundException;
+
     User createUser(String email);
-    User readUser(String userId);
-    User updateUser(String userId, String oldPassword, String newPassword);
-    User deleteUser(String userId);
-    User activateUser(String userId);
-    User deactivateUser(String userId);
-    List<User> listUsers(String userId); // list users from the same organisations as the requesting user
+    Optional<User> readUser(String userId);
+    User updateUser(User user, String oldPassword, String newPassword) throws NonMatchingPasswordException;
+    Optional<User> deleteUser(String userId);
+    Optional<User> activateUser(String userId);
+    Optional<User> verifyUser(String userId, String password);
+    Optional<User> deactivateUser(String userId);
+    Set<User> listUsers(User user); // list users from the same organisations as the requesting user
 
     Organisation createOrganisation(User owner, String name);
     Organisation deleteOrganisation(String actingUserId, String orgId);

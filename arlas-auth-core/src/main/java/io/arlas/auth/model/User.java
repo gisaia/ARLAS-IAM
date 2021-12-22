@@ -12,14 +12,19 @@ import java.util.Set;
 @Entity
 @Table(name = "user")
 public class User {
+    public static final String emailColumn = "email";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column
     private Integer id;
 
     @NotNull
-    @Column(unique = true)
+    @Column(name = emailColumn, unique = true)
     private String email;
+
+    @Column
+    private String password;
 
     @Column
     private String firstName;
@@ -67,6 +72,14 @@ public class User {
     public User setEmail(String email) {
         this.email = email;
         return this;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getFirstName() {
