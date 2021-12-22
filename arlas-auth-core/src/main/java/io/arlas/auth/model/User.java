@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -159,5 +160,18 @@ public class User {
 
     public void setPermissions(Set<Permission> permissions) {
         this.permissions = permissions;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return getEmail().equals(user.getEmail());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getEmail());
     }
 }
