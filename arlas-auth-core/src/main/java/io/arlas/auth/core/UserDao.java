@@ -5,13 +5,16 @@ import io.arlas.auth.model.Permission;
 import io.arlas.auth.model.User;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface UserDao {
 
     User createUser(User user);
 
-    User readUser(String userId);
+    Optional<User> readUserById(String userId);
+
+    Optional<User> readUserByEmail(String email);
 
     User updateUser(User user);
 

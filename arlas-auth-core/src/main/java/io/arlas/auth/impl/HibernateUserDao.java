@@ -8,6 +8,7 @@ import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,8 +23,16 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
     }
 
     @Override
-    public User readUser(String userId) {
-        return get(userId);
+    public Optional<User> readUserById(String userId) {
+        return Optional.ofNullable(get(userId));
+    }
+
+    @Override
+    public Optional<User> readUserByEmail(String email) {
+        return Optional.ofNullable(currentSession()
+                .createQuery("from User u where u." + User.emailColumn + "=:email", User.class)
+                .setParameter("email", email)
+                .uniqueResult());
     }
 
     @Override

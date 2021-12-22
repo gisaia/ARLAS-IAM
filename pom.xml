@@ -37,6 +37,7 @@
 
         <log4j.version>2.17.0</log4j.version>
         <postgresql.version>42.3.1</postgresql.version>
+        <spring.security.version>5.6.1</spring.security.version>
 
         <!-- REST AND DROPWIZARD-->
         <dropwizard.version>2.0.27</dropwizard.version>

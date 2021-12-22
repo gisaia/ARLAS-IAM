@@ -59,8 +59,8 @@ public class Permission {
         return isSystem;
     }
 
-    public void setSystem(boolean system) {
-        isSystem = system;
+    public void setSystem(boolean isSystem) {
+        this.isSystem = isSystem;
     }
 
     public Set<Role> getRoles() {
@@ -78,4 +78,5 @@ public class Permission {
     public void setUsers(Set<User> users) {
         this.users = users;
     }
+
 }
