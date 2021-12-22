@@ -7,7 +7,6 @@ import io.arlas.auth.model.User;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
-import java.util.List;
 import java.util.Set;
 
 public class HibernateRoleDao extends AbstractDAO<Role> implements RoleDao {
@@ -30,6 +29,18 @@ public class HibernateRoleDao extends AbstractDAO<Role> implements RoleDao {
     @Override
     public Role removeRoleFromUser(User user, Role role) {
         role.getUsers().remove(user);
+        return persist(role);
+    }
+
+    @Override
+    public Role addPermissionToRole(Permission permission, Role role) {
+        role.getPermissions().add(permission);
+        return persist(role);
+    }
+
+    @Override
+    public Role removePermissionFromRole(Permission permission, Role role) {
+        role.getPermissions().remove(permission);
         return persist(role);
     }
 
