@@ -5,13 +5,14 @@ import io.arlas.auth.model.Role;
 import io.arlas.auth.model.User;
 
 import java.util.List;
+import java.util.Set;
 
 public interface RoleDao {
 
-    Role createRole(String name, String orgId, List<Permission> permissions);
+    Role createRole(Role role, Set<Permission> permissions);
 
-    User addRoleToUser(String actingUserId, String targetUserId, String roleId);
+    Role addRoleToUser(User user, Role role);
 
-    User removeRoleFromUser(String actingUserId, String targetUserId, String roleId);
+    Role removeRoleFromUser(User user, Role role);
 
 }

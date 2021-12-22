@@ -91,6 +91,14 @@ public class Role {
         this.users = users;
     }
 
+    public Set<Permission> getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(Set<Permission> permissions) {
+        this.permissions = permissions;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
