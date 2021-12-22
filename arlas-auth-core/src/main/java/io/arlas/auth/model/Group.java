@@ -26,6 +26,10 @@ public class Group {
 
     private Group() {}
 
+    public Group(String name, Organisation organisation) {
+        this.key = new GroupKey(name, organisation);
+    }
+
     public Integer getId() {
         return id;
     }
@@ -60,5 +64,13 @@ public class Group {
 
     public void setMembers(Set<User> members) {
         this.members = members;
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
     }
 }

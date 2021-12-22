@@ -21,7 +21,12 @@ public class GroupKey implements java.io.Serializable {
     @JoinColumn(name = "id_organisation")
     private Organisation organisation;
 
-    public GroupKey() {}
+    private GroupKey() {}
+
+    public GroupKey(String name, Organisation organisation) {
+        this.name = name;
+        this.organisation = organisation;
+    }
 
     public String getName() {
         return name;
