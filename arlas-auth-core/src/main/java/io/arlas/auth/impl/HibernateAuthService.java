@@ -1,6 +1,8 @@
 package io.arlas.auth.impl;
 
 import io.arlas.auth.core.*;
+import io.arlas.auth.exceptions.AlreadyExistsException;
+import io.arlas.auth.exceptions.InvalidEmailException;
 import io.arlas.auth.exceptions.NonMatchingPasswordException;
 import io.arlas.auth.exceptions.NotFoundException;
 import io.arlas.auth.model.*;
@@ -10,6 +12,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class HibernateAuthService implements AuthService {
     private final GroupDao groupDao;
@@ -19,6 +23,9 @@ public class HibernateAuthService implements AuthService {
     private final RoleDao roleDao;
     private final UserDao userDao;
     private final BCryptPasswordEncoder encoder;
+
+    // this regex will do a basic check (verification will be done by sending an email to the user) and extract domain
+    private static final Pattern emailRegex = Pattern.compile("(?<=@)[^.]+(?=\\.)");
 
     public HibernateAuthService(SessionFactory factory) {
         this.groupDao = new HibernateGroupDao(factory);
@@ -39,11 +46,20 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public User createUser(String email) {
-        User user = new User();
-        user.setEmail(email);
-        // TODO add more attributes
-        return userDao.createUser(user);
+    public User createUser(String email) throws InvalidEmailException, AlreadyExistsException {
+        Matcher regexMatcher = emailRegex.matcher(email);
+        if (regexMatcher.find()) {
+            if (userDao.readUserByEmail(email).isEmpty()) {
+                User user = new User();
+                user.setEmail(email);
+                // TODO add more attributes
+                return userDao.createUser(user);
+            } else {
+                throw new AlreadyExistsException();
+            }
+        } else {
+            throw new InvalidEmailException();
+        }
     }
 
     @Override
@@ -116,21 +132,34 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Organisation createOrganisation(User owner, String name) {
-        // TODO
-        return null;
+    public Organisation createOrganisation(User owner, String name) throws AlreadyExistsException {
+        Matcher regexMatcher = emailRegex.matcher(owner.getEmail());
+        if (regexMatcher.find()) {
+            String domain = regexMatcher.group();
+            if (organisationDao.readOrganisationByName(name).isPresent()) {
+                throw new AlreadyExistsException();
+            } else {
+                Organisation organisation = organisationDao.createOrganisation(new Organisation(domain));
+                organisationMemberDao.addUserToOrganisation(owner, organisation, true);
+                return organisation;
+            }
+        } else {
+            // should not happen as we checked when he was created
+            throw new RuntimeException("Invalid owner email address for userId: " + owner.getId());
+        }
     }
 
     @Override
-    public Organisation deleteOrganisation(String actingUserId, String orgId) {
-        // TODO
-        return null;
+    public Optional<Organisation> deleteOrganisation(User user, String orgId) {
+        Optional<Organisation> organisation = organisationDao.readOrganisationById(orgId);
+        organisation.ifPresent(o -> organisationDao.deleteOrganisation(o));
+        // TODO : delete associated resources
+        return organisation;
     }
 
     @Override
-    public List<Organisation> listOrganisations(String userId) {
-        // TODO
-        return null;
+    public Set<Organisation> listOrganisations(User user) {
+        return userDao.listOrganisations(user);
     }
 
     @Override

@@ -7,7 +7,6 @@ import io.arlas.auth.model.User;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -63,10 +62,10 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
     }
 
     @Override
-    public List<Organisation> listOrganisations(User user) {
+    public Set<Organisation> listOrganisations(User user) {
         return user.getOrganisations().stream()
                 .map(om -> om.getOrganisation())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     @Override
