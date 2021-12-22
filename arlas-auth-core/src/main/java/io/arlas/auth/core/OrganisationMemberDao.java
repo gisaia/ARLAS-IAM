@@ -1,6 +1,7 @@
 package io.arlas.auth.core;
 
-import io.arlas.auth.model.*;
+import io.arlas.auth.model.Organisation;
+import io.arlas.auth.model.User;
 
 public interface OrganisationMemberDao {
 

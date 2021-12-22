@@ -1,17 +1,9 @@
 package io.arlas.auth.core;
 
-import io.arlas.auth.model.*;
-
-import java.util.List;
+import io.arlas.auth.model.Permission;
 
 public interface PermissionDao {
 
-    List<Permission> listPermissions(String actingUserId, String targetUserId);
-
-    Permission createPermission(String permission);
-
-    User addPermissionToUser(String userId, String permissionId);
-
-    User removePermissionFromUser(String userId, String permissionId);
+    Permission createPermission(Permission permission);
 
 }
