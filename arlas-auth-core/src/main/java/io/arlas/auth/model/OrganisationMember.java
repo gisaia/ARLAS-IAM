@@ -5,8 +5,10 @@ import org.hibernate.annotations.Type;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
+@Table(name = "organisationMember")
 public class OrganisationMember {
 
     @Id
@@ -17,6 +19,11 @@ public class OrganisationMember {
     private boolean isOwner;
 
     private OrganisationMember() {}
+
+    public OrganisationMember(User user, Organisation organisation, boolean isOwner) {
+        this.pk = new OrganisationMemberPk(user, organisation);
+        this.isOwner = isOwner;
+    }
 
     public OrganisationMemberPk getPk() {
         return pk;

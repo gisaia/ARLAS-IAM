@@ -20,6 +20,11 @@ public class OrganisationMemberPk implements java.io.Serializable {
 
     private OrganisationMemberPk() {}
 
+    public OrganisationMemberPk(User user, Organisation organisation) {
+        this.user = user;
+        this.org = organisation;
+    }
+
     public User getUser() {
         return user;
     }
