@@ -1,6 +1,6 @@
 package io.arlas.auth.impl;
 
-import io.arlas.auth.core.UserService;
+import io.arlas.auth.core.UserDao;
 import io.arlas.auth.model.Organisation;
 import io.arlas.auth.model.User;
 import io.dropwizard.hibernate.AbstractDAO;
@@ -9,8 +9,8 @@ import org.hibernate.SessionFactory;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class HibernateUserService extends AbstractDAO<User> implements UserService {
-    public HibernateUserService(SessionFactory sessionFactory) {
+public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
+    public HibernateUserDao(SessionFactory sessionFactory) {
         super(sessionFactory);
     }
 

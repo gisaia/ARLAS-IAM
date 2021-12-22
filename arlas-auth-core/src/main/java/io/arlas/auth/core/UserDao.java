@@ -5,7 +5,7 @@ import io.arlas.auth.model.User;
 
 import java.util.List;
 
-public interface UserService {
+public interface UserDao {
 
     User createUser(User user);
 
