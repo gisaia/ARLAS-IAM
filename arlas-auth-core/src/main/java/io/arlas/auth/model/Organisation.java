@@ -58,6 +58,10 @@ public class Organisation {
         return this.members.add(organisationMember);
     }
 
+    public boolean removeMember(OrganisationMember organisationMember) {
+        return this.members.remove(organisationMember);
+    }
+
     public Set<Group> getGroups() {
         return groups;
     }
