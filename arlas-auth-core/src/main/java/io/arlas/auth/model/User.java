@@ -4,10 +4,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "user")
@@ -15,9 +12,9 @@ public class User {
     public static final String emailColumn = "email";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     @Column
-    private Integer id;
+    private UUID id;
 
     @NotNull
     @Column(name = emailColumn, unique = true)
@@ -61,7 +58,7 @@ public class User {
 
     public User() {}
 
-    public Integer getId() {
+    public UUID getId() {
         return this.id;
     }
 

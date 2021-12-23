@@ -7,14 +7,15 @@ import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "role")
 public class Role {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     @Column
-    private Integer id;
+    private UUID id;
 
     @NotNull
     @Column(unique = true)
@@ -47,7 +48,7 @@ public class Role {
 
     private Role() {}
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 

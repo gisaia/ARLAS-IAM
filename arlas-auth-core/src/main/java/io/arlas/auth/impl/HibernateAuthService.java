@@ -9,6 +9,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,7 +66,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Optional<User> readUser(Integer userId) {
+    public Optional<User> readUser(UUID userId) {
         return userDao.readUser(userId);
     }
 
@@ -91,14 +92,14 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Optional<User> deleteUser(Integer userId) {
+    public Optional<User> deleteUser(UUID userId) {
         Optional<User> user = readUser(userId);
         user.ifPresent(u -> userDao.deleteUser(u));
         return user;
     }
 
     @Override
-    public Optional<User> activateUser(Integer userId) {
+    public Optional<User> activateUser(UUID userId) {
         Optional<User> user = readUser(userId);
         user.ifPresent(u -> {
             u.setActive(true);
@@ -108,7 +109,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Optional<User> verifyUser(Integer userId, String password) {
+    public Optional<User> verifyUser(UUID userId, String password) {
         Optional<User> user = readUser(userId);
         user.ifPresent(u -> {
             u.setPassword(encode(password));
@@ -119,7 +120,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Optional<User> deactivateUser(Integer userId) {
+    public Optional<User> deactivateUser(UUID userId) {
         Optional<User> user = readUser(userId);
         user.ifPresent(u -> {
             u.setActive(false);
@@ -155,7 +156,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Optional<Organisation> deleteOrganisation(User user, Integer orgId) {
+    public Optional<Organisation> deleteOrganisation(User user, UUID orgId) {
         Optional<Organisation> organisation = organisationDao.readOrganisation(orgId);
         organisation.ifPresent(o -> organisationDao.deleteOrganisation(o));
         // TODO : delete associated resources
@@ -167,17 +168,18 @@ public class HibernateAuthService implements AuthService {
         return userDao.listOrganisations(user);
     }
 
-    private Optional<Organisation> getOwnedOrganisation(User owner, Integer orgId, boolean checkOwned) {
+    private Optional<Organisation> getOwnedOrganisation(User owner, UUID orgId, boolean checkOwned) {
         return owner.getOrganisations().stream()
-                .filter(om -> (om.getOrganisation().getId() == orgId) && (!checkOwned || om.isOwner()))
+                .filter(om -> (om.getOrganisation().getId().equals(orgId)) && (!checkOwned || om.isOwner()))
                 .map(o -> o.getOrganisation())
                 .findFirst();
     }
 
     @Override
-    public Organisation addUserToOrganisation(User owner, String email, Integer orgId) throws NotOwnerException, AlreadyExistsException, InvalidEmailException {
+    public Organisation addUserToOrganisation(User owner, String email, UUID orgId) throws NotOwnerException, NotFoundException {
         Optional<Organisation> organisation = getOwnedOrganisation(owner, orgId, true);
-        User newUser = userDao.readUser(email).orElse(createUser(email));
+        User newUser = userDao.readUser(email).orElseThrow(() -> new NotFoundException());
+        // TODO: if user does not exist, send an invitation to create an account
         organisation.ifPresent(
                 o -> organisationMemberDao.addUserToOrganisation(newUser, o, false)
         );
@@ -185,7 +187,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Organisation removeUserFromOrganisation(User owner, String removedUserId, Integer orgId) throws NotOwnerException {
+    public Organisation removeUserFromOrganisation(User owner, String removedUserId, UUID orgId) throws NotOwnerException {
         Optional<Organisation> organisation = getOwnedOrganisation(owner, orgId, true);
         organisation.ifPresent(
                 o -> userDao.readUser(removedUserId).ifPresent(u -> organisationMemberDao.removeUserFromOrganisation(u, o))
@@ -194,7 +196,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Role createRole(String name, Integer orgId, List<Permission> permissions) {
+    public Role createRole(String name, UUID orgId, List<Permission> permissions) {
         // TODO
         return null;
     }
@@ -212,7 +214,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Group createGroup(String name, Integer orgId) {
+    public Group createGroup(String name, UUID orgId) {
         // TODO
         return null;
     }
@@ -254,13 +256,13 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public User addPermissionToUser(Integer userId, String permissionId) {
+    public User addPermissionToUser(UUID userId, String permissionId) {
         // TODO
         return null;
     }
 
     @Override
-    public User removePermissionFromUser(Integer userId, String permissionId) {
+    public User removePermissionFromUser(UUID userId, String permissionId) {
         // TODO
         return null;
     }

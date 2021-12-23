@@ -6,12 +6,13 @@ import io.arlas.auth.model.User;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 public interface UserDao {
 
     User createUser(User user);
 
-    Optional<User> readUser(Integer userId);
+    Optional<User> readUser(UUID userId);
 
     Optional<User> readUser(String email);
 
@@ -19,11 +20,11 @@ public interface UserDao {
 
     User deleteUser(User user);
 
-    User activateUser(Integer userId);
+    User activateUser(UUID userId);
 
-    User deactivateUser(Integer userId);
+    User deactivateUser(UUID userId);
 
-    User verifyUser(Integer userId);
+    User verifyUser(UUID userId);
 
     Set<Organisation> listOrganisations(User user);
 

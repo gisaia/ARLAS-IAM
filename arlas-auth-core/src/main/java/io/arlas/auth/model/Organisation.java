@@ -4,6 +4,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "organisation")
@@ -11,9 +12,9 @@ public class Organisation {
     public static final String nameColumn = "name";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     @Column
-    private Integer id;
+    private UUID id;
 
     @NotNull
     @Column(name = nameColumn, unique = true)
@@ -34,7 +35,7 @@ public class Organisation {
         this.name = name;
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 

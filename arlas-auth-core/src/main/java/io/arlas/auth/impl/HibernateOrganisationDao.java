@@ -8,6 +8,7 @@ import org.hibernate.SessionFactory;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class HibernateOrganisationDao extends AbstractDAO<Organisation> implements OrganisationDao {
@@ -21,7 +22,7 @@ public class HibernateOrganisationDao extends AbstractDAO<Organisation> implemen
     }
 
     @Override
-    public Optional<Organisation> readOrganisation(Integer orgId) {
+    public Optional<Organisation> readOrganisation(UUID orgId) {
         return Optional.ofNullable(get(orgId));
     }
 
