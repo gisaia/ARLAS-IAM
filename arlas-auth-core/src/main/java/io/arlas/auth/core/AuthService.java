@@ -1,9 +1,6 @@
 package io.arlas.auth.core;
 
-import io.arlas.auth.exceptions.AlreadyExistsException;
-import io.arlas.auth.exceptions.InvalidEmailException;
-import io.arlas.auth.exceptions.NonMatchingPasswordException;
-import io.arlas.auth.exceptions.NotFoundException;
+import io.arlas.auth.exceptions.*;
 import io.arlas.auth.model.*;
 
 import java.util.List;
@@ -14,26 +11,26 @@ public interface AuthService {
     User login(String email, String password) throws NotFoundException;
 
     User createUser(String email) throws InvalidEmailException, AlreadyExistsException;
-    Optional<User> readUser(String userId);
+    Optional<User> readUser(Integer userId);
     User updateUser(User user, String oldPassword, String newPassword) throws NonMatchingPasswordException;
-    Optional<User> deleteUser(String userId);
-    Optional<User> activateUser(String userId);
-    Optional<User> verifyUser(String userId, String password);
-    Optional<User> deactivateUser(String userId);
+    Optional<User> deleteUser(Integer userId);
+    Optional<User> activateUser(Integer userId);
+    Optional<User> verifyUser(Integer userId, String password);
+    Optional<User> deactivateUser(Integer userId);
     Set<User> listUsers(User user); // list users from the same organisations as the requesting user
 
-    Organisation createOrganisation(User owner, String name) throws AlreadyExistsException;
-    Optional<Organisation> deleteOrganisation(User user, String orgId);
+    Organisation createOrganisation(User owner, String name) throws AlreadyExistsException, ForbiddenOrganisationNameException;
+    Optional<Organisation> deleteOrganisation(User user, Integer orgId);
     Set<Organisation> listOrganisations(User user);
 
-    User addUserToOrganisation(String actingUserId, String addedUserId, String orgId);
-    User removeUserFromOrganisation(String actingUserId, String removedUserId, String orgId);
+    Organisation addUserToOrganisation(User owner, String email, Integer orgId) throws NotOwnerException, AlreadyExistsException, InvalidEmailException;
+    Organisation removeUserFromOrganisation(User owner, String removedUserId, Integer orgId) throws NotOwnerException;
 
-    Role createRole(String name, String orgId, List<Permission> permissions);
+    Role createRole(String name, Integer orgId, List<Permission> permissions);
     User addRoleToUser(String actingUserId, String targetUserId, String roleId);
     User removeRoleFromUser(String actingUserId, String targetUserId, String roleId);
 
-    Group createGroup(String name, String orgId);
+    Group createGroup(String name, Integer orgId);
     User addUserToGroup(String actingUserId, String targetUserId, String groupId);
     User removeUserFromGroup(String actingUserId, String targetUserId, String groupId);
     Group addRoleToGroup(String actingUserId, String roleId, String groupId);
@@ -41,6 +38,6 @@ public interface AuthService {
 
     List<Permission> listPermissions(String actingUserId, String targetUserId);
     Permission createPermission(String permission);
-    User addPermissionToUser(String userId, String permissionId);
-    User removePermissionFromUser(String userId, String permissionId);
+    User addPermissionToUser(Integer userId, String permissionId);
+    User removePermissionFromUser(Integer userId, String permissionId);
 }

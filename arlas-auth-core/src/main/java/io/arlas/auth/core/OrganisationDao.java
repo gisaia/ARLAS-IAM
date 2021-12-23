@@ -10,9 +10,9 @@ public interface OrganisationDao {
 
     Organisation createOrganisation(Organisation organisation);
 
-    Optional<Organisation> readOrganisationById(String orgId);
+    Optional<Organisation> readOrganisation(Integer orgId);
 
-    Optional<Organisation> readOrganisationByName(String name);
+    Optional<Organisation> readOrganisation(String name);
 
     Organisation deleteOrganisation(Organisation organisation);
 

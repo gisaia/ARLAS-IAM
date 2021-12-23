@@ -11,19 +11,19 @@ public interface UserDao {
 
     User createUser(User user);
 
-    Optional<User> readUserById(String userId);
+    Optional<User> readUser(Integer userId);
 
-    Optional<User> readUserByEmail(String email);
+    Optional<User> readUser(String email);
 
     User updateUser(User user);
 
     User deleteUser(User user);
 
-    User activateUser(String userId);
+    User activateUser(Integer userId);
 
-    User deactivateUser(String userId);
+    User deactivateUser(Integer userId);
 
-    User verifyUser(String userId);
+    User verifyUser(Integer userId);
 
     Set<Organisation> listOrganisations(User user);
 

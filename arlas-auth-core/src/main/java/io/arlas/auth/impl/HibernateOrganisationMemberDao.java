@@ -7,6 +7,8 @@ import io.arlas.auth.model.User;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
+import java.util.Optional;
+
 public class HibernateOrganisationMemberDao extends AbstractDAO<OrganisationMember> implements OrganisationMemberDao {
     public HibernateOrganisationMemberDao(SessionFactory sessionFactory) {
         super(sessionFactory);
@@ -20,10 +22,12 @@ public class HibernateOrganisationMemberDao extends AbstractDAO<OrganisationMemb
 
     @Override
     public Organisation removeUserFromOrganisation(User user, Organisation organisation) {
-        organisation.getMembers().forEach(om -> {
-            if (om.getUser().getId() == user.getId()) {
-                currentSession().delete(om);
-            }
+        Optional<OrganisationMember> omToRemove = organisation.getMembers().stream()
+                .filter(om -> om.getUser().getId() == user.getId()).findFirst();
+        omToRemove.ifPresent(om -> {
+            currentSession().delete(om);
+            organisation.removeMember(om);
+
         });
         return organisation;
     }

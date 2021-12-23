@@ -22,12 +22,12 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
     }
 
     @Override
-    public Optional<User> readUserById(String userId) {
+    public Optional<User> readUser(Integer userId) {
         return Optional.ofNullable(get(userId));
     }
 
     @Override
-    public Optional<User> readUserByEmail(String email) {
+    public Optional<User> readUser(String email) {
         return Optional.ofNullable(currentSession()
                 .createQuery("from User u where u." + User.emailColumn + "=:email", User.class)
                 .setParameter("email", email)
@@ -47,17 +47,17 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
     }
 
     @Override
-    public User activateUser(String userId) {
+    public User activateUser(Integer userId) {
         return persist(get(userId).setActive(true));
     }
 
     @Override
-    public User deactivateUser(String userId) {
+    public User deactivateUser(Integer userId) {
         return persist(get(userId).setActive(false));
     }
 
     @Override
-    public User verifyUser(String userId) {
+    public User verifyUser(Integer userId) {
         return persist(get(userId).setVerified(true));
     }
 
