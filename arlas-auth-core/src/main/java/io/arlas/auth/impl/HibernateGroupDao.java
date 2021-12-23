@@ -20,24 +20,28 @@ public class HibernateGroupDao extends AbstractDAO<Group> implements GroupDao {
     @Override
     public Group addUserToGroup(User user, Group group) {
         group.getMembers().add(user);
+        user.getGroups().add(group);
         return persist(group);
     }
 
     @Override
     public Group removeUserFromGroup(User user, Group group) {
         group.getMembers().remove(user);
+        user.getGroups().remove(group);
         return persist(group);
     }
 
     @Override
     public Group addRoleToGroup(Role role, Group group) {
         group.getRoles().add(role);
+        role.getGroups().add(group);
         return persist(group);
     }
 
     @Override
     public Group removeRoleFromGroup(Role role, Group group) {
         group.getRoles().remove(role);
+        role.getGroups().remove(group);
         return persist(group);
     }
 }

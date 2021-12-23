@@ -154,8 +154,8 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Organisation deleteOrganisation(User user, UUID orgId) throws NotOwnerException {
-        Organisation organisation = getOwnedOrganisation(user, orgId, true);
+    public Organisation deleteOrganisation(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
+        Organisation organisation = getOrganisation(owner, orgId, true);
         organisationDao.deleteOrganisation(organisation);
         // TODO : delete associated resources
         return organisation;
@@ -166,31 +166,37 @@ public class HibernateAuthService implements AuthService {
         return userDao.listOrganisations(user);
     }
 
-    private Organisation getOwnedOrganisation(User owner, UUID orgId, boolean checkOwned) throws NotOwnerException {
-        return owner.getOrganisations().stream()
+    private Organisation getOrganisation(User owner, UUID orgId, boolean checkOwned) throws NotOwnerException, NotFoundException {
+        Optional<Organisation> organisation = owner.getOrganisations().stream()
                 .filter(om -> (om.getOrganisation().is(orgId)) && (!checkOwned || om.isOwner()))
                 .map(OrganisationMember::getOrganisation)
-                .findFirst().orElseThrow(NotOwnerException::new);
+                .findFirst();
+        if (organisation.isPresent()) {
+            return organisation.get();
+        } else {
+            if (checkOwned) { throw new NotOwnerException(); }
+            else { throw new NotFoundException(); }
+        }
     }
 
     @Override
     public Organisation addUserToOrganisation(User owner, String email, UUID orgId) throws NotOwnerException, NotFoundException {
         return organisationMemberDao.addUserToOrganisation(
                 userDao.readUser(email).orElseThrow(NotFoundException::new),
-                getOwnedOrganisation(owner, orgId, true),
+                getOrganisation(owner, orgId, true),
                 false);
     }
 
     @Override
-    public Organisation removeUserFromOrganisation(User owner, UUID removedUserId, UUID orgId) throws NotOwnerException, NotFoundException {
+    public Organisation removeUserFromOrganisation(User owner, UUID userId, UUID orgId) throws NotOwnerException, NotFoundException {
         return organisationMemberDao.removeUserFromOrganisation(
-                userDao.readUser(removedUserId).orElseThrow(NotFoundException::new),
-                getOwnedOrganisation(owner, orgId, true));
+                userDao.readUser(userId).orElseThrow(NotFoundException::new),
+                getOrganisation(owner, orgId, true));
     }
 
     @Override
-    public Role createRole(String name, UUID orgId, Set<Permission> permissions) throws AlreadyExistsException, NotFoundException {
-        Organisation organisation = organisationDao.readOrganisation(orgId).orElseThrow(NotFoundException::new);
+    public Role createRole(User owner, String name, UUID orgId, Set<Permission> permissions) throws AlreadyExistsException, NotOwnerException, NotFoundException {
+        Organisation organisation = getOrganisation(owner, orgId, true);
         if (organisation.getRoles().stream().anyMatch(r -> r.getName().equals(name))) {
             throw new AlreadyExistsException();
         } else {
@@ -199,58 +205,69 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public User addRoleToUser(User owner, UUID orgId, UUID targetUserId, UUID roleId) throws NotFoundException, NotOwnerException {
-        Organisation organisation = getOwnedOrganisation(owner, orgId, true);
-        User user = userDao.readUser(targetUserId).orElseThrow(NotFoundException::new);
-        Role role = organisation.getRoles().stream().filter(r -> r.is(roleId)).findFirst().orElseThrow(NotFoundException::new);
-        if (user.getOrganisations().stream().anyMatch(om -> om.getOrganisation().is(orgId))) {
-            roleDao.addRoleToUser(user, role);
-            return user;
+    public User addRoleToUser(User owner, UUID orgId, UUID userId, UUID roleId) throws NotFoundException, NotOwnerException {
+        Organisation ownerOrg = getOrganisation(owner, orgId, true);
+        User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
+        Organisation userOrg = getOrganisation(user, orgId, false);
+        roleDao.addRoleToUser(user,
+                ownerOrg.getRoles().stream().filter(r -> r.is(roleId)).findFirst().orElseThrow(NotFoundException::new));
+        return user;
+    }
+
+    @Override
+    public User removeRoleFromUser(User owner, UUID orgId, UUID userId, UUID roleId) throws NotOwnerException, NotFoundException {
+        Organisation ownerOrg = getOrganisation(owner, orgId, true);
+        User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
+        Organisation userOrg = getOrganisation(user, orgId, false);
+        roleDao.removeRoleFromUser(user,
+                ownerOrg.getRoles().stream().filter(r -> r.is(roleId)).findFirst().orElseThrow(NotFoundException::new));
+        return user;
+    }
+
+    @Override
+    public Group createGroup(User owner, String name, UUID orgId) throws AlreadyExistsException, NotOwnerException, NotFoundException {
+        Organisation organisation = getOrganisation(owner, orgId, true);
+        if (organisation.getGroups().stream().anyMatch(r -> r.getName().equals(name))) {
+            throw new AlreadyExistsException();
         } else {
-            throw new NotFoundException(); // user is not in the same organisation as owner
+            return groupDao.createGroup(new Group(name, organisation));
         }
     }
 
     @Override
-    public User removeRoleFromUser(User owner, UUID orgId, UUID targetUserId, UUID roleId) throws NotOwnerException, NotFoundException {
-        Organisation organisation = getOwnedOrganisation(owner, orgId, true);
-        User user = userDao.readUser(targetUserId).orElseThrow(NotFoundException::new);
-        if (user.getOrganisations().stream().anyMatch(om -> om.getOrganisation().is(orgId))) {
-            roleDao.removeRoleFromUser(user, roleDao.readRole(roleId).orElseThrow(NotFoundException::new));
-            return user;
-        } else {
-            throw new NotFoundException(); // user is not in the same organisation as owner
-        }
+    public User addUserToGroup(User owner, UUID orgId, UUID userId, UUID grpId) throws NotOwnerException, NotFoundException {
+        Organisation ownerOrg = getOrganisation(owner, orgId, true);
+        User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
+        Organisation userOrg = getOrganisation(user, orgId, false);
+        groupDao.addUserToGroup(user,
+                ownerOrg.getGroups().stream().filter(g -> g.is(grpId)).findFirst().orElseThrow(NotFoundException::new));
+        return user;
     }
 
     @Override
-    public Group createGroup(String name, UUID orgId) {
-        // TODO
-        return null;
+    public User removeUserFromGroup(User owner, UUID orgId, UUID userId, UUID grpId) throws NotOwnerException, NotFoundException {
+        Organisation ownerOrg = getOrganisation(owner, orgId, true);
+        User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
+        Organisation userOrg = getOrganisation(user, orgId, false);
+        groupDao.removeUserFromGroup(user,
+                ownerOrg.getGroups().stream().filter(g -> g.is(grpId)).findFirst().orElseThrow(NotFoundException::new));
+        return user;
     }
 
     @Override
-    public User addUserToGroup(User owner, UUID targetUserId, UUID groupId) {
-        // TODO
-        return null;
+    public Group addRoleToGroup(User owner, UUID orgId, UUID roleId, UUID grpId) throws NotOwnerException, NotFoundException {
+        Organisation ownerOrg = getOrganisation(owner, orgId, true);
+        Role role = ownerOrg.getRoles().stream().filter(r -> r.is(roleId)).findFirst().orElseThrow(NotFoundException::new);
+        Group group = ownerOrg.getGroups().stream().filter(g -> g.is(grpId)).findFirst().orElseThrow(NotFoundException::new);
+        return groupDao.addRoleToGroup(role, group);
     }
 
     @Override
-    public User removeUserFromGroup(User owner, UUID targetUserId, UUID groupId) {
-        // TODO
-        return null;
-    }
-
-    @Override
-    public Group addRoleToGroup(User owner, UUID roleId, UUID groupId) {
-        // TODO
-        return null;
-    }
-
-    @Override
-    public Group removeRoleFromGroup(User owner, UUID roleId, UUID groupId) {
-        // TODO
-        return null;
+    public Group removeRoleFromGroup(User owner, UUID orgId, UUID roleId, UUID grpId) throws NotOwnerException, NotFoundException {
+        Organisation ownerOrg = getOrganisation(owner, orgId, true);
+        Role role = ownerOrg.getRoles().stream().filter(r -> r.is(roleId)).findFirst().orElseThrow(NotFoundException::new);
+        Group group = ownerOrg.getGroups().stream().filter(g -> g.is(grpId)).findFirst().orElseThrow(NotFoundException::new);
+        return groupDao.removeRoleFromGroup(role, group);
     }
 
     @Override
