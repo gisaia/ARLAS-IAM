@@ -15,7 +15,7 @@ public interface OrganisationDao {
 
     Optional<Organisation> readOrganisation(String name);
 
-    Organisation deleteOrganisation(Organisation organisation);
+    void deleteOrganisation(Organisation organisation);
 
     Set<User> listUsers(User user); // list users from the same organisations as the requesting user
 

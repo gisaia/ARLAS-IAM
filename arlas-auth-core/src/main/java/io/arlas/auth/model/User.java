@@ -62,6 +62,10 @@ public class User {
         return this.id;
     }
 
+    public boolean is(UUID uuid) {
+        return this.id.equals(uuid);
+    }
+
     public String getEmail() {
         return email;
     }

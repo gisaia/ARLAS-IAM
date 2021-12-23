@@ -18,7 +18,7 @@ public class Role {
     private UUID id;
 
     @NotNull
-    @Column(unique = true)
+    @Column
     private String name;
 
     @Type(type = "org.hibernate.type.NumericBooleanType")
@@ -48,8 +48,16 @@ public class Role {
 
     private Role() {}
 
+    public Role(String name) {
+        this.name = name;
+    }
+
     public UUID getId() {
         return id;
+    }
+
+    public boolean is(UUID uuid) {
+        return this.id.equals(uuid);
     }
 
     public String getName() {
@@ -74,6 +82,11 @@ public class Role {
 
     public void setOrganisations(Set<Organisation> organisations) {
         this.organisations = organisations;
+    }
+
+    public Role addOrganisation(Organisation organisation) {
+        this.organisations.add(organisation);
+        return this;
     }
 
     public Set<Group> getGroups() {

@@ -39,6 +39,10 @@ public class Organisation {
         return id;
     }
 
+    public boolean is(UUID uuid) {
+        return this.id.equals(uuid);
+    }
+
     public String getName() {
         return name;
     }
@@ -69,5 +73,13 @@ public class Organisation {
 
     public void setGroups(Set<Group> groups) {
         this.groups = groups;
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
     }
 }
