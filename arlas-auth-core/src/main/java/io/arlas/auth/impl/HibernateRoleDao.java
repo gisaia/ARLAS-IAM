@@ -30,12 +30,14 @@ public class HibernateRoleDao extends AbstractDAO<Role> implements RoleDao {
     @Override
     public Role addRoleToUser(User user, Role role) {
         role.getUsers().add(user);
+        user.getRoles().add(role);
         return persist(role);
     }
 
     @Override
     public Role removeRoleFromUser(User user, Role role) {
         role.getUsers().remove(user);
+        user.getRoles().remove(role);
         return persist(role);
     }
 
