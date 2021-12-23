@@ -6,14 +6,15 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "permission")
 public class Permission {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     @Column
-    private Integer id;
+    private UUID id;
 
     @NotNull
     @Column(unique = true)
@@ -43,7 +44,7 @@ public class Permission {
         this.isSystem = isSystem;
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 

@@ -3,14 +3,15 @@ package io.arlas.auth.model;
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "group")
 public class Group {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     @Column
-    private Integer id;
+    private UUID id;
 
     @EmbeddedId
     private GroupKey key;
@@ -30,7 +31,7 @@ public class Group {
         this.key = new GroupKey(name, organisation);
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 

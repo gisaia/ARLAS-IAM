@@ -9,6 +9,7 @@ import org.hibernate.SessionFactory;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
@@ -22,7 +23,7 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
     }
 
     @Override
-    public Optional<User> readUser(Integer userId) {
+    public Optional<User> readUser(UUID userId) {
         return Optional.ofNullable(get(userId));
     }
 
@@ -47,17 +48,17 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
     }
 
     @Override
-    public User activateUser(Integer userId) {
+    public User activateUser(UUID userId) {
         return persist(get(userId).setActive(true));
     }
 
     @Override
-    public User deactivateUser(Integer userId) {
+    public User deactivateUser(UUID userId) {
         return persist(get(userId).setActive(false));
     }
 
     @Override
-    public User verifyUser(Integer userId) {
+    public User verifyUser(UUID userId) {
         return persist(get(userId).setVerified(true));
     }
 
