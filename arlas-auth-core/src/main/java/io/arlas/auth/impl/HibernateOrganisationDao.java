@@ -35,10 +35,8 @@ public class HibernateOrganisationDao extends AbstractDAO<Organisation> implemen
     }
 
     @Override
-    public Organisation deleteOrganisation(Organisation organisation) {
-        // TODO check that user is owner
+    public void deleteOrganisation(Organisation organisation) {
         currentSession().delete(organisation);
-        return organisation;
     }
 
     @Override

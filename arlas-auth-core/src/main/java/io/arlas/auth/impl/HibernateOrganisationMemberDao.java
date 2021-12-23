@@ -23,7 +23,7 @@ public class HibernateOrganisationMemberDao extends AbstractDAO<OrganisationMemb
     @Override
     public Organisation removeUserFromOrganisation(User user, Organisation organisation) {
         Optional<OrganisationMember> omToRemove = organisation.getMembers().stream()
-                .filter(om -> om.getUser().getId() == user.getId()).findFirst();
+                .filter(om -> om.getUser().is(user.getId())).findFirst();
         omToRemove.ifPresent(om -> {
             currentSession().delete(om);
             organisation.removeMember(om);

@@ -35,6 +35,10 @@ public class Group {
         return id;
     }
 
+    public boolean is(UUID uuid) {
+        return this.id.equals(uuid);
+    }
+
     public GroupKey getKey() {
         return key;
     }

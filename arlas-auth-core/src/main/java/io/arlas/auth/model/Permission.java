@@ -48,6 +48,10 @@ public class Permission {
         return id;
     }
 
+    public boolean is(UUID uuid) {
+        return this.id.equals(uuid);
+    }
+
     public String getValue() {
         return value;
     }

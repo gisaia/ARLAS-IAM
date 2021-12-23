@@ -20,25 +20,25 @@ public interface AuthService {
     Optional<User> deactivateUser(UUID userId);
     Set<User> listUsers(User user); // list users from the same organisations as the requesting user
 
-    Organisation createOrganisation(User owner, String name) throws AlreadyExistsException, ForbiddenOrganisationNameException;
-    Optional<Organisation> deleteOrganisation(User user, UUID orgId);
+    Organisation createOrganisation(User owner) throws AlreadyExistsException, ForbiddenOrganisationNameException, NotOwnerException;
+    Organisation deleteOrganisation(User user, UUID orgId) throws NotOwnerException;
     Set<Organisation> listOrganisations(User user);
 
     Organisation addUserToOrganisation(User owner, String email, UUID orgId) throws NotOwnerException, AlreadyExistsException, InvalidEmailException, NotFoundException;
-    Organisation removeUserFromOrganisation(User owner, String removedUserId, UUID orgId) throws NotOwnerException;
+    Organisation removeUserFromOrganisation(User owner, UUID removedUserId, UUID orgId) throws NotOwnerException, NotFoundException;
 
-    Role createRole(String name, UUID orgId, List<Permission> permissions);
-    User addRoleToUser(String actingUserId, String targetUserId, String roleId);
-    User removeRoleFromUser(String actingUserId, String targetUserId, String roleId);
+    Role createRole(String name, UUID orgId, Set<Permission> permissions) throws AlreadyExistsException, NotFoundException;
+    User addRoleToUser(User owner, UUID orgId, UUID targetUserId, UUID roleId) throws NotFoundException, NotOwnerException;
+    User removeRoleFromUser(User owner, UUID orgId, UUID targetUserId, UUID roleId) throws NotOwnerException, NotFoundException;
 
     Group createGroup(String name, UUID orgId);
-    User addUserToGroup(String actingUserId, String targetUserId, String groupId);
-    User removeUserFromGroup(String actingUserId, String targetUserId, String groupId);
-    Group addRoleToGroup(String actingUserId, String roleId, String groupId);
-    Group removeRoleFromGroup(String actingUserId, String roleId, String groupId);
+    User addUserToGroup(User owner, UUID targetUserId, UUID groupId);
+    User removeUserFromGroup(User owner, UUID targetUserId, UUID groupId);
+    Group addRoleToGroup(User owner, UUID roleId, UUID groupId);
+    Group removeRoleFromGroup(User owner, UUID roleId, UUID groupId);
 
-    List<Permission> listPermissions(String actingUserId, String targetUserId);
+    List<Permission> listPermissions(User owner, UUID targetUserId);
     Permission createPermission(String permission);
-    User addPermissionToUser(UUID userId, String permissionId);
-    User removePermissionFromUser(UUID userId, String permissionId);
+    User addPermissionToUser(UUID userId, UUID permissionId);
+    User removePermissionFromUser(UUID userId, UUID permissionId);
 }

@@ -7,7 +7,9 @@ import io.arlas.auth.model.User;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 public class HibernateRoleDao extends AbstractDAO<Role> implements RoleDao {
     public HibernateRoleDao(SessionFactory sessionFactory) {
@@ -18,6 +20,11 @@ public class HibernateRoleDao extends AbstractDAO<Role> implements RoleDao {
     public Role createRole(Role role, Set<Permission> permissions) {
         role.setPermissions(permissions);
         return persist(role);
+    }
+
+    @Override
+    public Optional<Role> readRole(UUID roleId) {
+        return Optional.ofNullable(get(roleId));
     }
 
     @Override

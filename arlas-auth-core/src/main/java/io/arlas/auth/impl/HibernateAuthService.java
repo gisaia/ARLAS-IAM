@@ -6,10 +6,7 @@ import io.arlas.auth.model.*;
 import org.hibernate.SessionFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,10 +40,14 @@ public class HibernateAuthService implements AuthService {
         return encoder.matches(inputPassword, storedPassword);
     }
 
+    private Optional<String> validateEmailDomain(String email) {
+        Matcher regexMatcher = emailRegex.matcher(email);
+        return regexMatcher.find() ? Optional.of(regexMatcher.group()) : Optional.empty();
+    }
+
     @Override
     public User createUser(String email) throws InvalidEmailException, AlreadyExistsException {
-        Matcher regexMatcher = emailRegex.matcher(email);
-        if (regexMatcher.find()) {
+        if (validateEmailDomain(email).isPresent()) {
             if (userDao.readUser(email).isEmpty()) {
                 User user = new User();
                 user.setEmail(email);
@@ -94,7 +95,7 @@ public class HibernateAuthService implements AuthService {
     @Override
     public Optional<User> deleteUser(UUID userId) {
         Optional<User> user = readUser(userId);
-        user.ifPresent(u -> userDao.deleteUser(u));
+        user.ifPresent(userDao::deleteUser);
         return user;
     }
 
@@ -135,30 +136,27 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Organisation createOrganisation(User owner, String name) throws AlreadyExistsException, ForbiddenOrganisationNameException {
-        Matcher regexMatcher = emailRegex.matcher(owner.getEmail());
-        if (regexMatcher.find()) {
-            String domain = regexMatcher.group();
-            if (organisationDao.readOrganisation(name).isPresent()) {
-                throw new AlreadyExistsException();
-            } if (!domain.equals(name)) { // user can only create his domain as organisation name
-                throw new ForbiddenOrganisationNameException();
-            }
-            else {
-                Organisation organisation = organisationDao.createOrganisation(new Organisation(domain));
-                organisationMemberDao.addUserToOrganisation(owner, organisation, true);
-                return organisation;
-            }
+    public Organisation createOrganisation(User owner) throws AlreadyExistsException, NotOwnerException {
+        String domain = validateEmailDomain(owner.getEmail()).orElseThrow(RuntimeException::new);
+        Optional<Organisation> org = organisationDao.readOrganisation(domain);
+        if (org.isEmpty()) {
+            Organisation organisation = organisationDao.createOrganisation(new Organisation(domain));
+            organisationMemberDao.addUserToOrganisation(owner, organisation, true);
+            return organisation;
         } else {
-            // should not happen as we checked when he was created
-            throw new RuntimeException("Invalid owner email address for userId: " + owner.getId());
+            if (org.get().getMembers().stream()
+                    .anyMatch(om -> om.getUser().is(owner.getId()) && om.isOwner())) {
+                throw new AlreadyExistsException();
+            } else {
+                throw new NotOwnerException();
+            }
         }
     }
 
     @Override
-    public Optional<Organisation> deleteOrganisation(User user, UUID orgId) {
-        Optional<Organisation> organisation = organisationDao.readOrganisation(orgId);
-        organisation.ifPresent(o -> organisationDao.deleteOrganisation(o));
+    public Organisation deleteOrganisation(User user, UUID orgId) throws NotOwnerException {
+        Organisation organisation = getOwnedOrganisation(user, orgId, true);
+        organisationDao.deleteOrganisation(organisation);
         // TODO : delete associated resources
         return organisation;
     }
@@ -168,49 +166,61 @@ public class HibernateAuthService implements AuthService {
         return userDao.listOrganisations(user);
     }
 
-    private Optional<Organisation> getOwnedOrganisation(User owner, UUID orgId, boolean checkOwned) {
+    private Organisation getOwnedOrganisation(User owner, UUID orgId, boolean checkOwned) throws NotOwnerException {
         return owner.getOrganisations().stream()
-                .filter(om -> (om.getOrganisation().getId().equals(orgId)) && (!checkOwned || om.isOwner()))
-                .map(o -> o.getOrganisation())
-                .findFirst();
+                .filter(om -> (om.getOrganisation().is(orgId)) && (!checkOwned || om.isOwner()))
+                .map(OrganisationMember::getOrganisation)
+                .findFirst().orElseThrow(NotOwnerException::new);
     }
 
     @Override
     public Organisation addUserToOrganisation(User owner, String email, UUID orgId) throws NotOwnerException, NotFoundException {
-        Optional<Organisation> organisation = getOwnedOrganisation(owner, orgId, true);
-        User newUser = userDao.readUser(email).orElseThrow(() -> new NotFoundException());
-        // TODO: if user does not exist, send an invitation to create an account
-        organisation.ifPresent(
-                o -> organisationMemberDao.addUserToOrganisation(newUser, o, false)
-        );
-        return organisation.orElseThrow(() -> new NotOwnerException());
+        return organisationMemberDao.addUserToOrganisation(
+                userDao.readUser(email).orElseThrow(NotFoundException::new),
+                getOwnedOrganisation(owner, orgId, true),
+                false);
     }
 
     @Override
-    public Organisation removeUserFromOrganisation(User owner, String removedUserId, UUID orgId) throws NotOwnerException {
-        Optional<Organisation> organisation = getOwnedOrganisation(owner, orgId, true);
-        organisation.ifPresent(
-                o -> userDao.readUser(removedUserId).ifPresent(u -> organisationMemberDao.removeUserFromOrganisation(u, o))
-        );
-        return organisation.orElseThrow(() -> new NotOwnerException());
+    public Organisation removeUserFromOrganisation(User owner, UUID removedUserId, UUID orgId) throws NotOwnerException, NotFoundException {
+        return organisationMemberDao.removeUserFromOrganisation(
+                userDao.readUser(removedUserId).orElseThrow(NotFoundException::new),
+                getOwnedOrganisation(owner, orgId, true));
     }
 
     @Override
-    public Role createRole(String name, UUID orgId, List<Permission> permissions) {
-        // TODO
-        return null;
+    public Role createRole(String name, UUID orgId, Set<Permission> permissions) throws AlreadyExistsException, NotFoundException {
+        Organisation organisation = organisationDao.readOrganisation(orgId).orElseThrow(NotFoundException::new);
+        if (organisation.getRoles().stream().anyMatch(r -> r.getName().equals(name))) {
+            throw new AlreadyExistsException();
+        } else {
+            return roleDao.createRole(new Role(name).addOrganisation(organisation), permissions);
+        }
     }
 
     @Override
-    public User addRoleToUser(String actingUserId, String targetUserId, String roleId) {
-        // TODO
-        return null;
+    public User addRoleToUser(User owner, UUID orgId, UUID targetUserId, UUID roleId) throws NotFoundException, NotOwnerException {
+        Organisation organisation = getOwnedOrganisation(owner, orgId, true);
+        User user = userDao.readUser(targetUserId).orElseThrow(NotFoundException::new);
+        Role role = organisation.getRoles().stream().filter(r -> r.is(roleId)).findFirst().orElseThrow(NotFoundException::new);
+        if (user.getOrganisations().stream().anyMatch(om -> om.getOrganisation().is(orgId))) {
+            roleDao.addRoleToUser(user, role);
+            return user;
+        } else {
+            throw new NotFoundException(); // user is not in the same organisation as owner
+        }
     }
 
     @Override
-    public User removeRoleFromUser(String actingUserId, String targetUserId, String roleId) {
-        // TODO
-        return null;
+    public User removeRoleFromUser(User owner, UUID orgId, UUID targetUserId, UUID roleId) throws NotOwnerException, NotFoundException {
+        Organisation organisation = getOwnedOrganisation(owner, orgId, true);
+        User user = userDao.readUser(targetUserId).orElseThrow(NotFoundException::new);
+        if (user.getOrganisations().stream().anyMatch(om -> om.getOrganisation().is(orgId))) {
+            roleDao.removeRoleFromUser(user, roleDao.readRole(roleId).orElseThrow(NotFoundException::new));
+            return user;
+        } else {
+            throw new NotFoundException(); // user is not in the same organisation as owner
+        }
     }
 
     @Override
@@ -220,31 +230,31 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public User addUserToGroup(String actingUserId, String targetUserId, String groupId) {
+    public User addUserToGroup(User owner, UUID targetUserId, UUID groupId) {
         // TODO
         return null;
     }
 
     @Override
-    public User removeUserFromGroup(String actingUserId, String targetUserId, String groupId) {
+    public User removeUserFromGroup(User owner, UUID targetUserId, UUID groupId) {
         // TODO
         return null;
     }
 
     @Override
-    public Group addRoleToGroup(String actingUserId, String roleId, String groupId) {
+    public Group addRoleToGroup(User owner, UUID roleId, UUID groupId) {
         // TODO
         return null;
     }
 
     @Override
-    public Group removeRoleFromGroup(String actingUserId, String roleId, String groupId) {
+    public Group removeRoleFromGroup(User owner, UUID roleId, UUID groupId) {
         // TODO
         return null;
     }
 
     @Override
-    public List<Permission> listPermissions(String actingUserId, String targetUserId) {
+    public List<Permission> listPermissions(User owner, UUID targetUserId) {
         // TODO
         return null;
     }
@@ -256,13 +266,13 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public User addPermissionToUser(UUID userId, String permissionId) {
+    public User addPermissionToUser(UUID userId, UUID permissionId) {
         // TODO
         return null;
     }
 
     @Override
-    public User removePermissionFromUser(UUID userId, String permissionId) {
+    public User removePermissionFromUser(UUID userId, UUID permissionId) {
         // TODO
         return null;
     }
