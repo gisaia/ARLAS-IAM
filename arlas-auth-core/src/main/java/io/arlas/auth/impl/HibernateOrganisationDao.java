@@ -6,6 +6,7 @@ import io.arlas.auth.model.User;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,8 +17,20 @@ public class HibernateOrganisationDao extends AbstractDAO<Organisation> implemen
 
     @Override
     public Organisation createOrganisation(Organisation organisation) {
-        // TODO register owner as organisationMember
         return persist(organisation);
+    }
+
+    @Override
+    public Optional<Organisation> readOrganisationById(String orgId) {
+        return Optional.ofNullable(get(orgId));
+    }
+
+    @Override
+    public Optional<Organisation> readOrganisationByName(String name) {
+        return Optional.ofNullable(currentSession()
+                .createQuery("from Organisation o where o." + Organisation.nameColumn + "=:name", Organisation.class)
+                .setParameter("name", name)
+                .uniqueResult());
     }
 
     @Override

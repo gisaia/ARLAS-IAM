@@ -1,5 +1,7 @@
 package io.arlas.auth.core;
 
+import io.arlas.auth.exceptions.AlreadyExistsException;
+import io.arlas.auth.exceptions.InvalidEmailException;
 import io.arlas.auth.exceptions.NonMatchingPasswordException;
 import io.arlas.auth.exceptions.NotFoundException;
 import io.arlas.auth.model.*;
@@ -11,7 +13,7 @@ import java.util.Set;
 public interface AuthService {
     User login(String email, String password) throws NotFoundException;
 
-    User createUser(String email);
+    User createUser(String email) throws InvalidEmailException, AlreadyExistsException;
     Optional<User> readUser(String userId);
     User updateUser(User user, String oldPassword, String newPassword) throws NonMatchingPasswordException;
     Optional<User> deleteUser(String userId);
@@ -20,9 +22,9 @@ public interface AuthService {
     Optional<User> deactivateUser(String userId);
     Set<User> listUsers(User user); // list users from the same organisations as the requesting user
 
-    Organisation createOrganisation(User owner, String name);
-    Organisation deleteOrganisation(String actingUserId, String orgId);
-    List<Organisation> listOrganisations(String userId);
+    Organisation createOrganisation(User owner, String name) throws AlreadyExistsException;
+    Optional<Organisation> deleteOrganisation(User user, String orgId);
+    Set<Organisation> listOrganisations(User user);
 
     User addUserToOrganisation(String actingUserId, String addedUserId, String orgId);
     User removeUserFromOrganisation(String actingUserId, String removedUserId, String orgId);

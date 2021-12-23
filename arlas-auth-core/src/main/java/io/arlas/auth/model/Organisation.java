@@ -8,6 +8,7 @@ import java.util.Set;
 @Entity
 @Table(name = "organisation")
 public class Organisation {
+    public static final String nameColumn = "name";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,7 +16,7 @@ public class Organisation {
     private Integer id;
 
     @NotNull
-    @Column(unique = true)
+    @Column(name = nameColumn, unique = true)
     private String name;
 
     @OneToMany(mappedBy = "pk.organisation")
@@ -28,6 +29,10 @@ public class Organisation {
     private Set<Role> roles = new HashSet<>();
 
     private Organisation() {}
+
+    public Organisation(String name) {
+        this.name = name;
+    }
 
     public Integer getId() {
         return id;
@@ -47,6 +52,10 @@ public class Organisation {
 
     public void setMembers(Set<OrganisationMember> members) {
         this.members = members;
+    }
+
+    public boolean addMember(OrganisationMember organisationMember) {
+        return this.members.add(organisationMember);
     }
 
     public Set<Group> getGroups() {
