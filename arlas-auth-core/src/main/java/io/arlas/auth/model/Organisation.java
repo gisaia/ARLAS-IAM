@@ -3,6 +3,7 @@ package io.arlas.auth.model;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -37,6 +38,10 @@ public class Organisation {
 
     public UUID getId() {
         return id;
+    }
+
+    private void setId(UUID id) {
+        this.id = id;
     }
 
     public boolean is(UUID uuid) {
@@ -81,5 +86,18 @@ public class Organisation {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Organisation that = (Organisation) o;
+        return getId().equals(that.getId()) && getName().equals(that.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getName());
     }
 }

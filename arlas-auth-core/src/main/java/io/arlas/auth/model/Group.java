@@ -31,6 +31,10 @@ public class Group {
         this.key = new GroupKey(name, organisation);
     }
 
+    private void setId(UUID id) {
+        this.id = id;
+    }
+
     public UUID getId() {
         return id;
     }

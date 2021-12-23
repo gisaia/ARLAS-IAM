@@ -2,6 +2,7 @@ package io.arlas.auth.impl;
 
 import io.arlas.auth.core.OrganisationDao;
 import io.arlas.auth.model.Organisation;
+import io.arlas.auth.model.OrganisationMember;
 import io.arlas.auth.model.User;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
@@ -43,7 +44,7 @@ public class HibernateOrganisationDao extends AbstractDAO<Organisation> implemen
     public Set<User> listUsers(User user) {
         return user.getOrganisations().stream()
                 .flatMap(om -> om.getOrganisation().getMembers().stream())
-                .map(om -> om.getUser())
+                .map(OrganisationMember::getUser)
                 .collect(Collectors.toSet());
     }
 }
