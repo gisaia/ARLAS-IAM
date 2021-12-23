@@ -6,7 +6,10 @@ import io.arlas.auth.model.*;
 import org.hibernate.SessionFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,6 +35,8 @@ public class HibernateAuthService implements AuthService {
         this.encoder = new BCryptPasswordEncoder();
     }
 
+    // ------- private ------------
+
     private String encode(String password) {
         return encoder.encode(password);
     }
@@ -44,6 +49,8 @@ public class HibernateAuthService implements AuthService {
         Matcher regexMatcher = emailRegex.matcher(email);
         return regexMatcher.find() ? Optional.of(regexMatcher.group()) : Optional.empty();
     }
+
+    // ------- public ------------
 
     @Override
     public User createUser(String email) throws InvalidEmailException, AlreadyExistsException {
@@ -208,7 +215,7 @@ public class HibernateAuthService implements AuthService {
     public User addRoleToUser(User owner, UUID orgId, UUID userId, UUID roleId) throws NotFoundException, NotOwnerException {
         Organisation ownerOrg = getOrganisation(owner, orgId, true);
         User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
-        Organisation userOrg = getOrganisation(user, orgId, false);
+        getOrganisation(user, orgId, false);
         roleDao.addRoleToUser(user,
                 ownerOrg.getRoles().stream().filter(r -> r.is(roleId)).findFirst().orElseThrow(NotFoundException::new));
         return user;
@@ -218,7 +225,7 @@ public class HibernateAuthService implements AuthService {
     public User removeRoleFromUser(User owner, UUID orgId, UUID userId, UUID roleId) throws NotOwnerException, NotFoundException {
         Organisation ownerOrg = getOrganisation(owner, orgId, true);
         User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
-        Organisation userOrg = getOrganisation(user, orgId, false);
+        getOrganisation(user, orgId, false);
         roleDao.removeRoleFromUser(user,
                 ownerOrg.getRoles().stream().filter(r -> r.is(roleId)).findFirst().orElseThrow(NotFoundException::new));
         return user;
@@ -238,7 +245,7 @@ public class HibernateAuthService implements AuthService {
     public User addUserToGroup(User owner, UUID orgId, UUID userId, UUID grpId) throws NotOwnerException, NotFoundException {
         Organisation ownerOrg = getOrganisation(owner, orgId, true);
         User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
-        Organisation userOrg = getOrganisation(user, orgId, false);
+        getOrganisation(user, orgId, false);
         groupDao.addUserToGroup(user,
                 ownerOrg.getGroups().stream().filter(g -> g.is(grpId)).findFirst().orElseThrow(NotFoundException::new));
         return user;
@@ -248,7 +255,7 @@ public class HibernateAuthService implements AuthService {
     public User removeUserFromGroup(User owner, UUID orgId, UUID userId, UUID grpId) throws NotOwnerException, NotFoundException {
         Organisation ownerOrg = getOrganisation(owner, orgId, true);
         User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
-        Organisation userOrg = getOrganisation(user, orgId, false);
+        getOrganisation(user, orgId, false);
         groupDao.removeUserFromGroup(user,
                 ownerOrg.getGroups().stream().filter(g -> g.is(grpId)).findFirst().orElseThrow(NotFoundException::new));
         return user;
@@ -271,26 +278,34 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public List<Permission> listPermissions(User owner, UUID targetUserId) {
-        // TODO
+    public Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException {
+        Organisation ownerOrg = getOrganisation(owner, orgId, true);
+        User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
+        getOrganisation(user, orgId, false);
+        Set<Permission> permissions = new HashSet<>(user.getPermissions());
+        user.getRoles().stream()
+                .filter(r -> r.getOrganisations().contains(ownerOrg))
+                .forEach(r -> permissions.addAll(r.getPermissions()));
+        return permissions;
+    }
+
+    @Override
+    public Permission createPermission(String permission, boolean isSystem) {
+        permissionDao.createPermission(new Permission(permission, isSystem));
         return null;
     }
 
     @Override
-    public Permission createPermission(String permission) {
-        // TODO
-        return null;
+    public User addPermissionToUser(UUID userId, UUID permissionId) throws NotFoundException {
+        User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
+        Permission permission = permissionDao.readPermission(permissionId).orElseThrow(NotFoundException::new);
+        return userDao.addPermissionToUser(user, permission);
     }
 
     @Override
-    public User addPermissionToUser(UUID userId, UUID permissionId) {
-        // TODO
-        return null;
-    }
-
-    @Override
-    public User removePermissionFromUser(UUID userId, UUID permissionId) {
-        // TODO
-        return null;
+    public User removePermissionFromUser(UUID userId, UUID permissionId) throws NotFoundException {
+        User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
+        Permission permission = permissionDao.readPermission(permissionId).orElseThrow(NotFoundException::new);
+        return userDao.removePermissionFromUser(user, permission);
     }
 }

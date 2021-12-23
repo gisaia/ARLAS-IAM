@@ -5,6 +5,9 @@ import io.arlas.auth.model.Permission;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
+import java.util.Optional;
+import java.util.UUID;
+
 public class HibernatePermissionDao extends AbstractDAO<Permission> implements PermissionDao {
     public HibernatePermissionDao(SessionFactory sessionFactory) {
         super(sessionFactory);
@@ -13,5 +16,10 @@ public class HibernatePermissionDao extends AbstractDAO<Permission> implements P
     @Override
     public Permission createPermission(Permission permission) {
         return persist(permission);
+    }
+
+    @Override
+    public Optional<Permission> readPermission(UUID permissionId) {
+        return Optional.ofNullable(get(permissionId));
     }
 }

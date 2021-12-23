@@ -3,11 +3,13 @@ package io.arlas.auth.model;
 import javax.persistence.Embeddable;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import java.io.Serial;
 import java.util.Objects;
 
 @Embeddable
 public class OrganisationMemberPk implements java.io.Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @ManyToOne

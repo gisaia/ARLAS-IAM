@@ -3,7 +3,6 @@ package io.arlas.auth.core;
 import io.arlas.auth.exceptions.*;
 import io.arlas.auth.model.*;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -37,8 +36,8 @@ public interface AuthService {
     Group addRoleToGroup(User owner, UUID orgId, UUID roleId, UUID grpId) throws NotOwnerException, NotFoundException;
     Group removeRoleFromGroup(User owner, UUID orgId, UUID roleId, UUID grpId) throws NotOwnerException, NotFoundException;
 
-    List<Permission> listPermissions(User owner, UUID userId);
-    Permission createPermission(String permission);
-    User addPermissionToUser(UUID userId, UUID permissionId);
-    User removePermissionFromUser(UUID userId, UUID permissionId);
+    Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException;
+    Permission createPermission(String permission, boolean isSystem);
+    User addPermissionToUser(UUID userId, UUID permissionId) throws NotFoundException;
+    User removePermissionFromUser(UUID userId, UUID permissionId) throws NotFoundException;
 }

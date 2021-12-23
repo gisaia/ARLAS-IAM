@@ -48,6 +48,10 @@ public class Permission {
         return id;
     }
 
+    private void setId(UUID id) {
+        this.id = id;
+    }
+
     public boolean is(UUID uuid) {
         return this.id.equals(uuid);
     }
