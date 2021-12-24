@@ -1,0 +1,84 @@
+server:
+  requestLog:
+    appenders:
+      - type: file
+        currentLogFilename: ${ARLAS_AUTH_ACCESS_LOG_FILE:-arlas-auth-access.log}
+        archivedLogFilenamePattern: ${ARLAS_AUTH_LOG_FILE_ARCHIVE:-arlas-auth-access-%d.log.gz}
+  registerDefaultExceptionMappers: false
+  type: simple
+  rootPath: ${ARLAS_AUTH_PREFIX:-/arlas_auth_server}
+  applicationContextPath: ${ARLAS_AUTH_APP_PATH:-/}
+  adminContextPath: ${ARLAS_AUTH_ADMIN_PATH:-/admin}
+  connector:
+    type: http
+    port: ${ARLAS_AUTH_PORT:-9997}
+  maxThreads: ${ARLAS_AUTH_MAX_THREADS:-1024}
+  minThreads: ${ARLAS_AUTH_MIN_THREADS:-8}
+  maxQueuedRequests: ${ARLAS_AUTH_MAX_QUEUED_REQUESTS:-1024}
+
+logging:
+  level: ${ARLAS_AUTH_LOGGING_LEVEL:-INFO}
+  loggers:
+    "javax.management.mbeanserver": ${ARLAS_AUTH_LOGGING_MBEAN_LEVEL:-INFO}
+  appenders:
+    - type: console
+      threshold:  ${ARLAS_AUTH_LOGGING_CONSOLE_LEVEL:-INFO}
+    - type: file
+      currentLogFilename: ${ARLAS_AUTH_LOGGING_FILE:-arlas-auth.log}
+      threshold: ${ARLAS_AUTH_LOGGING_FILE_LEVEL:-INFO}
+      archive: ${ARLAS_AUTH_LOGGING_FILE_ARCHIVE:-true}
+      archivedLogFilenamePattern: ${ARLAS_AUTH_LOGGING_FILE_ARCHIVE_FILE_PATTERN:-arlas-auth-%d.log}
+      archivedFileCount: ${ARLAS_AUTH_LOGGING_FILE_ARCHIVE_FILE_COUNT:-5}
+
+swagger: # Configuration of SWAGGER for generating documentation and APIs
+  resourcePackage: io.arlas.auth.rest # The java package to process for extracting the APIs
+  # temporary patch for bug https://github.com/smoketurner/dropwizard-swagger/issues/206
+  # to be removed when version of dropwizard.swagger.version is upgraded
+  customJavascript: "/arlas_auth_server/swagger-static/custom-request-interceptor.js"
+
+arlas-base-uri: ${ARLAS_AUTH_BASE_URI:-}
+
+#arlas_cors:
+#  enabled: ${ARLAS_CORS_ENABLED:-true}
+#  allowed_origins: ${ARLAS_CORS_ALLOWED_ORIGINS:-"*"}
+#  allowed_headers: ${ARLAS_CORS_ALLOWED_HEADERS:-"arlas-user,arlas-groups,arlas-organization,X-Requested-With,Content-Type,Accept,Origin,Authorization,WWW-Authenticate"}
+#  allowed_methods: ${ARLAS_CORS_ALLOWED_METHODS:-"OPTIONS,GET,PUT,POST,DELETE,HEAD"}
+#  allowed_credentials: ${ARLAS_CORS_ALLOWED_CREDENTIALS:-true}
+#  exposed_headers: ${ARLAS_CORS_EXPOSED_HEADERS:-"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,Location,WWW-Authenticate"}
+
+#arlas_auth:
+#  enabled: ${ARLAS_AUTH_ENABLED:-false}
+#  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger.*:*,persist.*:GET}]
+#  # deprecated
+#  certificate_file: ${ARLAS_AUTH_CERT_FILE:-/opt/app/arlas.pem}
+#  certificate_url: ${ARLAS_AUTH_CERT_URL:-}
+#  header_user: ${ARLAS_HEADER_USER:-arlas-user}
+#  header_group: ${ARLAS_HEADER_GROUP:-arlas-groups}
+#  claim_roles: ${ARLAS_CLAIM_ROLES:-http://arlas.io/roles}
+#  claim_permissions: ${ARLAS_CLAIM_PERMISSIONS:-http://arlas.io/permissions}
+
+arlas_organization_header: ${ARLAS_ORGANIZATION_HEADER:-arlas-organization}
+anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}
+
+database:
+  # the name of your JDBC driver
+  driverClass: ${ARLAS_AUTH_HIBERNATE_DRIVER:-org.postgresql.Driver}
+  user: ${ARLAS_AUTH_HIBERNATE_USER:-pg-user}
+  password: ${ARLAS_AUTH_HIBERNATE_PASSWORD:-iAMs00perSecrEET}
+  # the JDBC URL
+  url: ${ARLAS_AUTH_HIBERNATE_URL:-jdbc:postgresql://localhost:5432/arlas_auth}
+  # any properties specific to your JDBC driver:
+  properties:
+    charSet: UTF-8
+    hibernate.dialect: ${ARLAS_AUTH_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}
+    hibernate.hbm2ddl.auto: update
+  # the maximum amount of time to wait on an empty pool before throwing an exception
+  maxWaitForConnection: 1s
+  # the SQL query to run when validating a connection's liveness
+  validationQuery: "/* MyApplication Health Check */ SELECT 1"
+  # the minimum number of connections to keep open
+  minSize: 8
+  # the maximum number of connections to keep open
+  maxSize: 32
+  # whether or not idle connections should be validated
+  checkConnectionWhileIdle: false
