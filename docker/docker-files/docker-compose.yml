@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    container_name: db
+    restart: always
+    environment:
+      POSTGRES_USER: ${ARLAS_AUTH_HIBERNATE_USER:-pg-user}
+      POSTGRES_PASSWORD: ${ARLAS_AUTH_HIBERNATE_PASSWORD:-iAMs00perSecrEET}
+      POSTGRES_DB: arlas_auth
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${ARLAS_AUTH_DATADIR:-/tmp}:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: tech@gisaia.com
+      PGADMIN_DEFAULT_PASSWORD: secret
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "8080:80"
+    volumes:
+    # on your local host: chmod -R 777 /home/user/projects/postgis/pgadmin
+    #- /home/user/projects/postgis/pgadmin/servers.json:/pgadmin4/servers.json
+    #- /home/user/projects/postgis/pgadmin/data:/var/lib/pgadmin
+      - ${PGA_CONFIG}:/pgadmin4/servers.json
+      - ${PGA_DATADIR}:/var/lib/pgadmin
+
+  arlas-auth-server:
+    build:
+      context: ../..
+      dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-package-only}
+    image: gisaia/arlas-auth-server:${ARLAS_AUTH_SERVER_VERSION:-latest}
+    container_name: arlas-auth-server
+    environment:
+      - ARLAS_AUTH_HOST="${ARLAS_AUTH_HOST:-localhost}"
+      - ARLAS_AUTH_PORT="${ARLAS_AUTH_PORT:-9997}"
+      - ARLAS_AUTH_PREFIX="${ARLAS_AUTH_PREFIX:-/arlas_auth_server}"
+      - ARLAS_AUTH_APP_PATH="${ARLAS_AUTH_APP_PATH:-/}"
+      - ARLAS_AUTH_HIBERNATE_URL="${ARLAS_AUTH_HIBERNATE_URL:-jdbc:postgresql://db:5432/arlas_auth}"
+      - ARLAS_AUTH_HIBERNATE_USER="${ARLAS_AUTH_HIBERNATE_USER:-pg-user}"
+      - ARLAS_AUTH_HIBERNATE_PASSWORD="${ARLAS_AUTH_HIBERNATE_PASSWORD:-iAMs00perSecrEET}"
+      - ARLAS_AUTH_HIBERNATE_DRIVER="${ARLAS_AUTH_HIBERNATE_DRIVER:-org.postgresql.Driver}"
+      - ARLAS_AUTH_HIBERNATE_DIALECT="${ARLAS_AUTH_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}"
+    ports:
+      - "9997:9997"
+    command: ["/opt/app/start.sh"]
