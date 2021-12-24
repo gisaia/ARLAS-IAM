@@ -30,10 +30,7 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
 
     @Override
     public Optional<User> readUser(String email) {
-        return Optional.ofNullable(currentSession()
-                .createQuery("from User u where u." + User.emailColumn + "=:email", User.class)
-                .setParameter("email", email)
-                .uniqueResult());
+        return currentSession().byNaturalId(email).loadOptional();
     }
 
     @Override

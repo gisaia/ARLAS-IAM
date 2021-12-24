@@ -1,5 +1,7 @@
 package io.arlas.auth.model;
 
+import org.hibernate.annotations.NaturalId;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -9,15 +11,14 @@ import java.util.*;
 @Entity
 @Table(name = "users")
 public class User {
-    public static final String emailColumn = "email";
 
     @Id
     @GeneratedValue
     @Column
     private UUID id;
 
-    @NotNull
-    @Column(name = emailColumn, unique = true)
+    @NaturalId
+    @Column
     private String email;
 
     @Column
@@ -56,7 +57,11 @@ public class User {
     @ManyToMany(mappedBy="users")
     private Set<Permission> permissions = new HashSet<>();
 
-    public User() {}
+    private User() {}
+
+    public User(String email) {
+        this.email = email;
+    }
 
     public UUID getId() {
         return this.id;
@@ -74,9 +79,8 @@ public class User {
         return email;
     }
 
-    public User setEmail(String email) {
+    private void setEmail(String email) {
         this.email = email;
-        return this;
     }
 
     public String getPassword() {

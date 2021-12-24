@@ -1,20 +1,27 @@
 package io.arlas.auth.model;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "groups")
+@Table(name = "groups", uniqueConstraints = { @UniqueConstraint(columnNames = { "name", "id_organisation" }) })
 public class Group {
     @Id
     @GeneratedValue
     @Column
     private UUID id;
 
-    @Embedded
-    private GroupKey key;
+    @NotNull
+    @Column
+    private String name;
+
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "id_organisation")
+    private Organisation organisation;
 
     @ManyToMany()
     @JoinTable(name = "GroupMember",
@@ -28,7 +35,8 @@ public class Group {
     private Group() {}
 
     public Group(String name, Organisation organisation) {
-        this.key = new GroupKey(name, organisation);
+        this.name = name;
+        this.organisation = organisation;
     }
 
     private void setId(UUID id) {
@@ -43,28 +51,20 @@ public class Group {
         return this.id.equals(uuid);
     }
 
-    public GroupKey getKey() {
-        return key;
-    }
-
-    public void setKey(GroupKey key) {
-        this.key = key;
-    }
-
     public String getName() {
-        return key.getName();
+        return name;
     }
 
     public void setName(String name) {
-        getKey().setName(name);
+        this.name = name;
     }
 
     public Organisation getOrganisation() {
-        return getKey().getOrganisation();
+        return organisation;
     }
 
     public void setOrganisation(Organisation organisation) {
-        getKey().setOrganisation(organisation);
+        this.organisation = organisation;
     }
 
     public Set<User> getMembers() {
