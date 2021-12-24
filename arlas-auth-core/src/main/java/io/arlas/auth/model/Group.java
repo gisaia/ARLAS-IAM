@@ -6,14 +6,14 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "group")
+@Table(name = "groups")
 public class Group {
     @Id
     @GeneratedValue
     @Column
     private UUID id;
 
-    @EmbeddedId
+    @Embedded
     private GroupKey key;
 
     @ManyToMany()
