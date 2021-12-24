@@ -7,7 +7,7 @@ import java.time.ZoneOffset;
 import java.util.*;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 public class User {
     public static final String emailColumn = "email";
 

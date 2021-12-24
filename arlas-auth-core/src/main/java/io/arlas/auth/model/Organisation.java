@@ -21,7 +21,7 @@ public class Organisation {
     @Column(name = nameColumn, unique = true)
     private String name;
 
-    @OneToMany(mappedBy = "pk.organisation")
+    @OneToMany(mappedBy = "pk.org")
     private Set<OrganisationMember> members = new HashSet<>();
 
     @OneToMany(mappedBy="key.organisation")
