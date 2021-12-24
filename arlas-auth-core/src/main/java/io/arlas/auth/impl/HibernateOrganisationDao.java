@@ -29,10 +29,7 @@ public class HibernateOrganisationDao extends AbstractDAO<Organisation> implemen
 
     @Override
     public Optional<Organisation> readOrganisation(String name) {
-        return Optional.ofNullable(currentSession()
-                .createQuery("from Organisation o where o." + Organisation.nameColumn + "=:name", Organisation.class)
-                .setParameter("name", name)
-                .uniqueResult());
+        return currentSession().byNaturalId(name).loadOptional();
     }
 
     @Override

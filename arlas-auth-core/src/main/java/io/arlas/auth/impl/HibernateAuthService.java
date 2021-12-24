@@ -75,8 +75,7 @@ public class HibernateAuthService implements AuthService {
             throws InvalidEmailException, AlreadyExistsException {
         if (validateEmailDomain(email).isPresent()) {
             if (userDao.readUser(email).isEmpty()) {
-                User user = new User();
-                user.setEmail(email);
+                User user = new User(email);
                 // TODO add more attributes
                 sendActivationEmail(user);
                 return userDao.createUser(user);

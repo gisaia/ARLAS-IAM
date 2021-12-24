@@ -1,5 +1,7 @@
 package io.arlas.auth.model;
 
+import org.hibernate.annotations.NaturalId;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.HashSet;
@@ -10,21 +12,20 @@ import java.util.UUID;
 @Entity
 @Table(name = "organisation")
 public class Organisation {
-    public static final String nameColumn = "name";
 
     @Id
     @GeneratedValue
     @Column
     private UUID id;
 
-    @NotNull
-    @Column(name = nameColumn, unique = true)
+    @NaturalId
+    @Column
     private String name;
 
     @OneToMany(mappedBy = "pk.org")
     private Set<OrganisationMember> members = new HashSet<>();
 
-    @OneToMany(mappedBy="key.organisation")
+    @OneToMany(mappedBy="organisation")
     private Set<Group> groups = new HashSet<>();
 
     @ManyToMany(mappedBy="organisations")
