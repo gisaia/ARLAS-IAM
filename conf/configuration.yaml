@@ -31,7 +31,7 @@ logging:
       archivedFileCount: ${ARLAS_AUTH_LOGGING_FILE_ARCHIVE_FILE_COUNT:-5}
 
 swagger: # Configuration of SWAGGER for generating documentation and APIs
-  resourcePackage: io.arlas.auth.rest # The java package to process for extracting the APIs
+  resourcePackage: io.arlas.auth.rest.service # The java package to process for extracting the APIs
   # temporary patch for bug https://github.com/smoketurner/dropwizard-swagger/issues/206
   # to be removed when version of dropwizard.swagger.version is upgraded
   customJavascript: "/arlas_auth_server/swagger-static/custom-request-interceptor.js"
@@ -59,6 +59,8 @@ arlas-base-uri: ${ARLAS_AUTH_BASE_URI:-}
 
 arlas_organization_header: ${ARLAS_ORGANIZATION_HEADER:-arlas-organization}
 anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}
+header_user: ${ARLAS_HEADER_USER:-arlas-user}
+header_group: ${ARLAS_HEADER_GROUP:-arlas-groups}
 
 database:
   # the name of your JDBC driver
@@ -72,6 +74,7 @@ database:
     charSet: UTF-8
     hibernate.dialect: ${ARLAS_AUTH_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}
     hibernate.hbm2ddl.auto: update
+    hibernate.session.events.log: false
   # the maximum amount of time to wait on an empty pool before throwing an exception
   maxWaitForConnection: 1s
   # the SQL query to run when validating a connection's liveness

@@ -1,5 +1,6 @@
 package io.arlas.auth.model;
 
+import io.dropwizard.jackson.JsonSnakeCase;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -11,6 +12,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "role")
+@JsonSnakeCase
 public class Role {
     @Id
     @GeneratedValue

@@ -1,5 +1,6 @@
 package io.arlas.auth.model;
 
+import io.dropwizard.jackson.JsonSnakeCase;
 import org.hibernate.annotations.NaturalId;
 
 import javax.persistence.*;
@@ -10,6 +11,7 @@ import java.util.*;
 
 @Entity
 @Table(name = "users")
+@JsonSnakeCase
 public class User {
 
     @Id

@@ -25,7 +25,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.arlas.auth.core.AuthService;
 import io.arlas.auth.impl.HibernateAuthService;
 import io.arlas.auth.model.*;
-import io.arlas.auth.rest.AuthRestService;
+import io.arlas.auth.rest.service.AuthRestService;
+import io.arlas.auth.util.ArlasAuthServerConfiguration;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
@@ -94,7 +95,7 @@ public class ArlasAuthServer extends Application<ArlasAuthServerConfiguration> {
 //        environment.jersey().register(new ConstraintViolationExceptionMapper());
 
         AuthService authService = new HibernateAuthService(hibernate.getSessionFactory());
-        environment.jersey().register(new AuthRestService(authService));
+        environment.jersey().register(new AuthRestService(authService, configuration));
 
         // Auth
 //        if (configuration.arlasAuthConfiguration.enabled) {
@@ -117,6 +118,7 @@ public class ArlasAuthServer extends Application<ArlasAuthServerConfiguration> {
 //        environment.jersey().register(InsensitiveCaseFilter.class);
     }
 
+    // TODO
 //    private void configureCors(Environment environment, ArlasCorsConfiguration configuration) {
 //        CrossOriginFilter filter = new CrossOriginFilter();
 //        final FilterRegistration.Dynamic cors = environment.servlets().addFilter("CrossOriginFilter", filter);

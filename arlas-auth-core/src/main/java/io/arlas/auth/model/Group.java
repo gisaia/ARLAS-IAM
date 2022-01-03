@@ -1,5 +1,7 @@
 package io.arlas.auth.model;
 
+import io.dropwizard.jackson.JsonSnakeCase;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.HashSet;
@@ -8,6 +10,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "groups", uniqueConstraints = { @UniqueConstraint(columnNames = { "name", "id_organisation" }) })
+@JsonSnakeCase
 public class Group {
     @Id
     @GeneratedValue
