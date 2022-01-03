@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package io.arlas.auth.server;
+package io.arlas.auth.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
@@ -44,6 +44,14 @@ public class ArlasAuthServerConfiguration extends Configuration {
     @NotNull
     @JsonProperty("arlas_organization_header")
     public String organizationHeader;
+
+    @NotNull
+    @JsonProperty("header_user")
+    public String headerUser;
+
+    @NotNull
+    @JsonProperty("header_group")
+    public String headerGroup;
 
     @JsonProperty("anonymous_value")
     public String anonymousValue;

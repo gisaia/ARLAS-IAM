@@ -29,7 +29,7 @@ public class HibernateOrganisationDao extends AbstractDAO<Organisation> implemen
 
     @Override
     public Optional<Organisation> readOrganisation(String name) {
-        return currentSession().byNaturalId(name).loadOptional();
+        return currentSession().byNaturalId(Organisation.class).using("name", name).loadOptional();
     }
 
     @Override

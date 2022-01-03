@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y bash netcat-openbsd curl
 WORKDIR /opt/app
 ADD arlas-auth-server/target/arlas-auth-server*.jar /opt/app/arlas-auth-server.jar
 ADD conf/configuration.yaml /opt/app/configuration.yaml
-#ADD docker/docker-files/pgCreateTable.sql /opt/app/pgCreateTable.sql
 ADD docker/docker-resources/start.sh /opt/app/start.sh
 EXPOSE 9997
 
