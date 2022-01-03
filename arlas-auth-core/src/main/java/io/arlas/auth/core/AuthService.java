@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public interface AuthService {
+    User readUser(UUID userId, boolean checkActiveVerified) throws NotFoundException;
+
     User login(String email, String password) throws NotFoundException;
 
     User createUser(String email) throws InvalidEmailException, AlreadyExistsException;

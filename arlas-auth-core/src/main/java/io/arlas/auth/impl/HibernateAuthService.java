@@ -93,6 +93,16 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
+    public User readUser(UUID userId, boolean checkActiveVerified) throws NotFoundException {
+        Optional<User> user = readUser(userId);
+        if (user.isPresent() && user.get().isVerified() && user.get().isActive()) {
+            return user.get();
+        } else {
+            throw new NotFoundException();
+        }
+    }
+
+    @Override
     public User login(String email, String password)
             throws NotFoundException {
         User user = userDao.readUser(email).orElseThrow(NotFoundException::new);
@@ -137,10 +147,12 @@ public class HibernateAuthService implements AuthService {
         // TODO add a token system to validate the verification request (link from verification email)
         Optional<User> user = readUser(userId);
         user.ifPresent(u -> {
-            u.setPassword(encode(password));
-            u.setVerified(true);
-            // TODO create personal organisation: what name? avoid email for GPRD
-            userDao.updateUser(u);
+            if (!u.isVerified()) {
+                u.setPassword(encode(password));
+                u.setVerified(true);
+                // TODO create personal organisation: what name? avoid email for GPRD
+                userDao.updateUser(u);
+            }
         });
         return user;
     }
