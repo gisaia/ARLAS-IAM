@@ -1,5 +1,6 @@
 module arlas.auth.core {
     exports io.arlas.auth.core;
+    exports io.arlas.auth.exceptions;
     exports io.arlas.auth.impl;
     exports io.arlas.auth.model;
     exports io.arlas.auth.util;
