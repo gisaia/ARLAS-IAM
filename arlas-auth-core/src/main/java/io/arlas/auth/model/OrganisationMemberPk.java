@@ -1,5 +1,6 @@
 package io.arlas.auth.model;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -12,11 +13,11 @@ public class OrganisationMemberPk implements java.io.Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @ManyToOne
+    @ManyToOne(cascade= CascadeType.REMOVE)
     @JoinColumn(name = "id_user")
     private User user;
 
-    @ManyToOne
+    @ManyToOne(cascade= CascadeType.REMOVE)
     @JoinColumn(name = "id_organisation")
     private Organisation org;
 

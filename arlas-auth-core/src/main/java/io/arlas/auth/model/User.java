@@ -1,10 +1,11 @@
 package io.arlas.auth.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import io.dropwizard.jackson.JsonSnakeCase;
 import org.hibernate.annotations.NaturalId;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -12,6 +13,7 @@ import java.util.*;
 @Entity
 @Table(name = "users")
 @JsonSnakeCase
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class User {
 
     @Id

@@ -1,5 +1,6 @@
 package io.arlas.auth.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.dropwizard.jackson.JsonSnakeCase;
 import org.hibernate.annotations.Type;
 
@@ -14,6 +15,7 @@ import javax.persistence.Table;
 public class OrganisationMember {
 
     @Id
+    @JsonIgnore
     private OrganisationMemberPk pk;
 
     @Type(type = "org.hibernate.type.NumericBooleanType")
