@@ -1,10 +1,11 @@
 package io.arlas.auth.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import io.dropwizard.jackson.JsonSnakeCase;
 import org.hibernate.annotations.NaturalId;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "organisation")
 @JsonSnakeCase
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Organisation {
 
     @Id
@@ -24,13 +26,13 @@ public class Organisation {
     @Column
     private String name;
 
-    @OneToMany(mappedBy = "pk.org")
+    @OneToMany(mappedBy = "pk.org", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     private Set<OrganisationMember> members = new HashSet<>();
 
-    @OneToMany(mappedBy="organisation")
+    @OneToMany(mappedBy="organisation", fetch = FetchType.EAGER)
     private Set<Group> groups = new HashSet<>();
 
-    @ManyToMany(mappedBy="organisations")
+    @ManyToMany(mappedBy="organisations", fetch = FetchType.EAGER)
     private Set<Role> roles = new HashSet<>();
 
     private Organisation() {}

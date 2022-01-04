@@ -3,6 +3,8 @@ package io.arlas.auth.rest.service;
 import com.codahale.metrics.annotation.Timed;
 import io.arlas.auth.core.AuthService;
 import io.arlas.auth.exceptions.NotFoundException;
+import io.arlas.auth.exceptions.NotOwnerException;
+import io.arlas.auth.model.Organisation;
 import io.arlas.auth.model.User;
 import io.arlas.auth.rest.model.Error;
 import io.arlas.auth.rest.model.UpdateData;
@@ -50,6 +52,8 @@ public class AuthRestService {
         this.anonymousValue = configuration.anonymousValue;
     }
 
+    // --------------- Users ---------------------
+
     @Timed
     @Path("user")
     @POST
@@ -91,7 +95,7 @@ public class AuthRestService {
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
-    public Response verify(
+    public Response verifyUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
@@ -100,7 +104,7 @@ public class AuthRestService {
 
             @ApiParam(name = "password", required = true)
             @NotNull @Valid String password
-    ) throws Exception {
+    ) {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.verifyUser(UUID.fromString(id), password))
                 .type("application/json")
@@ -196,7 +200,7 @@ public class AuthRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response =User.class, responseContainer = "List"),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = User.class, responseContainer = "List"),
             @ApiResponse(code = 404, message = "User not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
@@ -211,6 +215,146 @@ public class AuthRestService {
                 .build();
     }
 
+    // --------------- Organisations ---------------------
+    @Timed
+    @Path("organisation")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Creates an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = Organisation.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response createOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers
+    ) throws Exception {
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.createOrganisation(getUser(headers)))
+                .type("application/json")
+                .build();
+    }
+
+    @Timed
+    @Path("organisation/{oid}")
+    @DELETE
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Delete an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = Organisation.class),
+            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response deleteOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid
+    ) throws NotFoundException, NotOwnerException {
+        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.deleteOrganisation(getUser(headers), UUID.fromString(oid)))
+                .type("application/json")
+                .build();
+    }
+
+    @Timed
+    @Path("organisations")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "List organisations of the user",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = Organisation.class, responseContainer = "List"),
+            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response getOrganisations(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers
+    ) throws Exception {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.listOrganisations(getUser(headers)))
+                .type("application/json")
+                .build();
+    }
+
+    @Timed
+    @Path("organisation/{oid}/user")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Add a user to an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = Organisation.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response addUserToOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "email", required = true)
+            @NotNull @Valid String email
+    ) throws Exception {
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.addUserToOrganisation(getUser(headers), email, UUID.fromString(oid)))
+                .type("application/json")
+                .build();
+    }
+
+    @Timed
+    @Path("organisation/{oid}/users/{uid}")
+    @DELETE
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Removes a user from an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = Organisation.class),
+            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response removeUserFromOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+            @ApiParam(name = "uid", required = true)
+            @PathParam(value = "uid") String uid
+    ) throws NotFoundException, NotOwnerException {
+        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.removeUserFromOrganisation(getUser(headers), UUID.fromString(uid), UUID.fromString(oid)))
+                .type("application/json")
+                .build();
+    }
+
+
+    //----------------- private -----------------
 
     private User getUser(HttpHeaders headers) throws NotFoundException {
         return authService.readUser(UUID.fromString(getIdentityParam(headers).userId), true);
