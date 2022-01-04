@@ -337,4 +337,18 @@ public class HibernateAuthService implements AuthService {
         Permission permission = permissionDao.readPermission(permissionId).orElseThrow(NotFoundException::new);
         return userDao.removePermissionFromUser(user, permission);
     }
+
+    @Override
+    public Role addPermissionToRole(UUID roleId, UUID permissionId) throws NotFoundException {
+        Role role = roleDao.readRole(roleId).orElseThrow(NotFoundException::new);
+        Permission permission = permissionDao.readPermission(permissionId).orElseThrow(NotFoundException::new);
+        return roleDao.addPermissionToRole(permission, role);
+    }
+
+    @Override
+    public Role removePermissionFromRole(UUID roleId, UUID permissionId) throws NotFoundException {
+        Role role = roleDao.readRole(roleId).orElseThrow(NotFoundException::new);
+        Permission permission = permissionDao.readPermission(permissionId).orElseThrow(NotFoundException::new);
+        return roleDao.removePermissionFromRole(permission, role);
+    }
 }
