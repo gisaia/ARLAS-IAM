@@ -4,10 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import io.arlas.auth.core.AuthService;
 import io.arlas.auth.exceptions.NotFoundException;
 import io.arlas.auth.exceptions.NotOwnerException;
-import io.arlas.auth.model.Group;
-import io.arlas.auth.model.Organisation;
-import io.arlas.auth.model.Role;
-import io.arlas.auth.model.User;
+import io.arlas.auth.model.*;
 import io.arlas.auth.rest.model.Error;
 import io.arlas.auth.rest.model.Permissions;
 import io.arlas.auth.rest.model.UpdateData;
@@ -621,6 +618,192 @@ public class AuthRestService {
     ) throws NotFoundException, NotOwnerException {
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.removeRoleFromGroup(getUser(headers), UUID.fromString(oid), UUID.fromString(rid), UUID.fromString(gid)))
+                .type("application/json")
+                .build();
+    }
+
+    //----------------- permissions -----------------
+
+    @Timed
+    @Path("organisation/{oid}/user/{uid}/permissions")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "List permissions of a user within an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = Permissions.class, responseContainer = "List"),
+            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response getPermissions(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "uid", required = true)
+            @PathParam(value = "uid") String uid
+    ) throws Exception {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.listPermissions(getUser(headers), UUID.fromString(oid), UUID.fromString(uid)))
+                .type("application/json")
+                .build();
+    }
+
+    @Timed
+    @Path("permissions/{permission}")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Adds a system permission",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = Permission.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response addSystemPermission(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "permission", required = true)
+            @PathParam(value = "permission") String permission
+    ) {
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.createPermission(permission, true))
+                .type("application/json")
+                .build();
+    }
+
+    @Timed
+    @Path("permissions/{pid}/users/{uid}")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Add a permission to a user",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = User.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response addPermissionToUser(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "pid", required = true)
+            @PathParam(value = "pid") String pid,
+
+            @ApiParam(name = "uid", required = true)
+            @PathParam(value = "uid") String uid
+
+    ) throws NotFoundException {
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.addPermissionToUser(UUID.fromString(uid), UUID.fromString(pid)))
+                .type("application/json")
+                .build();
+    }
+
+    @Timed
+    @Path("permissions/{pid}/users/{uid}")
+    @DELETE
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Removes a permission from a user",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = User.class),
+            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response removePermissionFromUser(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "pid", required = true)
+            @PathParam(value = "pid") String pid,
+
+            @ApiParam(name = "uid", required = true)
+            @PathParam(value = "uid") String uid
+
+    ) throws NotFoundException {
+        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.removePermissionFromUser(UUID.fromString(uid), UUID.fromString(pid)))
+                .type("application/json")
+                .build();
+    }
+
+    @Timed
+    @Path("permissions/{pid}/roles/{rid}")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Add a permission to a role",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = Role.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response addPermissionToRole(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "pid", required = true)
+            @PathParam(value = "pid") String pid,
+
+            @ApiParam(name = "rid", required = true)
+            @PathParam(value = "rid") String rid
+
+    ) throws NotFoundException {
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.addPermissionToRole(UUID.fromString(rid), UUID.fromString(pid)))
+                .type("application/json")
+                .build();
+    }
+
+    @Timed
+    @Path("permissions/{pid}/roles/{rid}")
+    @DELETE
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Removes a permission from a role",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = Role.class),
+            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response removePermissionFromRole(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "pid", required = true)
+            @PathParam(value = "pid") String pid,
+
+            @ApiParam(name = "rid", required = true)
+            @PathParam(value = "rid") String rid
+
+    ) throws NotFoundException {
+        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.removePermissionFromRole(UUID.fromString(rid), UUID.fromString(pid)))
                 .type("application/json")
                 .build();
     }

@@ -42,4 +42,7 @@ public interface AuthService {
     Permission createPermission(String permission, boolean isSystem);
     User addPermissionToUser(UUID userId, UUID permissionId) throws NotFoundException;
     User removePermissionFromUser(UUID userId, UUID permissionId) throws NotFoundException;
+
+    Role addPermissionToRole(UUID roleId, UUID permissionId) throws NotFoundException;
+    Role removePermissionFromRole(UUID roleId, UUID permissionId) throws NotFoundException;
 }
