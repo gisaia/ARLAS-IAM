@@ -383,7 +383,8 @@ public class AuthRestService {
             @NotNull @Valid Permissions permissions
     ) throws Exception {
         return Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.createRole(getUser(headers), rname, UUID.fromString(oid), permissions.permissions))
+                .entity(authService.createRole(getUser(headers), rname, UUID.fromString(oid),
+                        permissions.permissions.stream().map(p -> new Permission(p, false)).collect(Collectors.toSet())))
                 .type("application/json")
                 .build();
     }

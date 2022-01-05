@@ -5,7 +5,7 @@ import io.arlas.auth.model.Permission;
 import java.util.Set;
 
 public class Permissions {
-    public Set<Permission> permissions;
+    public Set<String> permissions;
 
     public Permissions(){}
 }

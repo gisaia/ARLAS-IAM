@@ -85,12 +85,20 @@ public class Organisation {
         this.groups = groups;
     }
 
+    public void addGroup(Group group) {
+        this.groups.add(group);
+    }
+
     public Set<Role> getRoles() {
         return roles;
     }
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    public void addRole(Role role) {
+        this.roles.add(role);
     }
 
     @Override
@@ -105,4 +113,5 @@ public class Organisation {
     public int hashCode() {
         return Objects.hash(getId(), getName());
     }
+
 }
