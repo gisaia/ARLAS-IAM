@@ -229,7 +229,9 @@ public class HibernateAuthService implements AuthService {
         if (organisation.getRoles().stream().anyMatch(r -> r.getName().equals(name))) {
             throw new AlreadyExistsException();
         } else {
-            return roleDao.createRole(new Role(name).addOrganisation(organisation), permissions);
+            Role role = roleDao.createRole(new Role(name).addOrganisation(organisation), permissions);
+            organisation.addRole(role);
+            return role;
         }
     }
 
@@ -262,7 +264,9 @@ public class HibernateAuthService implements AuthService {
         if (organisation.getGroups().stream().anyMatch(r -> r.getName().equals(name))) {
             throw new AlreadyExistsException();
         } else {
-            return groupDao.createGroup(new Group(name, organisation));
+            Group group = groupDao.createGroup(new Group(name, organisation));
+            organisation.addGroup(group);
+            return group;
         }
     }
 
