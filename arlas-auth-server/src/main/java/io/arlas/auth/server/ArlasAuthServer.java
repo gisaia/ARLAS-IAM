@@ -23,6 +23,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.arlas.auth.core.AuthService;
+import io.arlas.auth.exceptions.ArlasAuthExceptionMapper;
+import io.arlas.auth.exceptions.ConstraintViolationExceptionMapper;
+import io.arlas.auth.exceptions.IllegalArgumentExceptionMapper;
 import io.arlas.auth.impl.HibernateAuthService;
 import io.arlas.auth.model.*;
 import io.arlas.auth.rest.service.AuthRestService;
@@ -89,10 +92,10 @@ public class ArlasAuthServer extends Application<ArlasAuthServerConfiguration> {
 
         environment.getObjectMapper().setSerializationInclusion(Include.NON_NULL);
         environment.jersey().register(MultiPartFeature.class);
-//        environment.jersey().register(new ArlasExceptionMapper());
-//        environment.jersey().register(new IllegalArgumentExceptionMapper());
+        environment.jersey().register(new ArlasAuthExceptionMapper());
+        environment.jersey().register(new IllegalArgumentExceptionMapper());
         environment.jersey().register(new JsonProcessingExceptionMapper());
-//        environment.jersey().register(new ConstraintViolationExceptionMapper());
+        environment.jersey().register(new ConstraintViolationExceptionMapper());
 
         AuthService authService = new HibernateAuthService(hibernate.getSessionFactory());
         environment.jersey().register(new AuthRestService(authService, configuration));

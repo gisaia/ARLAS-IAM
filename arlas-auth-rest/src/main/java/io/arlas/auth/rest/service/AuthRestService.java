@@ -2,8 +2,8 @@ package io.arlas.auth.rest.service;
 
 import com.codahale.metrics.annotation.Timed;
 import io.arlas.auth.core.AuthService;
+import io.arlas.auth.exceptions.*;
 import io.arlas.auth.exceptions.NotFoundException;
-import io.arlas.auth.exceptions.NotOwnerException;
 import io.arlas.auth.model.*;
 import io.arlas.auth.rest.model.Error;
 import io.arlas.auth.rest.model.Permissions;
@@ -65,6 +65,7 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = User.class),
+            @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -74,7 +75,7 @@ public class AuthRestService {
 
             @ApiParam(name = "email", required = true)
             @NotNull @Valid String email
-    ) throws Exception {
+    ) throws AlreadyExistsException, InvalidEmailException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.createUser(email))
                 .type("application/json")
@@ -129,7 +130,7 @@ public class AuthRestService {
     public Response getUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers
-    ) throws Exception {
+    ) throws NotFoundException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(getUser(headers))
                 .type("application/json")
@@ -147,7 +148,6 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = User.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -172,6 +172,7 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = User.class),
+            @ApiResponse(code = 400, message = "Non matching passwords.", response = Error.class),
             @ApiResponse(code = 404, message = "User not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
@@ -183,7 +184,7 @@ public class AuthRestService {
             @ApiParam(name = "updateData", required = true)
             @NotNull @Valid UpdateData updateData
 
-    ) throws Exception {
+    ) throws NotFoundException, NonMatchingPasswordException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.updateUser(getUser(headers), updateData.oldPassword, updateData.newPassword))
                 .type("application/json")
@@ -208,7 +209,7 @@ public class AuthRestService {
     public Response getUsers(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers
-    ) throws Exception {
+    ) throws NotFoundException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.listUsers(getUser(headers)))
                 .type("application/json")
@@ -227,13 +228,15 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = Organisation.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
     public Response createOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers
-    ) throws Exception {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenOrganisationNameException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.createOrganisation(getUser(headers)))
                 .type("application/json")
@@ -251,7 +254,8 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = Organisation.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -286,7 +290,7 @@ public class AuthRestService {
     public Response getOrganisations(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers
-    ) throws Exception {
+    ) throws NotFoundException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.listOrganisations(getUser(headers)))
                 .type("application/json")
@@ -304,6 +308,8 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = Organisation.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -316,7 +322,7 @@ public class AuthRestService {
 
             @ApiParam(name = "email", required = true)
             @NotNull @Valid String email
-    ) throws Exception {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, InvalidEmailException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.addUserToOrganisation(getUser(headers), email, UUID.fromString(oid)))
                 .type("application/json")
@@ -334,7 +340,8 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = Organisation.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -366,6 +373,8 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = Role.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -381,7 +390,7 @@ public class AuthRestService {
 
             @ApiParam(name = "permissions", required = true)
             @NotNull @Valid Permissions permissions
-    ) throws Exception {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.createRole(getUser(headers), rname, UUID.fromString(oid),
                         permissions.permissions.stream().map(p -> new Permission(p, false)).collect(Collectors.toSet())))
@@ -400,6 +409,8 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = User.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -415,7 +426,7 @@ public class AuthRestService {
 
             @ApiParam(name = "uid", required = true)
             @PathParam(value = "uid") String uid
-    ) throws Exception {
+    ) throws NotFoundException, NotOwnerException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.addRoleToUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), UUID.fromString(rid)))
                 .type("application/json")
@@ -433,7 +444,8 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = User.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -469,6 +481,8 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = Group.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -482,7 +496,7 @@ public class AuthRestService {
             @ApiParam(name = "gname", required = true)
             @PathParam(value = "gname") String gname
 
-    ) throws Exception {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.createGroup(getUser(headers), gname, UUID.fromString(oid)))
                 .type("application/json")
@@ -500,6 +514,8 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = User.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -515,7 +531,7 @@ public class AuthRestService {
 
             @ApiParam(name = "uid", required = true)
             @PathParam(value = "uid") String uid
-    ) throws Exception {
+    ) throws NotFoundException, NotOwnerException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.addUserToGroup(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), UUID.fromString(gid)))
                 .type("application/json")
@@ -533,7 +549,8 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = User.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -567,6 +584,8 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = Group.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -582,7 +601,7 @@ public class AuthRestService {
 
             @ApiParam(name = "rid", required = true)
             @PathParam(value = "rid") String rid
-    ) throws Exception {
+    ) throws NotFoundException, NotOwnerException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.addRoleToGroup(getUser(headers), UUID.fromString(oid), UUID.fromString(rid), UUID.fromString(gid)))
                 .type("application/json")
@@ -600,7 +619,8 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = Group.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -636,7 +656,8 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = Permissions.class, responseContainer = "List"),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -649,7 +670,7 @@ public class AuthRestService {
 
             @ApiParam(name = "uid", required = true)
             @PathParam(value = "uid") String uid
-    ) throws Exception {
+    ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.listPermissions(getUser(headers), UUID.fromString(oid), UUID.fromString(uid)))
                 .type("application/json")
@@ -694,6 +715,7 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = User.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
