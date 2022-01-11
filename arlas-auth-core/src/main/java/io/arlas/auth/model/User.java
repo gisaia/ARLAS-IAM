@@ -49,16 +49,16 @@ public class User {
     @Column
     private boolean isActive = true;
 
-    @OneToMany(mappedBy = "pk.user")
+    @OneToMany(mappedBy = "pk.user", cascade= CascadeType.REMOVE)
     private Set<OrganisationMember> organisations = new HashSet<>();
 
-    @ManyToMany(mappedBy = "members")
+    @ManyToMany(mappedBy = "members", cascade= CascadeType.REMOVE)
     private Set<Group> groups = new HashSet<>();
 
-    @ManyToMany(mappedBy="users")
+    @ManyToMany(mappedBy="users", cascade= CascadeType.REMOVE)
     private Set<Role> roles = new HashSet<>();
 
-    @ManyToMany(mappedBy="users")
+    @ManyToMany(mappedBy="users", cascade= CascadeType.REMOVE)
     private Set<Permission> permissions = new HashSet<>();
 
     private User() {}
