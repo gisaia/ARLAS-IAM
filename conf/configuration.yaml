@@ -20,6 +20,7 @@ logging:
   level: ${ARLAS_AUTH_LOGGING_LEVEL:-INFO}
   loggers:
     "javax.management.mbeanserver": ${ARLAS_AUTH_LOGGING_MBEAN_LEVEL:-INFO}
+    "org.hibernate": ${ARLAS_AUTH_LOGGING_HIBERNATE_LEVEL:-INFO}
   appenders:
     - type: console
       threshold:  ${ARLAS_AUTH_LOGGING_CONSOLE_LEVEL:-INFO}

@@ -113,7 +113,7 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("user")
+    @Path("user/{id}")
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -126,19 +126,23 @@ public class AuthRestService {
             @ApiResponse(code = 404, message = "User not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
-    @UnitOfWork
+    @UnitOfWork(readOnly = true)
     public Response getUser(
             @Context UriInfo uriInfo,
-            @Context HttpHeaders headers
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "id", required = true)
+            @PathParam(value = "id") String id
     ) throws NotFoundException {
+
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(getUser(headers))
+                .entity(getUser(headers, id))
                 .type("application/json")
                 .build();
     }
 
     @Timed
-    @Path("user")
+    @Path("user/{id}")
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -148,21 +152,27 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = User.class),
+            @ApiResponse(code = 400, message = "Non matching passwords.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
     public Response deleteUser(
             @Context UriInfo uriInfo,
-            @Context HttpHeaders headers
-    ) {
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "id", required = true)
+            @PathParam(value = "id") String id
+    ) throws NotFoundException {
+        checkLoggedInUser(headers, id);
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.deleteUser(UUID.fromString(getIdentityParam(headers).userId)).get())
+                .entity(authService.deleteUser(UUID.fromString(id)).get())
                 .type("application/json")
                 .build();
+
     }
 
     @Timed
-    @Path("user")
+    @Path("user/{id}")
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -181,12 +191,16 @@ public class AuthRestService {
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
+
+            @ApiParam(name = "id", required = true)
+            @PathParam(value = "id") String id,
+
             @ApiParam(name = "updateData", required = true)
             @NotNull @Valid UpdateData updateData
 
     ) throws NotFoundException, NonMatchingPasswordException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.updateUser(getUser(headers), updateData.oldPassword, updateData.newPassword))
+                .entity(authService.updateUser(getUser(headers, id), updateData.oldPassword, updateData.newPassword))
                 .type("application/json")
                 .build();
     }
@@ -205,7 +219,7 @@ public class AuthRestService {
             @ApiResponse(code = 404, message = "User not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
-    @UnitOfWork
+    @UnitOfWork(readOnly = true)
     public Response getUsers(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers
@@ -286,7 +300,7 @@ public class AuthRestService {
             @ApiResponse(code = 404, message = "User not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
-    @UnitOfWork
+    @UnitOfWork(readOnly = true)
     public Response getOrganisations(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers
@@ -660,7 +674,7 @@ public class AuthRestService {
             @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
-    @UnitOfWork
+    @UnitOfWork(readOnly = true)
     public Response getPermissions(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
@@ -833,8 +847,19 @@ public class AuthRestService {
 
     //----------------- private -----------------
 
+    private void checkLoggedInUser(HttpHeaders headers, String id) throws NotFoundException {
+        if (!id.equals(getIdentityParam(headers).userId)) {
+            throw new NotFoundException("Logged in user " + getIdentityParam(headers).userId + " does not match requested id " + id);
+        }
+    }
+
     private User getUser(HttpHeaders headers) throws NotFoundException {
         return authService.readUser(UUID.fromString(getIdentityParam(headers).userId), true);
+    }
+
+    private User getUser(HttpHeaders headers, String id) throws NotFoundException {
+        checkLoggedInUser(headers, id);
+        return getUser(headers);
     }
 
     private IdentityParam getIdentityParam(HttpHeaders headers) {
@@ -849,7 +874,7 @@ public class AuthRestService {
                 .map(g -> g.trim())
                 .collect(Collectors.toList());
 
-        LOGGER.info("User='" + userId + "' / Org='" + organization + "' / Groups='" + groups.toString() + "'");
+        LOGGER.debug("User='" + userId + "' / Org='" + organization + "' / Groups='" + groups.toString() + "'");
         return new IdentityParam(userId, organization, groups);
     }
 
