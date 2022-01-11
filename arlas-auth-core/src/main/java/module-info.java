@@ -14,5 +14,7 @@ module arlas.auth.core {
     requires dropwizard.core;
     requires dropwizard.db;
     requires dropwizard.swagger;
+    requires java.ws.rs;
+    requires org.slf4j;
 
 }

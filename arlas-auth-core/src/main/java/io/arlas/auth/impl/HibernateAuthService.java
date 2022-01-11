@@ -80,10 +80,10 @@ public class HibernateAuthService implements AuthService {
                 sendActivationEmail(user);
                 return userDao.createUser(user);
             } else {
-                throw new AlreadyExistsException();
+                throw new AlreadyExistsException("User already exists.");
             }
         } else {
-            throw new InvalidEmailException();
+            throw new InvalidEmailException("Email format is not valid.");
         }
     }
 
@@ -98,7 +98,7 @@ public class HibernateAuthService implements AuthService {
         if (user.isPresent() && user.get().isVerified() && user.get().isActive()) {
             return user.get();
         } else {
-            throw new NotFoundException();
+            throw new NotFoundException("User not found.");
         }
     }
 
@@ -110,7 +110,7 @@ public class HibernateAuthService implements AuthService {
             return user;
         } else {
             // we don't tell the user which of email or password is wrong, to avoid "username enumeration" attack type
-            throw new NotFoundException();
+            throw new NotFoundException("No matching user/password found.");
         }
     }
 
@@ -121,7 +121,7 @@ public class HibernateAuthService implements AuthService {
             user.setPassword(encode(newPassword));
             return userDao.updateUser(user);
         } else {
-            throw new NonMatchingPasswordException();
+            throw new NonMatchingPasswordException("Old password does not match.");
         }
     }
 
@@ -184,9 +184,9 @@ public class HibernateAuthService implements AuthService {
         } else {
             if (org.get().getMembers().stream()
                     .anyMatch(om -> om.getUser().is(owner.getId()) && om.isOwner())) {
-                throw new AlreadyExistsException();
+                throw new AlreadyExistsException("Organisation already exists.");
             } else {
-                throw new NotOwnerException();
+                throw new NotOwnerException("Organisation already created by another user.");
             }
         }
     }
@@ -227,7 +227,7 @@ public class HibernateAuthService implements AuthService {
             throws AlreadyExistsException, NotOwnerException, NotFoundException {
         Organisation organisation = getOrganisation(owner, orgId, true);
         if (organisation.getRoles().stream().anyMatch(r -> r.getName().equals(name))) {
-            throw new AlreadyExistsException();
+            throw new AlreadyExistsException("Role already exists.");
         } else {
             Role role = roleDao.createRole(new Role(name).addOrganisation(organisation), permissions);
             organisation.addRole(role);
@@ -262,7 +262,7 @@ public class HibernateAuthService implements AuthService {
             throws AlreadyExistsException, NotOwnerException, NotFoundException {
         Organisation organisation = getOrganisation(owner, orgId, true);
         if (organisation.getGroups().stream().anyMatch(r -> r.getName().equals(name))) {
-            throw new AlreadyExistsException();
+            throw new AlreadyExistsException("Group already exists in this organisation.");
         } else {
             Group group = groupDao.createGroup(new Group(name, organisation));
             organisation.addGroup(group);
