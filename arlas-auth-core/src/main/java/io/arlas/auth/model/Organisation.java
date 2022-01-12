@@ -29,10 +29,10 @@ public class Organisation {
     @OneToMany(mappedBy = "pk.org", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     private Set<OrganisationMember> members = new HashSet<>();
 
-    @OneToMany(mappedBy="organisation", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy="organisation", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     private Set<Group> groups = new HashSet<>();
 
-    @ManyToMany(mappedBy="organisations", fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy="organisations", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     private Set<Role> roles = new HashSet<>();
 
     private Organisation() {}

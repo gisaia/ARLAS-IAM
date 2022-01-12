@@ -22,6 +22,7 @@ public class AuthITUser {
     protected static String userId1;
     protected static String userId2;
     protected static String orgId;
+    protected static String fooGroupId1;
 
     static {
         userHeader = Optional.ofNullable(System.getenv("ARLAS_USER_HEADER")).orElse("arlas-user");
@@ -33,23 +34,18 @@ public class AuthITUser {
         RestAssured.basePath = "";
         String arlasPrefix = Optional.ofNullable(System.getenv("ARLAS_AUTH_PREFIX")).orElse("/arlas_auth_server");
         arlasAppPath = Optional.ofNullable(System.getenv("ARLAS_AUTH_APP_PATH")).orElse("/");
-        if (arlasAppPath.endsWith("/"))
-            arlasAppPath = arlasAppPath.substring(0, arlasAppPath.length() - 1);
+        if (arlasAppPath.endsWith("/")) arlasAppPath = arlasAppPath.substring(0, arlasAppPath.length() - 1);
         arlasAppPath = arlasAppPath + arlasPrefix;
-        if (arlasAppPath.endsWith("//"))
-            arlasAppPath = arlasAppPath.substring(0, arlasAppPath.length() - 1);
-        if (!arlasAppPath.endsWith("/"))
-            arlasAppPath = arlasAppPath + "/auth/";
+        if (arlasAppPath.endsWith("//")) arlasAppPath = arlasAppPath.substring(0, arlasAppPath.length() - 1);
+        if (!arlasAppPath.endsWith("/")) arlasAppPath = arlasAppPath + "/auth/";
     }
 
     @Test
     public void test01CreateUser() {
-        userId1 = createUser(USER1)
-                .then().statusCode(201)
+        userId1 = createUser(USER1).then().statusCode(201)
                 .body("email", equalTo(USER1))
                 .extract().jsonPath().get("id");
-        userId2 = createUser(USER2)
-                .then().statusCode(201)
+        userId2 = createUser(USER2).then().statusCode(201)
                 .body("email", equalTo(USER2))
                 .extract().jsonPath().get("id");
     }
@@ -152,18 +148,77 @@ public class AuthITUser {
     }
 
     @Test
-    public void test14DeleteOrganisationAsOwner() {
-        deleteOrganisation(userId1).then().statusCode(202);
-        getUser(userId1).then().statusCode(200).body("organisations", hasSize(0));
+    public void test14AddUserToOrganisation() {
+        addUserToOrganisation(userId1, USER2).then().statusCode(201);
+        getUser(userId2, userId2).then().statusCode(200)
+                .body("organisations", hasSize(1))
+                .body("organisations[0].organisation.name", equalTo("foo"))
+                .body("organisations[0].organisation.members", hasSize(2))
+        ;
     }
 
     @Test
-    public void test90DeleteUserNotSelf() {
+    public void test15AddGroupToOrganisation() {
+        fooGroupId1 = createGroup(userId1,"fooGroup1").then().statusCode(201)
+                .body("name", equalTo("fooGroup1"))
+                .body("organisation.name", equalTo("foo"))
+                .extract().jsonPath().get("id");
+    }
+
+    @Test
+    public void test16AddExistingGroupToOrganisation() {
+        createGroup(userId1, "fooGroup1").then().statusCode(400);
+    }
+
+    @Test
+    public void test16AddGroupToOrganisationNotOwned() {
+        createGroup(userId2, "fooGroup2").then().statusCode(400);
+    }
+
+    @Test
+    public void test17AddUserInGroup() {
+        addUserInGroup(userId1, userId2).then().statusCode(201)
+                .body("groups", hasSize(1))
+                .body("groups[0].id", equalTo(fooGroupId1))
+        ;
+    }
+
+    @Test
+    public void test18AddUserInGroupNotOwner() {
+        addUserInGroup(userId2, userId1).then().statusCode(400);
+    }
+
+
+    @Test
+    public void test95DeleteUserFromGroup() {
+        deleteUserFromGroup(userId1, userId2).then().statusCode(202);
+        getUser(userId2, userId2).then().statusCode(200)
+                .body("groups", hasSize(0))
+        ;
+    }
+
+    @Test
+    public void test96DeleteUserFromOrganisation() {
+        deleteUserFromOrganisation(userId1, userId2).then().statusCode(202);
+        getUser(userId2, userId2).then().statusCode(200)
+                .body("organisations", hasSize(0))
+        ;
+    }
+
+    @Test
+    public void test97DeleteOrganisationAsOwner() {
+        deleteOrganisation(userId1).then().statusCode(202);
+        getUser(userId1).then().statusCode(200).body("organisations", hasSize(0));
+        getUser(userId2, userId2).then().statusCode(200).body("groups", hasSize(0));
+    }
+
+    @Test
+    public void test98DeleteUserNotSelf() {
         deleteUser(userId1, userId2).then().statusCode(404);
     }
 
     @Test
-    public void test91DeleteUserSelf() {
+    public void test99DeleteUserSelf() {
         deleteUser(userId1, userId1).then().statusCode(202);
         deleteUser(userId2, userId2).then().statusCode(202);
     }
@@ -178,7 +233,11 @@ public class AuthITUser {
     }
 
     protected Response getUser(String id) {
-        return givenForUser(userId1)
+        return getUser(userId1, id);
+    }
+
+    protected Response getUser(String actingId, String id) {
+        return givenForUser(actingId)
                 .pathParam("id", id)
                 .contentType("application/json")
                 .get(arlasAppPath.concat("user/{id}"));
@@ -220,6 +279,53 @@ public class AuthITUser {
                 .pathParam("oid", orgId)
                 .contentType("application/json")
                 .delete(arlasAppPath.concat("organisation/{oid}"));
+
+    }
+
+    protected Response addUserToOrganisation(String actingId, String email) {
+        return givenForUser(actingId)
+                .pathParam("oid", orgId)
+                .contentType("application/json")
+                .body(email)
+                .post(arlasAppPath.concat("organisation/{oid}/user"));
+
+    }
+
+    protected Response deleteUserFromOrganisation(String actingId, String userId) {
+        return givenForUser(actingId)
+                .pathParam("oid", orgId)
+                .pathParam("uid", userId)
+                .contentType("application/json")
+                .delete(arlasAppPath.concat("organisation/{oid}/users/{uid}"));
+
+    }
+
+    protected Response createGroup(String actingId, String gname) {
+        return givenForUser(actingId)
+                .pathParam("oid", orgId)
+                .pathParam("gname", gname)
+                .contentType("application/json")
+                .post(arlasAppPath.concat("organisation/{oid}/group/{gname}"));
+
+    }
+
+    protected Response addUserInGroup(String actingId, String uid) {
+        return givenForUser(actingId)
+                .pathParam("oid", orgId)
+                .pathParam("gid", fooGroupId1)
+                .pathParam("uid", uid)
+                .contentType("application/json")
+                .post(arlasAppPath.concat("organisation/{oid}/group/{gid}/users/{uid}"));
+
+    }
+
+    protected Response deleteUserFromGroup(String actingId, String uid) {
+        return givenForUser(actingId)
+                .pathParam("oid", orgId)
+                .pathParam("gid", fooGroupId1)
+                .pathParam("uid", uid)
+                .contentType("application/json")
+                .delete(arlasAppPath.concat("organisation/{oid}/group/{gid}/users/{uid}"));
 
     }
 
