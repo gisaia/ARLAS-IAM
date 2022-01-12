@@ -11,13 +11,17 @@ import java.util.Optional;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class AuthITUser {
+    public static final String USER1 = "u1@foo.com";
+    public static final String USER2 = "u2@foo.com";
     protected static String arlasAppPath;
-    private static final String userHeader;
-    private static String userId1;
-    private static String userId2;
+    protected static final String userHeader;
+    protected static String userId1;
+    protected static String userId2;
+    protected static String orgId;
 
     static {
         userHeader = Optional.ofNullable(System.getenv("ARLAS_USER_HEADER")).orElse("arlas-user");
@@ -40,19 +44,19 @@ public class AuthITUser {
 
     @Test
     public void test01CreateUser() {
-        userId1 = createUser("u1@foo.com")
+        userId1 = createUser(USER1)
                 .then().statusCode(201)
-                .body("email", equalTo("u1@foo.com"))
+                .body("email", equalTo(USER1))
                 .extract().jsonPath().get("id");
-        userId2 = createUser("u2@foo.com")
+        userId2 = createUser(USER2)
                 .then().statusCode(201)
-                .body("email", equalTo("u2@foo.com"))
+                .body("email", equalTo(USER2))
                 .extract().jsonPath().get("id");
     }
 
     @Test
     public void test02CreateUserAlreadyExisting() {
-        createUser("u1@foo.com").then().statusCode(400);
+        createUser(USER1).then().statusCode(400);
     }
 
     @Test
@@ -68,7 +72,7 @@ public class AuthITUser {
                 .body("password1")
                 .post(arlasAppPath.concat("user/{id}/verify"))
                 .then().statusCode(201)
-                .body("email", equalTo("u1@foo.com"))
+                .body("email", equalTo(USER1))
                 .body("verified", equalTo(true));
 
         given()
@@ -77,14 +81,13 @@ public class AuthITUser {
                 .body("password2")
                 .post(arlasAppPath.concat("user/{id}/verify"))
                 .then().statusCode(201)
-                .body("email", equalTo("u2@foo.com"))
+                .body("email", equalTo(USER2))
                 .body("verified", equalTo(true));
     }
 
     @Test
     public void test05GetUserSelf() {
-        getUser(userId1).then().statusCode(200)
-                .body("email", equalTo("u1@foo.com"));
+        getUser(userId1).then().statusCode(200).body("email", equalTo(USER1));
     }
 
     @Test
@@ -99,31 +102,73 @@ public class AuthITUser {
 
     @Test
     public void test08UpdateUserSelf() {
-        updateUser(userId1, "password1", "newpassword1")
-                .then().statusCode(201);
+        updateUser(userId1, "password1", "newpassword1").then().statusCode(201);
         // trick to check that the password has been changed:
-        updateUser(userId1, "newpassword1", "password1")
-                .then().statusCode(201);
+        updateUser(userId1, "newpassword1", "password1").then().statusCode(201);
     }
 
     @Test
-    public void test08UpdateUserNotSelf() {
-        updateUser(userId2, "password2", "newpassword2")
-                .then().statusCode(404);
+    public void test09UpdateUserNotSelf() {
+        updateUser(userId2, "password2", "newpassword2").then().statusCode(404);
     }
 
     @Test
-    public void test09DeleteUserNotSelf() {
+    public void test10CreateOrganisation() {
+        listOrganisations(userId1).then().statusCode(200)
+                .body("", hasSize(0));
+
+        orgId = createOrganisation(userId1).then().statusCode(201)
+                .body("name", equalTo("foo"))
+                .body("members", hasSize(1))
+                .body("members[0].owner", equalTo(true))
+                .body("members[0].user.email", equalTo(USER1))
+                .extract().jsonPath().get("id");
+
+        getUser(userId1).then().statusCode(200)
+                .body("organisations", hasSize(1))
+                .body("organisations[0].organisation.name", equalTo("foo"));
+    }
+
+    @Test
+    public void test11ListOrganisations() {
+        listOrganisations(userId1).then().statusCode(200)
+                .body("", hasSize(1))
+                .body("[0].name", equalTo("foo"))
+                .body("[0].members", hasSize(1))
+                .body("[0].members[0].owner", equalTo(true))
+                .body("[0].members[0].user.email", equalTo(USER1));
+    }
+
+    @Test
+    public void test12CreateExistingOrganisation() {
+        createOrganisation(userId1).then().statusCode(400);
+        createOrganisation(userId2).then().statusCode(400);
+    }
+
+    @Test
+    public void test13DeleteOrganisationNotOwner() {
+        deleteOrganisation(userId2).then().statusCode(400);
+        getUser(userId1).then().statusCode(200).body("organisations", hasSize(1));
+    }
+
+    @Test
+    public void test14DeleteOrganisationAsOwner() {
+        deleteOrganisation(userId1).then().statusCode(202);
+        getUser(userId1).then().statusCode(200).body("organisations", hasSize(0));
+    }
+
+    @Test
+    public void test90DeleteUserNotSelf() {
         deleteUser(userId1, userId2).then().statusCode(404);
     }
 
     @Test
-    public void test10DeleteUserSelf() {
+    public void test91DeleteUserSelf() {
         deleteUser(userId1, userId1).then().statusCode(202);
         deleteUser(userId2, userId2).then().statusCode(202);
     }
 
-
+    // ----------------
 
     protected Response createUser(String email) {
         return given()
@@ -154,6 +199,28 @@ public class AuthITUser {
                 .pathParam("id", targetId)
                 .contentType("application/json")
                 .delete(arlasAppPath.concat("user/{id}"));
+    }
+
+    protected Response createOrganisation(String userId) {
+        return givenForUser(userId)
+                .contentType("application/json")
+                .post(arlasAppPath.concat("organisation"));
+
+    }
+
+    protected Response listOrganisations(String userId) {
+        return givenForUser(userId)
+                .contentType("application/json")
+                .get(arlasAppPath.concat("organisations"));
+
+    }
+
+    protected Response deleteOrganisation(String userId) {
+        return givenForUser(userId)
+                .pathParam("oid", orgId)
+                .contentType("application/json")
+                .delete(arlasAppPath.concat("organisation/{oid}"));
+
     }
 
     protected RequestSpecification givenForUser(String id) {

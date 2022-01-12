@@ -250,7 +250,7 @@ public class AuthRestService {
     public Response createOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers
-    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenOrganisationNameException {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.createOrganisation(getUser(headers)))
                 .type("application/json")

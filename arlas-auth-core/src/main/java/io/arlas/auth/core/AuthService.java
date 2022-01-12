@@ -21,7 +21,7 @@ public interface AuthService {
     Optional<User> deactivateUser(UUID userId);
     Set<User> listUsers(User user); // list users from the same organisations as the requesting user
 
-    Organisation createOrganisation(User owner) throws AlreadyExistsException, ForbiddenOrganisationNameException, NotOwnerException;
+    Organisation createOrganisation(User owner) throws AlreadyExistsException, NotOwnerException;
     Organisation deleteOrganisation(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
     Set<Organisation> listOrganisations(User user);
 
