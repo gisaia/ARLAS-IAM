@@ -88,7 +88,7 @@ public class AuthRestService {
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(
-            value = "Creates a user",
+            value = "Verifies a user",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
@@ -482,7 +482,7 @@ public class AuthRestService {
                 .build();
     }
 
-    //----------------- roles -------------------
+    //----------------- groups -------------------
 
     @Timed
     @Path("organisation/{oid}/group/{gname}")

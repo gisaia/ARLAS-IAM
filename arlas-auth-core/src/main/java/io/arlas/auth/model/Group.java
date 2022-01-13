@@ -26,13 +26,13 @@ public class Group {
     @JoinColumn(name = "id_organisation")
     private Organisation organisation;
 
-    @ManyToMany()
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "GroupMember",
             joinColumns = @JoinColumn(name = "id_group"),
             inverseJoinColumns = @JoinColumn(name = "id_user"))
     private Set<User> members = new HashSet<>();
 
-    @ManyToMany(mappedBy="groups")
+    @ManyToMany(mappedBy="groups", fetch = FetchType.EAGER)
     private Set<Role> roles = new HashSet<>();
 
     private Group() {}
