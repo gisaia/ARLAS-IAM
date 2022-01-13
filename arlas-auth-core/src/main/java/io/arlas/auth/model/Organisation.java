@@ -26,13 +26,13 @@ public class Organisation {
     @Column
     private String name;
 
-    @OneToMany(mappedBy = "pk.org", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "pk.org", cascade = CascadeType.REMOVE)
     private Set<OrganisationMember> members = new HashSet<>();
 
-    @OneToMany(mappedBy="organisation", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy="organisation", cascade = CascadeType.REMOVE)
     private Set<Group> groups = new HashSet<>();
 
-    @ManyToMany(mappedBy="organisations", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
+    @ManyToMany(mappedBy="organisations", cascade = CascadeType.REMOVE)
     private Set<Role> roles = new HashSet<>();
 
     private Organisation() {}
@@ -106,12 +106,12 @@ public class Organisation {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Organisation that = (Organisation) o;
-        return getId().equals(that.getId()) && getName().equals(that.getName());
+        return getName().equals(that.getName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getName());
+        return Objects.hash(getName());
     }
 
 }

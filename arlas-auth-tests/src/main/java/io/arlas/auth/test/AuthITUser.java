@@ -17,12 +17,22 @@ import static org.hamcrest.Matchers.hasSize;
 public class AuthITUser {
     public static final String USER1 = "u1@foo.com";
     public static final String USER2 = "u2@foo.com";
+    public static final String ORG = "foo";
+    public static final String GRP1 = "fooGroup1";
+    public static final String ROLE1 = "fooRole1";
+    public static final String ROLE2 = "fooRole2";
+    public static final String PERMISSIONS = """
+                {"permissions":["p1"]}
+                """;
+
     protected static String arlasAppPath;
     protected static final String userHeader;
     protected static String userId1;
     protected static String userId2;
     protected static String orgId;
     protected static String fooGroupId1;
+    protected static String fooRoleId1;
+    protected static String fooRoleId2;
 
     static {
         userHeader = Optional.ofNullable(System.getenv("ARLAS_USER_HEADER")).orElse("arlas-user");
@@ -114,7 +124,7 @@ public class AuthITUser {
                 .body("", hasSize(0));
 
         orgId = createOrganisation(userId1).then().statusCode(201)
-                .body("name", equalTo("foo"))
+                .body("name", equalTo(ORG))
                 .body("members", hasSize(1))
                 .body("members[0].owner", equalTo(true))
                 .body("members[0].user.email", equalTo(USER1))
@@ -122,14 +132,21 @@ public class AuthITUser {
 
         getUser(userId1).then().statusCode(200)
                 .body("organisations", hasSize(1))
-                .body("organisations[0].organisation.name", equalTo("foo"));
+                .body("organisations[0].organisation.name", equalTo(ORG));
+    }
+
+    @Test
+    public void test11ListUsers() {
+        listUsers(userId1).then().statusCode(200)
+                .body("", hasSize(1))
+                .body("[0].id", equalTo(userId1));
     }
 
     @Test
     public void test11ListOrganisations() {
         listOrganisations(userId1).then().statusCode(200)
                 .body("", hasSize(1))
-                .body("[0].name", equalTo("foo"))
+                .body("[0].name", equalTo(ORG))
                 .body("[0].members", hasSize(1))
                 .body("[0].members[0].owner", equalTo(true))
                 .body("[0].members[0].user.email", equalTo(USER1));
@@ -152,57 +169,132 @@ public class AuthITUser {
         addUserToOrganisation(userId1, USER2).then().statusCode(201);
         getUser(userId2, userId2).then().statusCode(200)
                 .body("organisations", hasSize(1))
-                .body("organisations[0].organisation.name", equalTo("foo"))
-                .body("organisations[0].organisation.members", hasSize(2))
-        ;
+                .body("organisations[0].organisation.name", equalTo(ORG))
+                .body("organisations[0].organisation.members", hasSize(2));
+    }
+
+    @Test
+    public void test15ListUsers() {
+        listUsers(userId1).then().statusCode(200)
+                .body("", hasSize(2));
     }
 
     @Test
     public void test15AddGroupToOrganisation() {
-        fooGroupId1 = createGroup(userId1,"fooGroup1").then().statusCode(201)
-                .body("name", equalTo("fooGroup1"))
-                .body("organisation.name", equalTo("foo"))
+        fooGroupId1 = createGroup(userId1,GRP1).then().statusCode(201)
+                .body("name", equalTo(GRP1))
+                .body("organisation.name", equalTo(ORG))
                 .extract().jsonPath().get("id");
     }
 
     @Test
     public void test16AddExistingGroupToOrganisation() {
-        createGroup(userId1, "fooGroup1").then().statusCode(400);
+        createGroup(userId1, GRP1).then().statusCode(400);
     }
 
     @Test
-    public void test16AddGroupToOrganisationNotOwned() {
+    public void test17AddGroupToOrganisationNotOwned() {
         createGroup(userId2, "fooGroup2").then().statusCode(400);
     }
 
     @Test
-    public void test17AddUserInGroup() {
+    public void test18AddUserInGroup() {
         addUserInGroup(userId1, userId2).then().statusCode(201)
                 .body("groups", hasSize(1))
-                .body("groups[0].id", equalTo(fooGroupId1))
-        ;
+                .body("groups[0]", equalTo(fooGroupId1));
     }
 
     @Test
-    public void test18AddUserInGroupNotOwner() {
+    public void test19AddUserInGroupNotOwner() {
         addUserInGroup(userId2, userId1).then().statusCode(400);
     }
 
+    @Test
+    public void test20AddRoleToOrganisation() {
+        fooRoleId1 = createRole(userId1, ROLE1, PERMISSIONS).then().statusCode(201)
+                .body("name", equalTo(ROLE1))
+                .body("organisations[0].name", equalTo(ORG))
+                .extract().jsonPath().get("id");
+
+        fooRoleId2 = createRole(userId1, ROLE2, PERMISSIONS).then().statusCode(201)
+                .body("name", equalTo(ROLE2))
+                .body("organisations[0].name", equalTo(ORG))
+                .extract().jsonPath().get("id");
+    }
+
+    @Test
+    public void test21AddExistingRoleToOrganisation() {
+        createRole(userId1, ROLE1, PERMISSIONS).then().statusCode(400);
+    }
+
+    @Test
+    public void test22AddRoleToOrganisationNotOwned() {
+        createRole(userId2, "role2", PERMISSIONS).then().statusCode(400);
+    }
+
+    @Test
+    public void test23AddUserInRole() {
+        addUserInRole(userId1, userId2, fooRoleId1).then().statusCode(201)
+                .body("roles", hasSize(1))
+                .body("roles[0].id", equalTo(fooRoleId1));
+
+        addUserInRole(userId1, userId2, fooRoleId2).then().statusCode(201)
+                .body("roles", hasSize(2));
+    }
+
+    @Test
+    public void test24AddUserInRoleNotOwned() {
+        addUserInRole(userId2, userId1, fooRoleId1).then().statusCode(400);
+    }
+
+    @Test
+    public void test30AddRoleInGroup() {
+        addRoleInGroup(userId1, fooRoleId1).then().statusCode(201)
+                .body("roles", hasSize(1))
+                .body("roles[0].id", equalTo(fooRoleId1));
+        addRoleInGroup(userId1, fooRoleId2).then().statusCode(201)
+                .body("roles", hasSize(2));
+    }
+
+    @Test
+    public void test92DeleteNonEmptyRoleFromGroup() {
+        deleteRoleFromGroup(userId1, fooRoleId1).then().statusCode(202)
+                .body("roles", hasSize(1))
+                .body("members", hasSize(1));
+        getUser(userId2, userId2).then().statusCode(200)
+                .body("roles", hasSize(2))
+                .body("groups", hasSize(1));
+    }
+
+    @Test
+    public void test93DeleteUserFromRole() {
+        getUser(userId2, userId2).then().statusCode(200)
+                .body("roles", hasSize(2));
+        deleteUserFromRole(userId1, userId2, fooRoleId2).then().statusCode(202);
+        getUser(userId2, userId2).then().statusCode(200)
+                .body("roles", hasSize(1));
+    }
+
+    @Test
+    public void test94DeleteEmptyRoleFromGroup() {
+        deleteRoleFromGroup(userId1, fooRoleId2).then().statusCode(202)
+                .body("roles", hasSize(0));
+        getUser(userId2, userId2).then().statusCode(200)
+                .body("roles", hasSize(1));
+    }
 
     @Test
     public void test95DeleteUserFromGroup() {
         deleteUserFromGroup(userId1, userId2).then().statusCode(202);
         getUser(userId2, userId2).then().statusCode(200)
-                .body("groups", hasSize(0))
-        ;
+                .body("groups", hasSize(0));
     }
 
     @Test
     public void test96DeleteUserFromOrganisation() {
         deleteUserFromOrganisation(userId1, userId2).then().statusCode(202);
         getUser(userId2, userId2).then().statusCode(200)
-                .body("organisations", hasSize(0))
-        ;
+                .body("organisations", hasSize(0));
     }
 
     @Test
@@ -224,6 +316,10 @@ public class AuthITUser {
     }
 
     // ----------------
+
+    protected RequestSpecification givenForUser(String id) {
+        return given().header(userHeader, id);
+    }
 
     protected Response createUser(String email) {
         return given()
@@ -329,7 +425,55 @@ public class AuthITUser {
 
     }
 
-    protected RequestSpecification givenForUser(String id) {
-        return given().header(userHeader, id);
+    protected Response createRole(String actingId, String rname, String permissions) {
+        return givenForUser(actingId)
+                .pathParam("oid", orgId)
+                .pathParam("rname", rname)
+                .body(permissions)
+                .contentType("application/json")
+                .post(arlasAppPath.concat("organisation/{oid}/role/{rname}"));
+    }
+
+    protected Response addUserInRole(String actingId, String uid, String rid) {
+        return givenForUser(actingId)
+                .pathParam("oid", orgId)
+                .pathParam("rid", rid)
+                .pathParam("uid", uid)
+                .contentType("application/json")
+                .post(arlasAppPath.concat("organisation/{oid}/role/{rid}/users/{uid}"));
+    }
+
+    protected Response deleteUserFromRole(String actingId, String uid, String rid) {
+        return givenForUser(actingId)
+                .pathParam("oid", orgId)
+                .pathParam("rid", rid)
+                .pathParam("uid", uid)
+                .contentType("application/json")
+                .delete(arlasAppPath.concat("organisation/{oid}/role/{rid}/users/{uid}"));
+    }
+
+    protected Response addRoleInGroup(String actingId, String rid) {
+        return givenForUser(actingId)
+                .pathParam("oid", orgId)
+                .pathParam("gid", fooGroupId1)
+                .pathParam("rid", rid)
+                .contentType("application/json")
+                .post(arlasAppPath.concat("organisation/{oid}/group/{gid}/roles/{rid}"));
+    }
+
+    protected Response deleteRoleFromGroup(String actingId, String rid) {
+        return givenForUser(actingId)
+                .pathParam("oid", orgId)
+                .pathParam("gid", fooGroupId1)
+                .pathParam("rid", rid)
+                .contentType("application/json")
+                .delete(arlasAppPath.concat("organisation/{oid}/group/{gid}/roles/{rid}"));
+    }
+
+    protected Response listUsers(String userId) {
+        return givenForUser(userId)
+                .contentType("application/json")
+                .get(arlasAppPath.concat("users"));
+
     }
 }

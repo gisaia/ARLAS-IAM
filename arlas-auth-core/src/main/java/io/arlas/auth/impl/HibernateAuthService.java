@@ -192,12 +192,10 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Organisation deleteOrganisation(User owner, UUID orgId)
+    public void deleteOrganisation(User owner, UUID orgId)
             throws NotOwnerException, NotFoundException {
-        Organisation organisation = getOrganisation(owner, orgId, true);
-        organisationDao.deleteOrganisation(organisation);
+        organisationDao.deleteOrganisation(getOrganisation(owner, orgId, true));
         // TODO : delete associated resources
-        return organisation;
     }
 
     @Override
@@ -281,13 +279,12 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public User removeUserFromGroup(User owner, UUID orgId, UUID userId, UUID grpId) throws NotOwnerException, NotFoundException {
+    public Group removeUserFromGroup(User owner, UUID orgId, UUID userId, UUID grpId) throws NotOwnerException, NotFoundException {
         Organisation ownerOrg = getOrganisation(owner, orgId, true);
         User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
         getOrganisation(user, orgId, false);
-        groupDao.removeUserFromGroup(user,
+        return groupDao.removeUserFromGroup(user,
                 ownerOrg.getGroups().stream().filter(g -> g.is(grpId)).findFirst().orElseThrow(NotFoundException::new));
-        return user;
     }
 
     @Override

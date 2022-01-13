@@ -22,10 +22,10 @@ public interface AuthService {
     Set<User> listUsers(User user); // list users from the same organisations as the requesting user
 
     Organisation createOrganisation(User owner) throws AlreadyExistsException, NotOwnerException;
-    Organisation deleteOrganisation(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
+    void deleteOrganisation(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
     Set<Organisation> listOrganisations(User user);
 
-    Organisation addUserToOrganisation(User owner, String email, UUID orgId) throws NotOwnerException, AlreadyExistsException, InvalidEmailException, NotFoundException;
+    Organisation addUserToOrganisation(User owner, String email, UUID orgId) throws NotOwnerException, NotFoundException;
     Organisation removeUserFromOrganisation(User owner, UUID userId, UUID orgId) throws NotOwnerException, NotFoundException;
 
     Role createRole(User owner, String name, UUID orgId, Set<Permission> permissions) throws AlreadyExistsException, NotFoundException, NotOwnerException;
@@ -34,7 +34,7 @@ public interface AuthService {
 
     Group createGroup(User owner, String name, UUID orgId) throws NotFoundException, AlreadyExistsException, NotOwnerException;
     User addUserToGroup(User owner, UUID orgId, UUID userId, UUID grpId) throws NotOwnerException, NotFoundException;
-    User removeUserFromGroup(User owner, UUID orgId, UUID userId, UUID grpId) throws NotOwnerException, NotFoundException;
+    Group removeUserFromGroup(User owner, UUID orgId, UUID userId, UUID grpId) throws NotOwnerException, NotFoundException;
     Group addRoleToGroup(User owner, UUID orgId, UUID roleId, UUID grpId) throws NotOwnerException, NotFoundException;
     Group removeRoleFromGroup(User owner, UUID orgId, UUID roleId, UUID grpId) throws NotOwnerException, NotFoundException;
 

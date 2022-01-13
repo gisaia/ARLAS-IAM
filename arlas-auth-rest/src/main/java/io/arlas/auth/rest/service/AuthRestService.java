@@ -267,7 +267,7 @@ public class AuthRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = Organisation.class),
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = String.class),
             @ApiResponse(code = 400, message = "Bad request", response = Error.class),
             @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
@@ -280,8 +280,9 @@ public class AuthRestService {
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid
     ) throws NotFoundException, NotOwnerException {
+        authService.deleteOrganisation(getUser(headers), UUID.fromString(oid));
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.deleteOrganisation(getUser(headers), UUID.fromString(oid)))
+                .entity("organisation deleted")
                 .type("application/json")
                 .build();
     }
@@ -336,7 +337,7 @@ public class AuthRestService {
 
             @ApiParam(name = "email", required = true)
             @NotNull @Valid String email
-    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, InvalidEmailException {
+    ) throws NotFoundException, NotOwnerException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.addUserToOrganisation(getUser(headers), email, UUID.fromString(oid)))
                 .type("application/json")
@@ -365,6 +366,7 @@ public class AuthRestService {
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
+
             @ApiParam(name = "uid", required = true)
             @PathParam(value = "uid") String uid
     ) throws NotFoundException, NotOwnerException {
@@ -562,7 +564,7 @@ public class AuthRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = User.class),
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = Group.class),
             @ApiResponse(code = 400, message = "Bad request", response = Error.class),
             @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
