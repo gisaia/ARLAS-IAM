@@ -10,8 +10,7 @@ import org.junit.runners.MethodSorters;
 import java.util.Optional;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class AuthITUser {
@@ -21,6 +20,8 @@ public class AuthITUser {
     public static final String GRP1 = "fooGroup1";
     public static final String ROLE1 = "fooRole1";
     public static final String ROLE2 = "fooRole2";
+    public static final String SYS_PERMISSION1 = "sysPerm1";
+    public static final String SYS_PERMISSION2 = "sysPerm2";
     public static final String PERMISSIONS = """
                 {"permissions":["p1"]}
                 """;
@@ -33,6 +34,8 @@ public class AuthITUser {
     protected static String fooGroupId1;
     protected static String fooRoleId1;
     protected static String fooRoleId2;
+    protected static String permissionId1;
+    protected static String permissionId2;
 
     static {
         userHeader = Optional.ofNullable(System.getenv("ARLAS_USER_HEADER")).orElse("arlas-user");
@@ -76,7 +79,7 @@ public class AuthITUser {
                 .contentType("application/json")
                 .pathParam("id", userId1)
                 .body("password1")
-                .post(arlasAppPath.concat("user/{id}/verify"))
+                .post(arlasAppPath.concat("users/{id}/verify"))
                 .then().statusCode(201)
                 .body("email", equalTo(USER1))
                 .body("verified", equalTo(true));
@@ -85,7 +88,7 @@ public class AuthITUser {
                 .contentType("application/json")
                 .pathParam("id", userId2)
                 .body("password2")
-                .post(arlasAppPath.concat("user/{id}/verify"))
+                .post(arlasAppPath.concat("users/{id}/verify"))
                 .then().statusCode(201)
                 .body("email", equalTo(USER2))
                 .body("verified", equalTo(true));
@@ -236,7 +239,7 @@ public class AuthITUser {
     public void test23AddUserInRole() {
         addUserInRole(userId1, userId2, fooRoleId1).then().statusCode(201)
                 .body("roles", hasSize(1))
-                .body("roles[0].id", equalTo(fooRoleId1));
+                .body("roles[0]", equalTo(fooRoleId1));
 
         addUserInRole(userId1, userId2, fooRoleId2).then().statusCode(201)
                 .body("roles", hasSize(2));
@@ -251,9 +254,39 @@ public class AuthITUser {
     public void test30AddRoleInGroup() {
         addRoleInGroup(userId1, fooRoleId1).then().statusCode(201)
                 .body("roles", hasSize(1))
-                .body("roles[0].id", equalTo(fooRoleId1));
+                .body("roles[0]", equalTo(fooRoleId1));
         addRoleInGroup(userId1, fooRoleId2).then().statusCode(201)
                 .body("roles", hasSize(2));
+    }
+
+    @Test
+    public void test35AddSystemPermission() {
+        permissionId1 = addSystemPermission(userId1, SYS_PERMISSION1).then().statusCode(201)
+                .body("value", equalTo(SYS_PERMISSION1))
+                .extract().jsonPath().get("id");
+        permissionId2 = addSystemPermission(userId1, SYS_PERMISSION2).then().statusCode(201)
+                .body("value", equalTo(SYS_PERMISSION2))
+                .extract().jsonPath().get("id");
+    }
+
+    @Test
+    public void test36AddPermissionToRole() {
+        addPermissionToRole(userId1, fooRoleId1, permissionId1).then().statusCode(201)
+                .body("permissions", hasSize(2));
+    }
+
+    @Test
+    public void test37AddPermissionToUser() {
+        addPermissionToUser(userId1, userId2, permissionId2).then().statusCode(201)
+                .body("permissions", hasSize(1))
+                .body("permissions[0].id", equalTo(permissionId2));
+    }
+
+    @Test
+    public void test38ListPermissions() {
+        listPermissions(userId1, userId2).then().statusCode(200)
+                .body("", hasSize(3))
+                .body("[0]", isOneOf("p1", SYS_PERMISSION1, SYS_PERMISSION2));
     }
 
     @Test
@@ -325,7 +358,7 @@ public class AuthITUser {
         return given()
                 .contentType("application/json")
                 .body(email)
-                .post(arlasAppPath.concat("user"));
+                .post(arlasAppPath.concat("users"));
     }
 
     protected Response getUser(String id) {
@@ -336,7 +369,7 @@ public class AuthITUser {
         return givenForUser(actingId)
                 .pathParam("id", id)
                 .contentType("application/json")
-                .get(arlasAppPath.concat("user/{id}"));
+                .get(arlasAppPath.concat("users/{id}"));
     }
 
     protected Response updateUser(String id, String p1, String p2) {
@@ -346,20 +379,20 @@ public class AuthITUser {
                         {"oldPassword":"%s","newPassword":"%s"}
                         """, p1, p2))
                 .contentType("application/json")
-                .put(arlasAppPath.concat("user/{id}"));
+                .put(arlasAppPath.concat("users/{id}"));
     }
 
     protected Response deleteUser(String actingId, String targetId) {
         return givenForUser(actingId)
                 .pathParam("id", targetId)
                 .contentType("application/json")
-                .delete(arlasAppPath.concat("user/{id}"));
+                .delete(arlasAppPath.concat("users/{id}"));
     }
 
     protected Response createOrganisation(String userId) {
         return givenForUser(userId)
                 .contentType("application/json")
-                .post(arlasAppPath.concat("organisation"));
+                .post(arlasAppPath.concat("organisations"));
 
     }
 
@@ -374,7 +407,7 @@ public class AuthITUser {
         return givenForUser(userId)
                 .pathParam("oid", orgId)
                 .contentType("application/json")
-                .delete(arlasAppPath.concat("organisation/{oid}"));
+                .delete(arlasAppPath.concat("organisations/{oid}"));
 
     }
 
@@ -383,7 +416,7 @@ public class AuthITUser {
                 .pathParam("oid", orgId)
                 .contentType("application/json")
                 .body(email)
-                .post(arlasAppPath.concat("organisation/{oid}/user"));
+                .post(arlasAppPath.concat("organisations/{oid}/users"));
 
     }
 
@@ -392,7 +425,7 @@ public class AuthITUser {
                 .pathParam("oid", orgId)
                 .pathParam("uid", userId)
                 .contentType("application/json")
-                .delete(arlasAppPath.concat("organisation/{oid}/users/{uid}"));
+                .delete(arlasAppPath.concat("organisations/{oid}/users/{uid}"));
 
     }
 
@@ -401,7 +434,7 @@ public class AuthITUser {
                 .pathParam("oid", orgId)
                 .pathParam("gname", gname)
                 .contentType("application/json")
-                .post(arlasAppPath.concat("organisation/{oid}/group/{gname}"));
+                .post(arlasAppPath.concat("organisations/{oid}/groups/{gname}"));
 
     }
 
@@ -411,7 +444,7 @@ public class AuthITUser {
                 .pathParam("gid", fooGroupId1)
                 .pathParam("uid", uid)
                 .contentType("application/json")
-                .post(arlasAppPath.concat("organisation/{oid}/group/{gid}/users/{uid}"));
+                .post(arlasAppPath.concat("organisations/{oid}/groups/{gid}/users/{uid}"));
 
     }
 
@@ -421,7 +454,7 @@ public class AuthITUser {
                 .pathParam("gid", fooGroupId1)
                 .pathParam("uid", uid)
                 .contentType("application/json")
-                .delete(arlasAppPath.concat("organisation/{oid}/group/{gid}/users/{uid}"));
+                .delete(arlasAppPath.concat("organisations/{oid}/groups/{gid}/users/{uid}"));
 
     }
 
@@ -431,7 +464,7 @@ public class AuthITUser {
                 .pathParam("rname", rname)
                 .body(permissions)
                 .contentType("application/json")
-                .post(arlasAppPath.concat("organisation/{oid}/role/{rname}"));
+                .post(arlasAppPath.concat("organisations/{oid}/roles/{rname}"));
     }
 
     protected Response addUserInRole(String actingId, String uid, String rid) {
@@ -440,7 +473,7 @@ public class AuthITUser {
                 .pathParam("rid", rid)
                 .pathParam("uid", uid)
                 .contentType("application/json")
-                .post(arlasAppPath.concat("organisation/{oid}/role/{rid}/users/{uid}"));
+                .post(arlasAppPath.concat("organisations/{oid}/roles/{rid}/users/{uid}"));
     }
 
     protected Response deleteUserFromRole(String actingId, String uid, String rid) {
@@ -449,7 +482,7 @@ public class AuthITUser {
                 .pathParam("rid", rid)
                 .pathParam("uid", uid)
                 .contentType("application/json")
-                .delete(arlasAppPath.concat("organisation/{oid}/role/{rid}/users/{uid}"));
+                .delete(arlasAppPath.concat("organisations/{oid}/roles/{rid}/users/{uid}"));
     }
 
     protected Response addRoleInGroup(String actingId, String rid) {
@@ -458,7 +491,7 @@ public class AuthITUser {
                 .pathParam("gid", fooGroupId1)
                 .pathParam("rid", rid)
                 .contentType("application/json")
-                .post(arlasAppPath.concat("organisation/{oid}/group/{gid}/roles/{rid}"));
+                .post(arlasAppPath.concat("organisations/{oid}/groups/{gid}/roles/{rid}"));
     }
 
     protected Response deleteRoleFromGroup(String actingId, String rid) {
@@ -467,7 +500,7 @@ public class AuthITUser {
                 .pathParam("gid", fooGroupId1)
                 .pathParam("rid", rid)
                 .contentType("application/json")
-                .delete(arlasAppPath.concat("organisation/{oid}/group/{gid}/roles/{rid}"));
+                .delete(arlasAppPath.concat("organisations/{oid}/groups/{gid}/roles/{rid}"));
     }
 
     protected Response listUsers(String userId) {
@@ -476,4 +509,52 @@ public class AuthITUser {
                 .get(arlasAppPath.concat("users"));
 
     }
+
+    protected Response listPermissions(String actingId, String userId) {
+        return givenForUser(actingId)
+                .pathParam("oid", orgId)
+                .pathParam("uid", userId)
+                .contentType("application/json")
+                .get(arlasAppPath.concat("organisations/{oid}/users/{uid}/permissions"));
+    }
+
+    protected Response addSystemPermission(String actingId, String pvalue) {
+        return givenForUser(actingId)
+                .pathParam("pvalue", pvalue)
+                .contentType("application/json")
+                .post(arlasAppPath.concat("permissions/{pvalue}"));
+    }
+
+    protected Response addPermissionToUser(String actingId, String userId, String pid) {
+        return givenForUser(actingId)
+                .pathParam("pid", pid)
+                .pathParam("uid", userId)
+                .contentType("application/json")
+                .post(arlasAppPath.concat("permissions/{pid}/users/{uid}"));
+    }
+
+    protected Response deletePermissionFromUser(String actingId, String userId, String pid) {
+        return givenForUser(actingId)
+                .pathParam("pid", pid)
+                .pathParam("uid", userId)
+                .contentType("application/json")
+                .delete(arlasAppPath.concat("permissions/{pid}/users/{uid}"));
+    }
+
+    protected Response addPermissionToRole(String actingId, String rid, String pid) {
+        return givenForUser(actingId)
+                .pathParam("pid", pid)
+                .pathParam("rid", rid)
+                .contentType("application/json")
+                .post(arlasAppPath.concat("permissions/{pid}/roles/{rid}"));
+    }
+
+    protected Response deletePermissionFromRole(String actingId, String rid, String pid) {
+        return givenForUser(actingId)
+                .pathParam("pid", pid)
+                .pathParam("rid", rid)
+                .contentType("application/json")
+                .delete(arlasAppPath.concat("permissions/{pid}/roles/{rid}"));
+    }
+
 }

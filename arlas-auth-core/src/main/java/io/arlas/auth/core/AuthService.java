@@ -15,7 +15,7 @@ public interface AuthService {
     User createUser(String email) throws InvalidEmailException, AlreadyExistsException;
     Optional<User> readUser(UUID userId);
     User updateUser(User user, String oldPassword, String newPassword) throws NonMatchingPasswordException;
-    Optional<User> deleteUser(UUID userId);
+    void deleteUser(UUID userId);
     Optional<User> activateUser(UUID userId);
     Optional<User> verifyUser(UUID userId, String password);
     Optional<User> deactivateUser(UUID userId);
@@ -38,7 +38,7 @@ public interface AuthService {
     Group addRoleToGroup(User owner, UUID orgId, UUID roleId, UUID grpId) throws NotOwnerException, NotFoundException;
     Group removeRoleFromGroup(User owner, UUID orgId, UUID roleId, UUID grpId) throws NotOwnerException, NotFoundException;
 
-    Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException;
+    Set<String> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException;
     Permission createPermission(String permission, boolean isSystem);
     User addPermissionToUser(UUID userId, UUID permissionId) throws NotFoundException;
     User removePermissionFromUser(UUID userId, UUID permissionId) throws NotFoundException;

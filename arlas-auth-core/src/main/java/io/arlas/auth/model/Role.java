@@ -1,5 +1,7 @@
 package io.arlas.auth.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import io.dropwizard.jackson.JsonSnakeCase;
 import org.hibernate.annotations.Type;
 
@@ -13,6 +15,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "role")
 @JsonSnakeCase
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Role {
     @Id
     @GeneratedValue
@@ -45,7 +48,7 @@ public class Role {
             inverseJoinColumns = @JoinColumn(name = "id_user"))
     private Set<User> users = new HashSet<>();
 
-    @ManyToMany(mappedBy="roles")
+    @ManyToMany(mappedBy="roles", cascade= CascadeType.REMOVE)
     private Set<Permission> permissions = new HashSet<>();
 
     private Role() {}

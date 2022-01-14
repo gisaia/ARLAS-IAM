@@ -55,12 +55,12 @@ public class AuthRestService {
     // --------------- Users ---------------------
 
     @Timed
-    @Path("user")
+    @Path("users")
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(
-            value = "Creates a user",
+            value = "Create a user",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
@@ -83,12 +83,12 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("user/{id}/verify")
+    @Path("users/{id}/verify")
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(
-            value = "Verifies a user",
+            value = "Verify a user (through link received by email)",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
@@ -113,7 +113,7 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("user/{id}")
+    @Path("users/{id}")
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -142,7 +142,7 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("user/{id}")
+    @Path("users/{id}")
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -151,7 +151,7 @@ public class AuthRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = User.class),
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = String.class),
             @ApiResponse(code = 400, message = "Non matching passwords.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
@@ -164,15 +164,16 @@ public class AuthRestService {
             @PathParam(value = "id") String id
     ) throws NotFoundException {
         checkLoggedInUser(headers, id);
+        authService.deleteUser(UUID.fromString(id));
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.deleteUser(UUID.fromString(id)).get())
+                .entity("User deleted.")
                 .type("application/json")
                 .build();
 
     }
 
     @Timed
-    @Path("user/{id}")
+    @Path("users/{id}")
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -232,12 +233,12 @@ public class AuthRestService {
 
     // --------------- Organisations ---------------------
     @Timed
-    @Path("organisation")
+    @Path("organisations")
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(
-            value = "Creates an organisation",
+            value = "Create an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
@@ -258,7 +259,7 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("organisation/{oid}")
+    @Path("organisations/{oid}")
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -313,7 +314,7 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("organisation/{oid}/user")
+    @Path("organisations/{oid}/users")
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -345,12 +346,12 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("organisation/{oid}/users/{uid}")
+    @Path("organisations/{oid}/users/{uid}")
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(
-            value = "Removes a user from an organisation",
+            value = "Remove a user from an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
@@ -379,7 +380,7 @@ public class AuthRestService {
     //----------------- roles -------------------
 
     @Timed
-    @Path("organisation/{oid}/role/{rname}")
+    @Path("organisations/{oid}/roles/{rname}")
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -415,7 +416,7 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("organisation/{oid}/role/{rid}/users/{uid}")
+    @Path("organisations/{oid}/roles/{rid}/users/{uid}")
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -450,12 +451,12 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("organisation/{oid}/role/{rid}/users/{uid}")
+    @Path("organisations/{oid}/roles/{rid}/users/{uid}")
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(
-            value = "Removes a role from a user from an organisation",
+            value = "Remove a role from a user from an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
@@ -487,7 +488,7 @@ public class AuthRestService {
     //----------------- groups -------------------
 
     @Timed
-    @Path("organisation/{oid}/group/{gname}")
+    @Path("organisations/{oid}/groups/{gname}")
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -520,7 +521,7 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("organisation/{oid}/group/{gid}/users/{uid}")
+    @Path("organisations/{oid}/groups/{gid}/users/{uid}")
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -555,12 +556,12 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("organisation/{oid}/group/{gid}/users/{uid}")
+    @Path("organisations/{oid}/groups/{gid}/users/{uid}")
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(
-            value = "Removes a user from a group in organisation",
+            value = "Remove a user from a group in organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
@@ -590,7 +591,7 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("organisation/{oid}/group/{gid}/roles/{rid}")
+    @Path("organisations/{oid}/groups/{gid}/roles/{rid}")
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -625,7 +626,7 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("organisation/{oid}/group/{gid}/roles/{rid}")
+    @Path("organisations/{oid}/groups/{gid}/roles/{rid}")
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -662,7 +663,7 @@ public class AuthRestService {
     //----------------- permissions -----------------
 
     @Timed
-    @Path("organisation/{oid}/user/{uid}/permissions")
+    @Path("organisations/{oid}/users/{uid}/permissions")
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -671,7 +672,7 @@ public class AuthRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = Permissions.class, responseContainer = "List"),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class, responseContainer = "List"),
             @ApiResponse(code = 400, message = "Bad request", response = Error.class),
             @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
@@ -758,7 +759,7 @@ public class AuthRestService {
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(
-            value = "Removes a permission from a user",
+            value = "Remove a permission from a user",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
@@ -821,7 +822,7 @@ public class AuthRestService {
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(
-            value = "Removes a permission from a role",
+            value = "Remove a permission from a role",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )

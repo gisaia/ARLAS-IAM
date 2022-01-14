@@ -75,12 +75,14 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
     @Override
     public User addPermissionToUser(User user, Permission permission) {
         user.getPermissions().add(permission);
+        permission.getUsers().add(user);
         return persist(user);
     }
 
     @Override
     public User removePermissionFromUser(User user, Permission permission) {
         user.getPermissions().remove(permission);
+        permission.getUsers().remove(user);
         return persist(user);
     }
 
