@@ -75,7 +75,7 @@ public class AuthRestService {
 
             @ApiParam(name = "email", required = true)
             @NotNull @Valid String email
-    ) throws AlreadyExistsException, InvalidEmailException {
+    ) throws AlreadyExistsException, InvalidEmailException, SendEmailException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.createUser(email))
                 .type("application/json")
@@ -83,7 +83,7 @@ public class AuthRestService {
     }
 
     @Timed
-    @Path("users/{id}/verify")
+    @Path("users/{id}/verify/{token}")
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -93,6 +93,7 @@ public class AuthRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = User.class),
+            @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -103,11 +104,14 @@ public class AuthRestService {
             @ApiParam(name = "id", required = true)
             @PathParam(value = "id") String id,
 
+            @ApiParam(name = "token", required = true)
+            @PathParam(value = "token") String token,
+
             @ApiParam(name = "password", required = true)
             @NotNull @Valid String password
-    ) {
+    ) throws NonMatchingPasswordException, AlreadyVerifiedException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.verifyUser(UUID.fromString(id), password))
+                .entity(authService.verifyUser(UUID.fromString(id), token, password))
                 .type("application/json")
                 .build();
     }

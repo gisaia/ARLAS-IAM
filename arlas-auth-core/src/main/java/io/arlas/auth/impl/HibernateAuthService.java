@@ -3,8 +3,11 @@ package io.arlas.auth.impl;
 import io.arlas.auth.core.*;
 import io.arlas.auth.exceptions.*;
 import io.arlas.auth.model.*;
+import io.arlas.auth.util.SMTPConfiguration;
+import io.arlas.auth.util.SMTPMailer;
 import org.hibernate.SessionFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.keygen.KeyGenerators;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -22,11 +25,12 @@ public class HibernateAuthService implements AuthService {
     private final RoleDao roleDao;
     private final UserDao userDao;
     private final BCryptPasswordEncoder encoder;
+    private final SMTPMailer mailer;
 
     // this regex will do a basic check (verification will be done by sending an email to the user) and extract domain
     private static final Pattern emailRegex = Pattern.compile("(?<=@)[^.]+(?=\\.)");
 
-    public HibernateAuthService(SessionFactory factory) {
+    public HibernateAuthService(SessionFactory factory, SMTPConfiguration conf) {
         this.groupDao = new HibernateGroupDao(factory);
         this.organisationDao = new HibernateOrganisationDao(factory);
         this.organisationMemberDao = new HibernateOrganisationMemberDao(factory);
@@ -34,6 +38,7 @@ public class HibernateAuthService implements AuthService {
         this.roleDao = new HibernateRoleDao(factory);
         this.userDao = new HibernateUserDao(factory);
         this.encoder = new BCryptPasswordEncoder();
+        this.mailer = new SMTPMailer(conf);
     }
 
     // ------- private ------------
@@ -51,8 +56,8 @@ public class HibernateAuthService implements AuthService {
         return regexMatcher.find() ? Optional.of(regexMatcher.group()) : Optional.empty();
     }
 
-    private void sendActivationEmail(User user) {
-        // TODO
+    private void sendActivationEmail(User user, String token) throws SendEmailException {
+        mailer.sendEmail(user, token);
     }
 
     private Organisation getOrganisation(User owner, UUID orgId, boolean checkOwned)
@@ -73,12 +78,14 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public User createUser(String email)
-            throws InvalidEmailException, AlreadyExistsException {
+            throws InvalidEmailException, AlreadyExistsException, SendEmailException {
         if (validateEmailDomain(email).isPresent()) {
             if (userDao.readUser(email).isEmpty()) {
                 User user = new User(email);
+                String verifyToken = KeyGenerators.string().generateKey();
+                user.setPassword(encode(verifyToken));
                 // TODO add more attributes
-                sendActivationEmail(user);
+                sendActivationEmail(user, verifyToken);
                 return userDao.createUser(user);
             } else {
                 throw new AlreadyExistsException("User already exists.");
@@ -107,7 +114,7 @@ public class HibernateAuthService implements AuthService {
     public User login(String email, String password)
             throws NotFoundException {
         User user = userDao.readUser(email).orElseThrow(NotFoundException::new);
-        if (user.isActive() && matches(password, user.getPassword())) {
+        if (user.isActive() && user.isVerified() && matches(password, user.getPassword())) {
             return user;
         } else {
             // we don't tell the user which of email or password is wrong, to avoid "username enumeration" attack type
@@ -142,17 +149,22 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Optional<User> verifyUser(UUID userId, String password) {
-        // TODO add a token system to validate the verification request (link from verification email)
+    public Optional<User> verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException {
         Optional<User> user = readUser(userId);
-        user.ifPresent(u -> {
-            if (!u.isVerified()) {
+        if (user.isPresent()) {
+            User u = user.get();
+            if (u.isVerified()) {
+                throw new AlreadyVerifiedException();
+            }
+            if (matches(verifyToken, u.getPassword())) {
                 u.setPassword(encode(password));
                 u.setVerified(true);
                 // TODO create personal organisation: what name? avoid email for GPRD
                 userDao.updateUser(u);
+            } else {
+                throw new NonMatchingPasswordException("Verification token does not match");
             }
-        });
+        }
         return user;
     }
 

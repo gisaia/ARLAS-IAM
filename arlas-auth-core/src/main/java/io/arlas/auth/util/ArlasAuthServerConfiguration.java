@@ -20,6 +20,7 @@
 package io.arlas.auth.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.arlas.auth.exceptions.ArlasConfigurationException;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
@@ -34,6 +35,10 @@ public class ArlasAuthServerConfiguration extends Configuration {
     @Valid
     @JsonProperty("database")
     public DataSourceFactory database = new DataSourceFactory();
+
+    @Valid
+    @JsonProperty("smtp")
+    public SMTPConfiguration smtp = new SMTPConfiguration();
 
     @JsonProperty("arlas-base-uri")
     public String arlasBaseUri;
@@ -58,10 +63,10 @@ public class ArlasAuthServerConfiguration extends Configuration {
 
     public static final String FLATTEN_CHAR = "_";
 
-    public void check() /*throws ArlasConfigurationException*/ {
-//        if (swaggerBundleConfiguration == null) {
-//            throw new ArlasConfigurationException("Swagger configuration missing in config file.");
-//        }
+    public void check() throws ArlasConfigurationException {
+        if (swaggerBundleConfiguration == null) {
+            throw new ArlasConfigurationException("Swagger configuration missing in config file.");
+        }
 //        if (arlasAuthConfiguration == null) {
 //            arlasAuthConfiguration = new ArlasAuthConfiguration();
 //            arlasAuthConfiguration.enabled = false;
@@ -71,12 +76,6 @@ public class ArlasAuthServerConfiguration extends Configuration {
 //        if (arlarsCorsConfiguration == null) {
 //            arlarsCorsConfiguration = new ArlasCorsConfiguration();
 //            arlarsCorsConfiguration.enabled = false;
-//        }
-//        if (arlasDatabaseFactoryClass == null) {
-//            throw new ArlasConfigurationException("arlas_database_factory_class is missing");
-//        }
-//        if (arlasCacheFactoryClass == null) {
-//            throw new ArlasConfigurationException("arlas_cache_factory_class is missing");
 //        }
     }
 }

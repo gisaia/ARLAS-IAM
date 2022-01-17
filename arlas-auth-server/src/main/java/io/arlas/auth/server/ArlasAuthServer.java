@@ -97,7 +97,7 @@ public class ArlasAuthServer extends Application<ArlasAuthServerConfiguration> {
         environment.jersey().register(new JsonProcessingExceptionMapper());
         environment.jersey().register(new ConstraintViolationExceptionMapper());
 
-        AuthService authService = new HibernateAuthService(hibernate.getSessionFactory());
+        AuthService authService = new HibernateAuthService(hibernate.getSessionFactory(), configuration.smtp);
         environment.jersey().register(new AuthRestService(authService, configuration));
 
         // Auth
