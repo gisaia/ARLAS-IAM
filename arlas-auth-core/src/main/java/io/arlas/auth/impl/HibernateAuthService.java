@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class HibernateAuthService implements AuthService {
     private final GroupDao groupDao;
@@ -126,10 +127,8 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Optional<User> deleteUser(UUID userId) {
-        Optional<User> user = readUser(userId);
-        user.ifPresent(userDao::deleteUser);
-        return user;
+    public void deleteUser(UUID userId) {
+        readUser(userId).ifPresent(userDao::deleteUser);
     }
 
     @Override
@@ -227,7 +226,8 @@ public class HibernateAuthService implements AuthService {
         if (organisation.getRoles().stream().anyMatch(r -> r.getName().equals(name))) {
             throw new AlreadyExistsException("Role already exists.");
         } else {
-            Role role = roleDao.createRole(new Role(name).addOrganisation(organisation), permissions);
+            Role role = roleDao.createRole(new Role(name).addOrganisation(organisation),
+                    permissionDao.savePermissions(permissions));
             organisation.addRole(role);
             return role;
         }
@@ -304,7 +304,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException {
+    public Set<String> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException {
         Organisation ownerOrg = getOrganisation(owner, orgId, true);
         User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
         getOrganisation(user, orgId, false);
@@ -315,7 +315,7 @@ public class HibernateAuthService implements AuthService {
         user.getGroups().stream()
                 .filter(g -> g.getOrganisation().is(orgId))
                 .forEach(g -> g.getRoles().forEach(r -> permissions.addAll(r.getPermissions())));
-        return permissions;
+        return permissions.stream().map(p -> p.getValue()).collect(Collectors.toSet());
     }
 
     @Override

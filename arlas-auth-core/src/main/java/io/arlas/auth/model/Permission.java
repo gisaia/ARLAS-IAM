@@ -1,6 +1,9 @@
 package io.arlas.auth.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import io.dropwizard.jackson.JsonSnakeCase;
+import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -13,6 +16,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "permission")
 @JsonSnakeCase
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Permission {
     @Id
     @GeneratedValue
@@ -20,6 +24,7 @@ public class Permission {
     private UUID id;
 
     @NotNull
+    @NaturalId
     @Column(unique = true)
     private String value;
 
@@ -96,7 +101,7 @@ public class Permission {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Permission that = (Permission) o;
-        return isSystem() == that.isSystem() && getValue().equals(that.getValue());
+        return getValue().equals(that.getValue());
     }
 
     @Override
