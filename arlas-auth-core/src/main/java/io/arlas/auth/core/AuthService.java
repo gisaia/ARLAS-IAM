@@ -12,12 +12,13 @@ public interface AuthService {
 
     User login(String email, String password) throws NotFoundException;
 
-    User createUser(String email) throws InvalidEmailException, AlreadyExistsException;
+    User createUser(String email) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
     Optional<User> readUser(UUID userId);
     User updateUser(User user, String oldPassword, String newPassword) throws NonMatchingPasswordException;
     void deleteUser(UUID userId);
     Optional<User> activateUser(UUID userId);
-    Optional<User> verifyUser(UUID userId, String password);
+    Optional<User> verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException;
+
     Optional<User> deactivateUser(UUID userId);
     Set<User> listUsers(User user); // list users from the same organisations as the requesting user
 

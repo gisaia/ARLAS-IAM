@@ -86,3 +86,13 @@ database:
   maxSize: 32
   # whether or not idle connections should be validated
   checkConnectionWhileIdle: false
+
+# SMTP configuration. Used to send account verification email.
+smtp:
+  activated: ${ARLAS_SMTP_ACTIVATED:-false}
+  host: ${ARLAS_SMTP_HOST:-}
+  port: ${ARLAS_SMTP_PORT:-25}
+  username: ${ARLAS_SMTP_USERNAME:-}
+  password: ${ARLAS_SMTP_PASSWORD:-}
+  from: ${ARLAS_SMTP_FROM:-}
+  link: ${ARLAS_SMTP_VERIFY_LINK:-}
