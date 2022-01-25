@@ -1,5 +1,6 @@
 module arlas.auth.rest {
     exports io.arlas.auth.rest.service;
+    exports io.arlas.auth.rest.model;
     requires java.ws.rs;
     requires swagger.annotations;
     requires org.slf4j;

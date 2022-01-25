@@ -83,6 +83,7 @@ public class HibernateAuthService implements AuthService {
             if (userDao.readUser(email).isEmpty()) {
                 User user = new User(email);
                 String verifyToken = KeyGenerators.string().generateKey();
+                // TODO add an expiration date to the token
                 user.setPassword(encode(verifyToken));
                 // TODO add more attributes
                 sendActivationEmail(user, verifyToken);

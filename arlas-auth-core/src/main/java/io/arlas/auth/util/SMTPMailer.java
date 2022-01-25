@@ -61,7 +61,7 @@ public class SMTPMailer {
                 throw new SendEmailException("Could not send email");
             }
         } else {
-            LOGGER.warn(String.format("SMTP client not activated. Verification token: %s",token));
+            LOGGER.warn(String.format("SMTP client not activated. Verification token: %s", token));
         }
     }
 }
