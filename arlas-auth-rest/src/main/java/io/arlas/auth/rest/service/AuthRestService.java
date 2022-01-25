@@ -6,6 +6,7 @@ import io.arlas.auth.exceptions.*;
 import io.arlas.auth.exceptions.NotFoundException;
 import io.arlas.auth.model.*;
 import io.arlas.auth.rest.model.Error;
+import io.arlas.auth.rest.model.LoginData;
 import io.arlas.auth.rest.model.Permissions;
 import io.arlas.auth.rest.model.UpdateData;
 import io.arlas.auth.util.ArlasAuthServerConfiguration;
@@ -53,6 +54,35 @@ public class AuthRestService {
     }
 
     // --------------- Users ---------------------
+
+    @Timed
+    @Path("users/login")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "User login",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = User.class),
+            @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response login(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "login", required = true)
+            @NotNull @Valid LoginData loginData
+    ) throws NotFoundException {
+        // TODO create session
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.login(loginData.email, loginData.password))
+                .type("application/json")
+                .build();
+    }
 
     @Timed
     @Path("users")

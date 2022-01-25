@@ -73,26 +73,27 @@ public class AuthITUser {
          createUser("u1@foo").then().statusCode(400);
     }
 
-    @Test
-    public void test04VerifyUser() {
-        given()
-                .contentType("application/json")
-                .pathParam("id", userId1)
-                .body("password1")
-                .post(arlasAppPath.concat("users/{id}/verify"))
-                .then().statusCode(201)
-                .body("email", equalTo(USER1))
-                .body("verified", equalTo(true));
-
-        given()
-                .contentType("application/json")
-                .pathParam("id", userId2)
-                .body("password2")
-                .post(arlasAppPath.concat("users/{id}/verify"))
-                .then().statusCode(201)
-                .body("email", equalTo(USER2))
-                .body("verified", equalTo(true));
-    }
+    // TODO: find a way to read the verification email and extract the token
+//    @Test
+//    public void test04VerifyUser() {
+//        given()
+//                .contentType("application/json")
+//                .pathParam("id", userId1)
+//                .body("password1")
+//                .post(arlasAppPath.concat("users/{id}/verify"))
+//                .then().statusCode(201)
+//                .body("email", equalTo(USER1))
+//                .body("verified", equalTo(true));
+//
+//        given()
+//                .contentType("application/json")
+//                .pathParam("id", userId2)
+//                .body("password2")
+//                .post(arlasAppPath.concat("users/{id}/verify"))
+//                .then().statusCode(201)
+//                .body("email", equalTo(USER2))
+//                .body("verified", equalTo(true));
+//    }
 
     @Test
     public void test05GetUserSelf() {
