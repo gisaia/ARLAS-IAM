@@ -17,4 +17,5 @@ module arlas.auth.core {
     requires org.slf4j;
     requires jakarta.mail;
     requires java.validation;
+    requires com.auth0.jwt;
 }

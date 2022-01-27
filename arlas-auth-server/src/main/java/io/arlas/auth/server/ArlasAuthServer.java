@@ -55,7 +55,8 @@ public class ArlasAuthServer extends Application<ArlasAuthServerConfiguration> {
                     OrganisationMember.class,
                     Permission.class,
                     Role.class,
-                    User.class) {
+                    User.class,
+                    TokenSecret.class) {
                 @Override
                 public DataSourceFactory getDataSourceFactory(ArlasAuthServerConfiguration configuration) {
                     return configuration.database;
@@ -97,7 +98,7 @@ public class ArlasAuthServer extends Application<ArlasAuthServerConfiguration> {
         environment.jersey().register(new JsonProcessingExceptionMapper());
         environment.jersey().register(new ConstraintViolationExceptionMapper());
 
-        AuthService authService = new HibernateAuthService(hibernate.getSessionFactory(), configuration.smtp);
+        AuthService authService = new HibernateAuthService(hibernate.getSessionFactory(), configuration);
         environment.jersey().register(new AuthRestService(authService, configuration));
 
         // Auth

@@ -62,6 +62,8 @@ arlas_organization_header: ${ARLAS_ORGANIZATION_HEADER:-arlas-organization}
 anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}
 header_user: ${ARLAS_HEADER_USER:-arlas-user}
 header_group: ${ARLAS_HEADER_GROUP:-arlas-groups}
+access_token_ttl: ${ARLAS_ACCESS_TOKEN_TTL:-600000}
+refresh_token_ttl: ${ARLAS_REFRESH_TOKEN_TTL:-3600000}
 
 database:
   # the name of your JDBC driver
@@ -76,6 +78,7 @@ database:
     hibernate.dialect: ${ARLAS_AUTH_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}
     hibernate.hbm2ddl.auto: update
     hibernate.session.events.log: false
+    javax.persistence.schema-generation.database.action: update
   # the maximum amount of time to wait on an empty pool before throwing an exception
   maxWaitForConnection: 1s
   # the SQL query to run when validating a connection's liveness
