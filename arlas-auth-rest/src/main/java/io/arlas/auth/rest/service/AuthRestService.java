@@ -65,8 +65,8 @@ public class AuthRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = User.class),
-            @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "User logged in", response = LoginSession.class),
+            @ApiResponse(code = 404, message = "Login failed", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -74,15 +74,18 @@ public class AuthRestService {
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "login", required = true)
+            @ApiParam(name = "loginData", required = true)
             @NotNull @Valid LoginData loginData
-    ) throws NotFoundException {
-        // TODO create session
+    ) throws ArlasAuthException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.login(loginData.email, loginData.password))
+                .entity(authService.login(loginData.email, loginData.password, uriInfo.getBaseUri().getHost()))
                 .type("application/json")
                 .build();
     }
+
+    // TODO add /userinfo ?
+
+    // TODO add /refreshAccessToken
 
     @Timed
     @Path("users")

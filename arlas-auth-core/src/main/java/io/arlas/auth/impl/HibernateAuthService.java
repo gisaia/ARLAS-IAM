@@ -3,16 +3,14 @@ package io.arlas.auth.impl;
 import io.arlas.auth.core.*;
 import io.arlas.auth.exceptions.*;
 import io.arlas.auth.model.*;
-import io.arlas.auth.util.SMTPConfiguration;
+import io.arlas.auth.util.ArlasAuthServerConfiguration;
 import io.arlas.auth.util.SMTPMailer;
+import io.arlas.auth.util.TokenManager;
 import org.hibernate.SessionFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -26,11 +24,12 @@ public class HibernateAuthService implements AuthService {
     private final UserDao userDao;
     private final BCryptPasswordEncoder encoder;
     private final SMTPMailer mailer;
+    private final TokenManager tokenManager;
 
     // this regex will do a basic check (verification will be done by sending an email to the user) and extract domain
     private static final Pattern emailRegex = Pattern.compile("(?<=@)[^.]+(?=\\.)");
 
-    public HibernateAuthService(SessionFactory factory, SMTPConfiguration conf) {
+    public HibernateAuthService(SessionFactory factory, ArlasAuthServerConfiguration conf) {
         this.groupDao = new HibernateGroupDao(factory);
         this.organisationDao = new HibernateOrganisationDao(factory);
         this.organisationMemberDao = new HibernateOrganisationMemberDao(factory);
@@ -38,7 +37,8 @@ public class HibernateAuthService implements AuthService {
         this.roleDao = new HibernateRoleDao(factory);
         this.userDao = new HibernateUserDao(factory);
         this.encoder = new BCryptPasswordEncoder();
-        this.mailer = new SMTPMailer(conf);
+        this.mailer = new SMTPMailer(conf.smtp);
+        this.tokenManager = new TokenManager(factory, conf);
     }
 
     // ------- private ------------
@@ -112,15 +112,21 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public User login(String email, String password)
-            throws NotFoundException {
+    public LoginSession login(String email, String password, String issuer)
+            throws ArlasAuthException {
         User user = userDao.readUser(email).orElseThrow(NotFoundException::new);
         if (user.isActive() && user.isVerified() && matches(password, user.getPassword())) {
-            return user;
+            // TODO store refresh token in DB
+            return tokenManager.getLoginSession(user.getId().toString(), issuer, new Date());
         } else {
             // we don't tell the user which of email or password is wrong, to avoid "username enumeration" attack type
             throw new NotFoundException("No matching user/password found.");
         }
+    }
+
+    @Override
+    public void logout(UUID userId) {
+        // TODO
     }
 
     @Override

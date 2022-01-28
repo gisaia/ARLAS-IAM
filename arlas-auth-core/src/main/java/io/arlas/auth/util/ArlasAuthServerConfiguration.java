@@ -40,6 +40,12 @@ public class ArlasAuthServerConfiguration extends Configuration {
     @JsonProperty("smtp")
     public SMTPConfiguration smtp = new SMTPConfiguration();
 
+    @JsonProperty("access_token_ttl")
+    public long accessTokenTTL;
+
+    @JsonProperty("refresh_token_ttl")
+    public long refreshTokenTTL;
+
     @JsonProperty("arlas-base-uri")
     public String arlasBaseUri;
 

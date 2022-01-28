@@ -10,7 +10,8 @@ import java.util.UUID;
 public interface AuthService {
     User readUser(UUID userId, boolean checkActiveVerified) throws NotFoundException;
 
-    User login(String email, String password) throws NotFoundException;
+    LoginSession login(String email, String password, String issuer) throws ArlasAuthException;
+    void logout(UUID userId);
 
     User createUser(String email) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
     Optional<User> readUser(UUID userId);
