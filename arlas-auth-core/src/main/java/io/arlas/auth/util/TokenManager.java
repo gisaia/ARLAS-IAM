@@ -11,12 +11,12 @@ import io.arlas.auth.exceptions.ArlasAuthException;
 import io.arlas.auth.impl.HibernateTokenSecretDao;
 import io.arlas.auth.model.LoginSession;
 import io.arlas.auth.model.TokenSecret;
-import io.dropwizard.hibernate.UnitOfWork;
 import org.hibernate.SessionFactory;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
 import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 
 public class TokenManager {
     private Algorithm algorithm;
@@ -55,8 +55,8 @@ public class TokenManager {
         }
     }
 
-    public LoginSession getLoginSession(String subject, String issuer, Date iat) throws ArlasAuthException {
-        return new LoginSession(createAccessToken(subject, issuer, iat),
+    public LoginSession getLoginSession(UUID subject, String issuer, Date iat) throws ArlasAuthException {
+        return new LoginSession(subject, createAccessToken(subject.toString(), issuer, iat),
                 createRefreshToken(), (iat.getTime() + this.refreshTokenTTL)/1000);
     }
 

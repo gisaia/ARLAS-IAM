@@ -1,16 +1,15 @@
 package io.arlas.auth.model;
 
+import java.util.UUID;
 
 public class LoginSession {
     public String accessToken; // JWT
-    public String refreshToken; // opaque string
-    public long refreshTokenExpiryDate;
+    public RefreshToken refreshToken;
 
     public LoginSession(){};
 
-    public LoginSession(String accessToken, String refreshToken, long refreshTokenExpiryDate) {
+    public LoginSession(UUID subject, String accessToken, String refreshToken, long refreshTokenExpiryDate) {
         this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
-        this.refreshTokenExpiryDate = refreshTokenExpiryDate;
+        this.refreshToken = new RefreshToken(subject, refreshToken, refreshTokenExpiryDate);
     }
 }

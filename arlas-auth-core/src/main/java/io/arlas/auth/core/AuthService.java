@@ -12,6 +12,7 @@ public interface AuthService {
 
     LoginSession login(String email, String password, String issuer) throws ArlasAuthException;
     void logout(UUID userId);
+    LoginSession refresh(String refreshToken, String issuer) throws ArlasAuthException;
 
     User createUser(String email) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
     Optional<User> readUser(UUID userId);
