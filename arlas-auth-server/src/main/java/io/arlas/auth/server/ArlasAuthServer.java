@@ -26,10 +26,13 @@ import io.arlas.auth.core.AuthService;
 import io.arlas.auth.exceptions.ArlasAuthExceptionMapper;
 import io.arlas.auth.exceptions.ConstraintViolationExceptionMapper;
 import io.arlas.auth.exceptions.IllegalArgumentExceptionMapper;
+import io.arlas.auth.filter.AuthenticationFilter;
+import io.arlas.auth.filter.AuthorizationFilter;
 import io.arlas.auth.impl.HibernateAuthService;
 import io.arlas.auth.model.*;
 import io.arlas.auth.rest.service.AuthRestService;
 import io.arlas.auth.util.ArlasAuthServerConfiguration;
+import io.arlas.auth.util.TokenManager;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
@@ -101,12 +104,8 @@ public class ArlasAuthServer extends Application<ArlasAuthServerConfiguration> {
 
         AuthService authService = new HibernateAuthService(hibernate.getSessionFactory(), configuration);
         environment.jersey().register(new AuthRestService(authService, configuration));
-
-        // Auth
-//        if (configuration.arlasAuthConfiguration.enabled) {
-//            environment.jersey().register(new AuthenticationFilter(configuration.arlasAuthConfiguration));
-//            environment.jersey().register(new AuthorizationFilter(configuration.arlasAuthConfiguration));
-//        }
+        environment.jersey().register(new AuthenticationFilter(configuration));
+        environment.jersey().register(new AuthorizationFilter(configuration, authService));
 
         //cors
 //        if (configuration.arlasCorsConfiguration.enabled) {

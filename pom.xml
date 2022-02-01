@@ -42,6 +42,7 @@
         <jackson.databind.version>2.13.1</jackson.databind.version>
         <jakartamail.version>2.0.1</jakartamail.version>
         <jwt.version>3.18.3</jwt.version>
+        <elastic-apm.version>1.28.4</elastic-apm.version>
 
         <!-- TESTS -->
         <junit.version>4.13.2</junit.version>

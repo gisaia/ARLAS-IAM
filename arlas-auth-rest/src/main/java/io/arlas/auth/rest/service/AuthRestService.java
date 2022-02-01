@@ -34,7 +34,13 @@ import java.util.stream.Collectors;
                 description = "auth REST services",
                 license = @License(name = "Proprietary"),
                 version = "API_VERSION"),
-        schemes = { SwaggerDefinition.Scheme.HTTP, SwaggerDefinition.Scheme.HTTPS })
+        schemes = { SwaggerDefinition.Scheme.HTTP, SwaggerDefinition.Scheme.HTTPS },
+        securityDefinition = @SecurityDefinition(
+                apiKeyAuthDefinitions = {
+                        @ApiKeyAuthDefinition(key = "JWT", name = "Authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
+                }
+        )
+)
 public class AuthRestService {
     Logger LOGGER = LoggerFactory.getLogger(AuthRestService.class);
     public static final String UTF8JSON = MediaType.APPLICATION_JSON + ";charset=utf-8";
@@ -88,7 +94,7 @@ public class AuthRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Delete session",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -114,7 +120,7 @@ public class AuthRestService {
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Refresh access token",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -170,7 +176,7 @@ public class AuthRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Verify a user (through link received by email)",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -204,7 +210,7 @@ public class AuthRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Read a user",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -233,7 +239,7 @@ public class AuthRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Delete the logged in user",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -264,7 +270,7 @@ public class AuthRestService {
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Update the logged in user",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -298,7 +304,7 @@ public class AuthRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "List users of same organisations",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -324,7 +330,7 @@ public class AuthRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Create an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -350,7 +356,7 @@ public class AuthRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Delete an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -380,7 +386,7 @@ public class AuthRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "List organisations of the user",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -405,7 +411,7 @@ public class AuthRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Add a user to an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -437,7 +443,7 @@ public class AuthRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Remove a user from an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -471,7 +477,7 @@ public class AuthRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Add a role to an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -507,7 +513,7 @@ public class AuthRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Add a role to a user in an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -542,7 +548,7 @@ public class AuthRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Remove a role from a user from an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -579,7 +585,7 @@ public class AuthRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Add a group to an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -612,7 +618,7 @@ public class AuthRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Add a user to a group in an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -647,7 +653,7 @@ public class AuthRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Remove a user from a group in organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -682,7 +688,7 @@ public class AuthRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Add a role to a group in an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -717,7 +723,7 @@ public class AuthRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Removes a role from a group from an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -754,7 +760,7 @@ public class AuthRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "List permissions of a user within an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -786,7 +792,7 @@ public class AuthRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Adds a system permission",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -813,7 +819,7 @@ public class AuthRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Add a permission to a user",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -845,7 +851,7 @@ public class AuthRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Remove a permission from a user",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -877,7 +883,7 @@ public class AuthRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Add a permission to a role",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -908,7 +914,7 @@ public class AuthRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
+    @ApiOperation(authorizations = @Authorization("JWT"),
             value = "Remove a permission from a role",
             produces = UTF8JSON,
             consumes = UTF8JSON

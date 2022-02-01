@@ -1,5 +1,6 @@
 package io.arlas.auth.impl;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.auth.core.*;
 import io.arlas.auth.exceptions.*;
 import io.arlas.auth.model.*;
@@ -119,12 +120,17 @@ public class HibernateAuthService implements AuthService {
         User user = userDao.readUser(email).orElseThrow(NotFoundException::new);
         if (user.isActive() && user.isVerified() && matches(password, user.getPassword())) {
             LoginSession ls = tokenManager.getLoginSession(user.getId(), issuer, new Date());
-            tokenDao.createOrUpdate(ls.refreshToken);
+            tokenDao.createOrUpdate(user.getId(), ls.refreshToken);
             return ls;
         } else {
             // we don't tell the user which of email or password is wrong, to avoid "username enumeration" attack type
             throw new NotFoundException("No matching user/password found.");
         }
+    }
+
+    @Override
+    public DecodedJWT verifyToken(String token) {
+        return tokenManager.verifyToken(token);
     }
 
     @Override
@@ -137,8 +143,7 @@ public class HibernateAuthService implements AuthService {
         RefreshToken token = tokenDao.read(refreshToken).orElseThrow(() -> new ArlasAuthException("Invalid refresh token."));
         if (token.getExpiryDate() >= System.currentTimeMillis() / 1000) {
             LoginSession ls = tokenManager.getLoginSession(token.getUserId(), issuer, new Date());
-            tokenDao.delete(token);
-            tokenDao.createOrUpdate(ls.refreshToken);
+            tokenDao.createOrUpdate(token.getUserId(), ls.refreshToken);
             return ls;
         } else {
             throw new ArlasAuthException("Expired refresh token.");

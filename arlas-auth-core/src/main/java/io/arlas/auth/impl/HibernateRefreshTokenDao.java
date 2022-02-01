@@ -24,7 +24,8 @@ public class HibernateRefreshTokenDao extends AbstractDAO<RefreshToken> implemen
     }
 
     @Override
-    public void createOrUpdate(RefreshToken token) {
+    public void createOrUpdate(UUID userId, RefreshToken token) {
+        read(userId).ifPresent(this::delete);
         persist(token);
     }
 

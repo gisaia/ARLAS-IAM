@@ -27,6 +27,12 @@ import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.HttpMethod;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class ArlasAuthServerConfiguration extends Configuration {
     @JsonProperty("swagger")
@@ -67,7 +73,35 @@ public class ArlasAuthServerConfiguration extends Configuration {
     @JsonProperty("anonymous_value")
     public String anonymousValue;
 
-    public static final String FLATTEN_CHAR = "_";
+    @JsonProperty("public_uris")
+    public List<String> publicUris;
+
+    @JsonProperty("claim_roles")
+    public String claimRoles;
+
+    @JsonProperty("claim_permissions")
+    public String claimPermissions;
+
+    private String publicRegex;
+
+    public String getPublicRegex()  {
+        // [swagger.*:*, persist.*:GET/POST/DELETE}]
+        if (this.publicRegex == null) {
+            final String allMethods = ":" + String.join("/", Arrays.asList(HttpMethod.DELETE, HttpMethod.GET, HttpMethod.HEAD, HttpMethod.OPTIONS, HttpMethod.POST, HttpMethod.PUT));
+            String pathToVerbs = Optional.ofNullable(this.publicUris)
+                    .orElse(Collections.emptyList())
+                    .stream()
+                    .map(u -> !u.contains(":") ? u.concat(allMethods) : (u.endsWith(":*") ? u.replace(":*", allMethods) : u))
+                    .flatMap(uri -> {
+                        String path = uri.split(":")[0];
+                        String verbs = uri.split(":")[1];
+                        return Arrays.stream(verbs.split("/")).map(verb -> path.concat(":").concat(verb));
+                    })
+                    .collect(Collectors.joining("|"));
+            this.publicRegex = "^(".concat(pathToVerbs).concat(")");
+        }
+        return this.publicRegex;
+    }
 
     public void check() throws ArlasConfigurationException {
         if (swaggerBundleConfiguration == null) {
