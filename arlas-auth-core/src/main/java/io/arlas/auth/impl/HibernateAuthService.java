@@ -22,6 +22,7 @@ public class HibernateAuthService implements AuthService {
     private final PermissionDao permissionDao;
     private final RoleDao roleDao;
     private final UserDao userDao;
+    private final RefreshTokenDao tokenDao;
     private final BCryptPasswordEncoder encoder;
     private final SMTPMailer mailer;
     private final TokenManager tokenManager;
@@ -36,6 +37,7 @@ public class HibernateAuthService implements AuthService {
         this.permissionDao = new HibernatePermissionDao(factory);
         this.roleDao = new HibernateRoleDao(factory);
         this.userDao = new HibernateUserDao(factory);
+        this.tokenDao = new HibernateRefreshTokenDao(factory);
         this.encoder = new BCryptPasswordEncoder();
         this.mailer = new SMTPMailer(conf.smtp);
         this.tokenManager = new TokenManager(factory, conf);
@@ -116,8 +118,9 @@ public class HibernateAuthService implements AuthService {
             throws ArlasAuthException {
         User user = userDao.readUser(email).orElseThrow(NotFoundException::new);
         if (user.isActive() && user.isVerified() && matches(password, user.getPassword())) {
-            // TODO store refresh token in DB
-            return tokenManager.getLoginSession(user.getId().toString(), issuer, new Date());
+            LoginSession ls = tokenManager.getLoginSession(user.getId(), issuer, new Date());
+            tokenDao.createOrUpdate(ls.refreshToken);
+            return ls;
         } else {
             // we don't tell the user which of email or password is wrong, to avoid "username enumeration" attack type
             throw new NotFoundException("No matching user/password found.");
@@ -126,7 +129,20 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public void logout(UUID userId) {
-        // TODO
+        tokenDao.read(userId).ifPresent(tokenDao::delete);
+    }
+
+    @Override
+    public LoginSession refresh(String refreshToken, String issuer) throws ArlasAuthException {
+        RefreshToken token = tokenDao.read(refreshToken).orElseThrow(() -> new ArlasAuthException("Invalid refresh token."));
+        if (token.getExpiryDate() >= System.currentTimeMillis() / 1000) {
+            LoginSession ls = tokenManager.getLoginSession(token.getUserId(), issuer, new Date());
+            tokenDao.delete(token);
+            tokenDao.createOrUpdate(ls.refreshToken);
+            return ls;
+        } else {
+            throw new ArlasAuthException("Expired refresh token.");
+        }
     }
 
     @Override
@@ -334,7 +350,7 @@ public class HibernateAuthService implements AuthService {
         user.getGroups().stream()
                 .filter(g -> g.getOrganisation().is(orgId))
                 .forEach(g -> g.getRoles().forEach(r -> permissions.addAll(r.getPermissions())));
-        return permissions.stream().map(p -> p.getValue()).collect(Collectors.toSet());
+        return permissions.stream().map(Permission::getValue).collect(Collectors.toSet());
     }
 
     @Override

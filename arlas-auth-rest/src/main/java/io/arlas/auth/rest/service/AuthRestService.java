@@ -56,7 +56,7 @@ public class AuthRestService {
     // --------------- Users ---------------------
 
     @Timed
-    @Path("users/login")
+    @Path("session")
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -65,7 +65,7 @@ public class AuthRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "User logged in", response = LoginSession.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Session created.", response = LoginSession.class),
             @ApiResponse(code = 404, message = "Login failed", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
@@ -83,9 +83,59 @@ public class AuthRestService {
                 .build();
     }
 
-    // TODO add /userinfo ?
+    @Timed
+    @Path("session")
+    @DELETE
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Delete session",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Session deleted.", response = String.class),
+            @ApiResponse(code = 404, message = "Login failed", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
-    // TODO add /refreshAccessToken
+    @UnitOfWork
+    public Response logout(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers
+    ) throws NotFoundException {
+        authService.logout(getUser(headers).getId());
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity("Session deleted.")
+                .type("text/html")
+                .build();
+    }
+
+    @Timed
+    @Path("session/{refreshToken}")
+    @PUT
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Refresh access token",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Session refreshed.", response = LoginSession.class),
+            @ApiResponse(code = 404, message = "Login failed", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response refresh(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "refreshToken", required = true)
+            @PathParam(value = "refreshToken") String refreshToken
+    ) throws ArlasAuthException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.refresh(refreshToken, uriInfo.getBaseUri().getHost()))
+                .type("application/json")
+                .build();
+    }
 
     @Timed
     @Path("users")
@@ -204,7 +254,7 @@ public class AuthRestService {
         authService.deleteUser(UUID.fromString(id));
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity("User deleted.")
-                .type("application/json")
+                .type("text/html")
                 .build();
 
     }
@@ -321,7 +371,7 @@ public class AuthRestService {
         authService.deleteOrganisation(getUser(headers), UUID.fromString(oid));
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity("organisation deleted")
-                .type("application/json")
+                .type("text/html")
                 .build();
     }
 

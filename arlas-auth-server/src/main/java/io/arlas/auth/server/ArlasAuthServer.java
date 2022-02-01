@@ -56,7 +56,8 @@ public class ArlasAuthServer extends Application<ArlasAuthServerConfiguration> {
                     Permission.class,
                     Role.class,
                     User.class,
-                    TokenSecret.class) {
+                    TokenSecret.class,
+                    RefreshToken.class) {
                 @Override
                 public DataSourceFactory getDataSourceFactory(ArlasAuthServerConfiguration configuration) {
                     return configuration.database;
@@ -122,7 +123,7 @@ public class ArlasAuthServer extends Application<ArlasAuthServerConfiguration> {
 //        environment.jersey().register(InsensitiveCaseFilter.class);
     }
 
-    // TODO
+    // TODO: add CORS
 //    private void configureCors(Environment environment, ArlasCorsConfiguration configuration) {
 //        CrossOriginFilter filter = new CrossOriginFilter();
 //        final FilterRegistration.Dynamic cors = environment.servlets().addFilter("CrossOriginFilter", filter);
