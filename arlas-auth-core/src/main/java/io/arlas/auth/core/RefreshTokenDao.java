@@ -11,7 +11,7 @@ public interface RefreshTokenDao {
 
     Optional<RefreshToken> read(String value);
 
-    void createOrUpdate(RefreshToken token);
+    void createOrUpdate(UUID userId, RefreshToken token);
 
     void delete(RefreshToken token);
 }

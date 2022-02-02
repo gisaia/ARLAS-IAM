@@ -64,6 +64,9 @@ header_user: ${ARLAS_HEADER_USER:-arlas-user}
 header_group: ${ARLAS_HEADER_GROUP:-arlas-groups}
 access_token_ttl: ${ARLAS_ACCESS_TOKEN_TTL:-600000}
 refresh_token_ttl: ${ARLAS_REFRESH_TOKEN_TTL:-3600000}
+public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger.*:*,auth/session:POST,auth/users:POST}]
+claim_roles: ${ARLAS_CLAIM_ROLES:-http://arlas.io/roles}
+claim_permissions: ${ARLAS_CLAIM_PERMISSIONS:-http://arlas.io/permissions}
 
 database:
   # the name of your JDBC driver

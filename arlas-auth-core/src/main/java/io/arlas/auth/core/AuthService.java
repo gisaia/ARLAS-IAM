@@ -1,5 +1,6 @@
 package io.arlas.auth.core;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.auth.exceptions.*;
 import io.arlas.auth.model.*;
 
@@ -11,6 +12,7 @@ public interface AuthService {
     User readUser(UUID userId, boolean checkActiveVerified) throws NotFoundException;
 
     LoginSession login(String email, String password, String issuer) throws ArlasAuthException;
+    DecodedJWT verifyToken(String token);
     void logout(UUID userId);
     LoginSession refresh(String refreshToken, String issuer) throws ArlasAuthException;
 

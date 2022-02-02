@@ -18,4 +18,6 @@ module arlas.auth.core {
     requires jakarta.mail;
     requires java.validation;
     requires com.auth0.jwt;
+    requires java.annotation;
+    requires co.elastic.apm.api;
 }
