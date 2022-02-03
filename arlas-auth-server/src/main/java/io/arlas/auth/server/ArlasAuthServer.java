@@ -32,7 +32,6 @@ import io.arlas.auth.impl.HibernateAuthService;
 import io.arlas.auth.model.*;
 import io.arlas.auth.rest.service.AuthRestService;
 import io.arlas.auth.util.ArlasAuthServerConfiguration;
-import io.arlas.auth.util.TokenManager;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
