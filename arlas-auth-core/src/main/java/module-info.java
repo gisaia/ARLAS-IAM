@@ -4,6 +4,7 @@ module arlas.auth.core {
     exports io.arlas.auth.impl;
     exports io.arlas.auth.model;
     exports io.arlas.auth.util;
+    exports io.arlas.auth.filter;
     requires java.persistence;
     requires org.hibernate.orm.core;
     requires dropwizard.hibernate;

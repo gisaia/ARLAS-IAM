@@ -138,7 +138,7 @@ public class AuthRestService {
             @PathParam(value = "refreshToken") String refreshToken
     ) throws ArlasAuthException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.refresh(refreshToken, uriInfo.getBaseUri().getHost()))
+                .entity(authService.refresh(getUser(headers).getId(), refreshToken, uriInfo.getBaseUri().getHost()))
                 .type("application/json")
                 .build();
     }

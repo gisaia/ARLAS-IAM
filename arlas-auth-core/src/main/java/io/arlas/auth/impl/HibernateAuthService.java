@@ -139,9 +139,9 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public LoginSession refresh(String refreshToken, String issuer) throws ArlasAuthException {
+    public LoginSession refresh(UUID userId, String refreshToken, String issuer) throws ArlasAuthException {
         RefreshToken token = tokenDao.read(refreshToken).orElseThrow(() -> new ArlasAuthException("Invalid refresh token."));
-        if (token.getExpiryDate() >= System.currentTimeMillis() / 1000) {
+        if (token.getUserId().equals(userId) && token.getExpiryDate() >= System.currentTimeMillis() / 1000) {
             LoginSession ls = tokenManager.getLoginSession(token.getUserId(), issuer, new Date());
             tokenDao.createOrUpdate(token.getUserId(), ls.refreshToken);
             return ls;
