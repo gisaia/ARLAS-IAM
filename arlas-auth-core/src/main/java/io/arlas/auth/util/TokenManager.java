@@ -6,7 +6,7 @@ import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import io.arlas.auth.core.TokenSecretDao;
-import io.arlas.auth.exceptions.ArlasAuthException;
+import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.auth.impl.HibernateTokenSecretDao;
 import io.arlas.auth.model.LoginSession;
 import io.arlas.auth.model.TokenSecret;
@@ -14,7 +14,6 @@ import org.hibernate.SessionFactory;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
 import java.util.Date;
-import java.util.Optional;
 import java.util.UUID;
 
 public class TokenManager {
@@ -50,12 +49,12 @@ public class TokenManager {
         return jwtVerifier.verify(token);
     }
 
-    public LoginSession getLoginSession(UUID subject, String issuer, Date iat) throws ArlasAuthException {
+    public LoginSession getLoginSession(UUID subject, String issuer, Date iat) throws ArlasException {
         return new LoginSession(subject, createAccessToken(subject.toString(), issuer, iat),
                 createRefreshToken(), (iat.getTime() + this.refreshTokenTTL)/1000);
     }
 
-    private String createAccessToken(String subject, String issuer, Date iat) throws ArlasAuthException {
+    private String createAccessToken(String subject, String issuer, Date iat) throws ArlasException {
         try {
             storeSecret();
             Date exp = new Date(iat.getTime() + this.accessTokenTTL);
@@ -66,7 +65,7 @@ public class TokenManager {
                     .withExpiresAt(exp)
                     .sign(this.algorithm);
         } catch (JWTCreationException exception){
-            throw new ArlasAuthException("Invalid Signing configuration / Couldn't convert Claims.");
+            throw new ArlasException("Invalid Signing configuration / Couldn't convert Claims.");
         }
     }
 

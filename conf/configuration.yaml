@@ -39,34 +39,30 @@ swagger: # Configuration of SWAGGER for generating documentation and APIs
 
 arlas-base-uri: ${ARLAS_AUTH_BASE_URI:-}
 
-#arlas_cors:
-#  enabled: ${ARLAS_CORS_ENABLED:-true}
-#  allowed_origins: ${ARLAS_CORS_ALLOWED_ORIGINS:-"*"}
-#  allowed_headers: ${ARLAS_CORS_ALLOWED_HEADERS:-"arlas-user,arlas-groups,arlas-organization,X-Requested-With,Content-Type,Accept,Origin,Authorization,WWW-Authenticate"}
-#  allowed_methods: ${ARLAS_CORS_ALLOWED_METHODS:-"OPTIONS,GET,PUT,POST,DELETE,HEAD"}
-#  allowed_credentials: ${ARLAS_CORS_ALLOWED_CREDENTIALS:-true}
-#  exposed_headers: ${ARLAS_CORS_EXPOSED_HEADERS:-"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,Location,WWW-Authenticate"}
+arlas_cors:
+  enabled: ${ARLAS_CORS_ENABLED:-true}
+  allowed_origins: ${ARLAS_CORS_ALLOWED_ORIGINS:-"*"}
+  allowed_headers: ${ARLAS_CORS_ALLOWED_HEADERS:-"arlas-user,arlas-groups,arlas-organization,X-Requested-With,Content-Type,Accept,Origin,Authorization,WWW-Authenticate"}
+  allowed_methods: ${ARLAS_CORS_ALLOWED_METHODS:-"OPTIONS,GET,PUT,POST,DELETE,HEAD"}
+  allowed_credentials: ${ARLAS_CORS_ALLOWED_CREDENTIALS:-true}
+  exposed_headers: ${ARLAS_CORS_EXPOSED_HEADERS:-"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,Location,WWW-Authenticate"}
 
-#arlas_auth:
-#  enabled: ${ARLAS_AUTH_ENABLED:-false}
-#  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger.*:*,persist.*:GET}]
-#  # deprecated
-#  certificate_file: ${ARLAS_AUTH_CERT_FILE:-/opt/app/arlas.pem}
-#  certificate_url: ${ARLAS_AUTH_CERT_URL:-}
-#  header_user: ${ARLAS_HEADER_USER:-arlas-user}
-#  header_group: ${ARLAS_HEADER_GROUP:-arlas-groups}
-#  claim_roles: ${ARLAS_CLAIM_ROLES:-http://arlas.io/roles}
-#  claim_permissions: ${ARLAS_CLAIM_PERMISSIONS:-http://arlas.io/permissions}
+arlas_auth:
+  enabled: ${ARLAS_AUTH_ENABLED:-false}
+  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger.*:*,auth/session:POST,auth/users:POST}]
+  login_url: ${ARLAS_AUTH_LOGIN_URL:-}
+  # deprecated
+  certificate_file: ${ARLAS_AUTH_CERT_FILE:-/opt/app/arlas.pem}
+  certificate_url: ${ARLAS_AUTH_CERT_URL:-}
+  header_user: ${ARLAS_HEADER_USER:-arlas-user}
+  header_group: ${ARLAS_HEADER_GROUP:-arlas-groups}
+  claim_roles: ${ARLAS_CLAIM_ROLES:-http://arlas.io/roles}
+  claim_permissions: ${ARLAS_CLAIM_PERMISSIONS:-http://arlas.io/permissions}
 
 arlas_organization_header: ${ARLAS_ORGANIZATION_HEADER:-arlas-organization}
 anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}
-header_user: ${ARLAS_HEADER_USER:-arlas-user}
-header_group: ${ARLAS_HEADER_GROUP:-arlas-groups}
 access_token_ttl: ${ARLAS_ACCESS_TOKEN_TTL:-600000}
 refresh_token_ttl: ${ARLAS_REFRESH_TOKEN_TTL:-3600000}
-public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger.*:*,auth/session:POST,auth/users:POST}]
-claim_roles: ${ARLAS_CLAIM_ROLES:-http://arlas.io/roles}
-claim_permissions: ${ARLAS_CLAIM_PERMISSIONS:-http://arlas.io/permissions}
 
 database:
   # the name of your JDBC driver

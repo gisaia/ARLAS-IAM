@@ -1,8 +1,10 @@
 package io.arlas.auth.exceptions;
 
+import io.arlas.commons.exceptions.ArlasException;
+
 import javax.ws.rs.core.Response;
 
-public class AlreadyVerifiedException extends ArlasAuthException {
+public class AlreadyVerifiedException extends ArlasException {
     private static final long serialVersionUID = 1L;
 
     public AlreadyVerifiedException() {

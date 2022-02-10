@@ -3,14 +3,14 @@ package io.arlas.auth.rest.service;
 import com.codahale.metrics.annotation.Timed;
 import io.arlas.auth.core.AuthService;
 import io.arlas.auth.exceptions.*;
-import io.arlas.auth.exceptions.NotFoundException;
 import io.arlas.auth.model.*;
-import io.arlas.auth.rest.model.Error;
 import io.arlas.auth.rest.model.LoginData;
 import io.arlas.auth.rest.model.Permissions;
 import io.arlas.auth.rest.model.UpdateData;
 import io.arlas.auth.util.ArlasAuthServerConfiguration;
 import io.arlas.auth.util.IdentityParam;
+import io.arlas.commons.exceptions.ArlasException;
+import io.arlas.commons.exceptions.NotFoundException;
 import io.dropwizard.hibernate.UnitOfWork;
 import io.swagger.annotations.*;
 import org.slf4j.Logger;
@@ -53,9 +53,9 @@ public class AuthRestService {
 
     public AuthRestService(AuthService authService, ArlasAuthServerConfiguration configuration) {
         this.authService = authService;
-        this.userHeader = configuration.headerUser;
+        this.userHeader = configuration.arlasAuthConfiguration.headerUser;
         this.organizationHeader = configuration.organizationHeader;
-        this.groupsHeader = configuration.headerGroup;
+        this.groupsHeader = configuration.arlasAuthConfiguration.headerGroup;
         this.anonymousValue = configuration.anonymousValue;
     }
 
@@ -82,7 +82,7 @@ public class AuthRestService {
 
             @ApiParam(name = "loginData", required = true)
             @NotNull @Valid LoginData loginData
-    ) throws ArlasAuthException {
+    ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.login(loginData.email, loginData.password, uriInfo.getBaseUri().getHost()))
                 .type("application/json")
@@ -136,7 +136,7 @@ public class AuthRestService {
 
             @ApiParam(name = "refreshToken", required = true)
             @PathParam(value = "refreshToken") String refreshToken
-    ) throws ArlasAuthException {
+    ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.refresh(getUser(headers).getId(), refreshToken, uriInfo.getBaseUri().getHost()))
                 .type("application/json")

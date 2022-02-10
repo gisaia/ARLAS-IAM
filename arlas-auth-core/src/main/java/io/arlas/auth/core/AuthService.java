@@ -3,6 +3,8 @@ package io.arlas.auth.core;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.auth.exceptions.*;
 import io.arlas.auth.model.*;
+import io.arlas.commons.exceptions.ArlasException;
+import io.arlas.commons.exceptions.NotFoundException;
 
 import java.util.Optional;
 import java.util.Set;
@@ -11,10 +13,10 @@ import java.util.UUID;
 public interface AuthService {
     User readUser(UUID userId, boolean checkActiveVerified) throws NotFoundException;
 
-    LoginSession login(String email, String password, String issuer) throws ArlasAuthException;
+    LoginSession login(String email, String password, String issuer) throws ArlasException;
     DecodedJWT verifyToken(String token);
     void logout(UUID userId);
-    LoginSession refresh(UUID userId, String refreshToken, String issuer) throws ArlasAuthException;
+    LoginSession refresh(UUID userId, String refreshToken, String issuer) throws ArlasException;
 
     User createUser(String email) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
     Optional<User> readUser(UUID userId);
