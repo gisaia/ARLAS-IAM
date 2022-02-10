@@ -12,6 +12,7 @@
         <module>arlas-auth-server</module>
         <module>arlas-auth-rest</module>
         <module>arlas-auth-tests</module>
+        <module>arlas-auth-filter</module>
     </modules>
     <packaging>pom</packaging>
     <name>ARLAS auth parent</name>
@@ -43,6 +44,7 @@
         <jakartamail.version>2.0.1</jakartamail.version>
         <jwt.version>3.18.3</jwt.version>
         <elastic-apm.version>1.28.4</elastic-apm.version>
+        <activation.version>2.0.1</activation.version>
 
         <!-- TESTS -->
         <junit.version>4.13.2</junit.version>
@@ -50,7 +52,7 @@
         <io.rest-assured.version>4.4.0</io.rest-assured.version>
 
         <!-- REST AND DROPWIZARD-->
-        <dropwizard.version>2.0.28</dropwizard.version>
+        <dropwizard.version>2.1.0-beta.7</dropwizard.version>
         <dropwizard.swagger.version>2.0.12-1</dropwizard.swagger.version>
 
         <!-- DOCUMENTATION GENERATION-->

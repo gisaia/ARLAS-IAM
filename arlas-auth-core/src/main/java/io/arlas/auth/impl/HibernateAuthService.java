@@ -7,6 +7,8 @@ import io.arlas.auth.model.*;
 import io.arlas.auth.util.ArlasAuthServerConfiguration;
 import io.arlas.auth.util.SMTPMailer;
 import io.arlas.auth.util.TokenManager;
+import io.arlas.commons.exceptions.ArlasException;
+import io.arlas.commons.exceptions.NotFoundException;
 import org.hibernate.SessionFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keygen.KeyGenerators;
@@ -116,7 +118,7 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public LoginSession login(String email, String password, String issuer)
-            throws ArlasAuthException {
+            throws ArlasException {
         User user = userDao.readUser(email).orElseThrow(NotFoundException::new);
         if (user.isActive() && user.isVerified() && matches(password, user.getPassword())) {
             LoginSession ls = tokenManager.getLoginSession(user.getId(), issuer, new Date());
@@ -139,14 +141,14 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public LoginSession refresh(UUID userId, String refreshToken, String issuer) throws ArlasAuthException {
-        RefreshToken token = tokenDao.read(refreshToken).orElseThrow(() -> new ArlasAuthException("Invalid refresh token."));
+    public LoginSession refresh(UUID userId, String refreshToken, String issuer) throws ArlasException {
+        RefreshToken token = tokenDao.read(refreshToken).orElseThrow(() -> new ArlasException("Invalid refresh token."));
         if (token.getUserId().equals(userId) && token.getExpiryDate() >= System.currentTimeMillis() / 1000) {
             LoginSession ls = tokenManager.getLoginSession(token.getUserId(), issuer, new Date());
             tokenDao.createOrUpdate(token.getUserId(), ls.refreshToken);
             return ls;
         } else {
-            throw new ArlasAuthException("Expired refresh token.");
+            throw new ArlasException("Expired refresh token.");
         }
     }
 
