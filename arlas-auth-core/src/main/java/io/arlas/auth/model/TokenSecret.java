@@ -27,7 +27,7 @@ public class TokenSecret {
 
     public TokenSecret(byte[] secret){
         this.secret = secret;
-    };
+    }
 
     public UUID getId() {
         return id;

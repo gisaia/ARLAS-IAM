@@ -1,4 +1,4 @@
-FROM gisaia/arlas-server:latest
+FROM gisaia/arlas-server:20.7.1-SNAPSHOT
 
 COPY arlas-auth-filter/target/arlas-auth-filter-*.jar /opt/app/arlas-auth-filter.jar
 ENV CP="./arlas-auth-filter.jar:./arlas-server.jar"

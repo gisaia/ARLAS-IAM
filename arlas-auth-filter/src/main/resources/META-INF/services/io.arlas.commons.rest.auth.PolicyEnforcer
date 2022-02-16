@@ -1,1 +1,2 @@
-io.arlas.auth.filter.impl.ArlasPolicyEnforcer
+io.arlas.auth.filter.impl.Auth0PolicyEnforcer
+io.arlas.auth.filter.impl.HTTPPolicyEnforcer

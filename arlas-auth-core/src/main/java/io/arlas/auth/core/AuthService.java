@@ -6,9 +6,7 @@ import io.arlas.auth.model.*;
 import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.commons.exceptions.NotFoundException;
 
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public interface AuthService {
     User readUser(UUID userId, boolean checkActiveVerified) throws NotFoundException;
@@ -17,6 +15,7 @@ public interface AuthService {
     DecodedJWT verifyToken(String token);
     void logout(UUID userId);
     LoginSession refresh(UUID userId, String refreshToken, String issuer) throws ArlasException;
+    String createPermissionToken(String subject, String issuer, Date iat) throws ArlasException;
 
     User createUser(String email) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
     Optional<User> readUser(UUID userId);
@@ -45,6 +44,8 @@ public interface AuthService {
     Group addRoleToGroup(User owner, UUID orgId, UUID roleId, UUID grpId) throws NotOwnerException, NotFoundException;
     Group removeRoleFromGroup(User owner, UUID orgId, UUID roleId, UUID grpId) throws NotOwnerException, NotFoundException;
 
+    Set<String> listPermissions(UUID userId) throws NotFoundException;
+    Set<String> listPermissions(UUID userId, UUID orgId) throws NotOwnerException, NotFoundException;
     Set<String> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException;
     Permission createPermission(String permission, boolean isSystem);
     User addPermissionToUser(UUID userId, UUID permissionId) throws NotFoundException;

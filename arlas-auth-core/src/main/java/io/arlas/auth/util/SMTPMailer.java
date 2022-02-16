@@ -45,8 +45,8 @@ public class SMTPMailer {
                 message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to.getEmail()));
                 message.setSubject("Please verify your email");
 
-                String msg = String.format("Follow this link to verify your email and set your password: %s/%s",
-                        this.conf.link, token);
+                String msg = "Follow this link to verify your email and set your password: " +
+                        String.format(this.conf.link, to.getId().toString(), token);
 
                 MimeBodyPart mimeBodyPart = new MimeBodyPart();
                 mimeBodyPart.setContent(msg, "text/html; charset=utf-8");
