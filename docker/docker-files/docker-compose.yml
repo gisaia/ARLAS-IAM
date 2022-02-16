@@ -55,7 +55,7 @@ services:
       - ARLAS_SMTP_USERNAME="${ARLAS_SMTP_USERNAME:-}"
       - ARLAS_SMTP_PASSWORD="${ARLAS_SMTP_PASSWORD:-}"
       - ARLAS_SMTP_FROM="${ARLAS_SMTP_FROM:-}"
-      - ARLAS_SMTP_VERIFY_LINK="${ARLAS_SMTP_VERIFY_LINK:-}"
+      - ARLAS_SMTP_VERIFY_LINK="${ARLAS_SMTP_VERIFY_LINK:-/users/%s/verify/%s}"
     ports:
       - "9997:9997"
     command: ["/opt/app/start.sh"]

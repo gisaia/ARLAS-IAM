@@ -82,7 +82,7 @@ public class HibernateAuthService implements AuthService {
     // ------- public ------------
 
     @Override
-    public User createUser(String email)
+    public User createUser(String email, String locale)
             throws InvalidEmailException, AlreadyExistsException, SendEmailException {
         if (validateEmailDomain(email).isPresent()) {
             if (userDao.readUser(email).isEmpty()) {
@@ -90,6 +90,7 @@ public class HibernateAuthService implements AuthService {
                 String verifyToken = KeyGenerators.string().generateKey();
                 // TODO add an expiration date to the token
                 user.setPassword(encode(verifyToken));
+                user.setLocale(locale);
                 // TODO add more attributes
                 user = userDao.createUser(user);
                 sendActivationEmail(user, verifyToken);

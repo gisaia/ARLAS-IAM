@@ -97,4 +97,7 @@ smtp:
   username: ${ARLAS_SMTP_USERNAME:-}
   password: ${ARLAS_SMTP_PASSWORD:-}
   from: ${ARLAS_SMTP_FROM:-}
-  link: ${ARLAS_SMTP_VERIFY_LINK:-}
+  link: ${ARLAS_SMTP_VERIFY_LINK:-/users/%s/verify/%s}
+  template_dir: ${ARLAS_SMTP_TEMPLATE_DIR:-/opt/app}
+  # can be localized, i.e. "verifyEmail_fr.ftlh", "verifyEmail_en.ftlh"...
+  template_file: ${ARLAS_SMTP_TEMPLATE_FILE:-verifyEmail.ftlh}

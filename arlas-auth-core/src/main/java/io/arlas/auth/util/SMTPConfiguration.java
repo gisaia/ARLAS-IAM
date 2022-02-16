@@ -26,4 +26,10 @@ public class SMTPConfiguration {
 
     @JsonProperty("link")
     public String link;
+
+    @JsonProperty("template_dir")
+    public String templateDir;
+
+    @JsonProperty("template_file")
+    public String templateFile;
 }

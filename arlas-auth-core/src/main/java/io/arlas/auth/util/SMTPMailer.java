@@ -1,5 +1,9 @@
 package io.arlas.auth.util;
 
+import freemarker.cache.FileTemplateLoader;
+import freemarker.cache.TemplateLoader;
+import freemarker.template.Configuration;
+import freemarker.template.TemplateException;
 import io.arlas.auth.exceptions.SendEmailException;
 import io.arlas.auth.model.User;
 import jakarta.mail.*;
@@ -10,12 +14,14 @@ import jakarta.mail.internet.MimeMultipart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Properties;
+import java.io.*;
+import java.util.*;
 
 public class SMTPMailer {
     Logger LOGGER = LoggerFactory.getLogger(SMTPMailer.class);
     private final SMTPConfiguration conf;
     private final Session session;
+    private Configuration freemarkerConf = null;
 
     public SMTPMailer(SMTPConfiguration conf) {
         this.conf = conf;
@@ -30,6 +36,13 @@ public class SMTPMailer {
                     return new PasswordAuthentication(conf.username, conf.password);
                 }
             });
+            try {
+                this.freemarkerConf = new Configuration(Configuration.VERSION_2_3_30);
+                TemplateLoader templateLoader = new FileTemplateLoader(new File(conf.templateDir));
+                freemarkerConf.setTemplateLoader(templateLoader);
+            } catch (IOException e) {
+                LOGGER.warn("Freemarker template dir not found. Will use hard coded mail content: " + conf.templateDir);
+            }
         } else {
             this.session = null;
         }
@@ -37,21 +50,18 @@ public class SMTPMailer {
     }
 
     public void sendEmail(User to, String token) throws SendEmailException {
-        // TODO use templating to make email content configurable
         if (this.conf.activated) {
             try {
                 Message message = new MimeMessage(session);
                 message.setFrom(new InternetAddress(this.conf.from));
                 message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to.getEmail()));
-                message.setSubject("Please verify your email");
+                var messages = ResourceBundle.getBundle("messages", new Locale(to.getLocale()));
+                message.setSubject(messages.getString("email.subject"));
 
-                String msg = "Follow this link to verify your email and set your password: " +
-                        String.format(this.conf.link, to.getId().toString(), token);
+                var mimeBodyPart = new MimeBodyPart();
+                mimeBodyPart.setContent(getMailContent(to, token), "text/html; charset=utf-8");
 
-                MimeBodyPart mimeBodyPart = new MimeBodyPart();
-                mimeBodyPart.setContent(msg, "text/html; charset=utf-8");
-
-                Multipart multipart = new MimeMultipart();
+                var multipart = new MimeMultipart();
                 multipart.addBodyPart(mimeBodyPart);
 
                 message.setContent(multipart);
@@ -63,5 +73,22 @@ public class SMTPMailer {
         } else {
             LOGGER.warn(String.format("SMTP client not activated. Verification token: %s", token));
         }
+    }
+
+    public String getMailContent(User to, String token) {
+        var link = String.format(this.conf.link, to.getId().toString(), token);
+        if (this.freemarkerConf != null) {
+            try {
+                var mailTemplate = freemarkerConf.getTemplate(conf.templateFile, new Locale(to.getLocale()));
+                var params = new HashMap<String, String>();
+                params.put("link", link);
+                Writer out = new StringWriter();
+                mailTemplate.process(params, out);
+                return out.toString();
+            } catch (TemplateException | IOException e) {
+                LOGGER.warn("Exception while processing email template. Will use hard coded mail content", e);
+            }
+        }
+        return "Follow this link to verify your email and set your password: " + link;
     }
 }

@@ -23,4 +23,5 @@ module arlas.auth.core {
     requires org.hibernate.orm.core;
     requires org.slf4j;
     requires spring.security.crypto;
+    requires freemarker;
 }
