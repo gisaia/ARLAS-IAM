@@ -91,8 +91,9 @@ public class HibernateAuthService implements AuthService {
                 // TODO add an expiration date to the token
                 user.setPassword(encode(verifyToken));
                 // TODO add more attributes
+                user = userDao.createUser(user);
                 sendActivationEmail(user, verifyToken);
-                return userDao.createUser(user);
+                return user;
             } else {
                 throw new AlreadyExistsException("User already exists.");
             }
@@ -150,6 +151,12 @@ public class HibernateAuthService implements AuthService {
         } else {
             throw new ArlasException("Expired refresh token.");
         }
+    }
+
+    @Override
+    public String createPermissionToken(String subject, String issuer, Date iat)
+            throws ArlasException {
+        return tokenManager.createPermissionToken(subject, issuer, iat, listPermissions(UUID.fromString(subject)));
     }
 
     @Override
@@ -345,19 +352,40 @@ public class HibernateAuthService implements AuthService {
                 org.getGroups().stream().filter(g -> g.is(grpId)).findFirst().orElseThrow(NotFoundException::new));
     }
 
+    private Set<String> listPermissions(User user, Organisation org) {
+        Set<Permission> permissions = new HashSet<>(user.getPermissions());
+        user.getRoles().stream()
+                .filter(r -> r.getOrganisations().contains(org))
+                .forEach(r -> permissions.addAll(r.getPermissions()));
+        user.getGroups().stream()
+                .filter(g -> g.getOrganisation().is(org.getId()))
+                .forEach(g -> g.getRoles().forEach(r -> permissions.addAll(r.getPermissions())));
+        return permissions.stream().map(Permission::getValue).collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<String> listPermissions(UUID userId) throws NotFoundException {
+        User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
+        Set<String> permissions = new HashSet<>();
+        for (OrganisationMember org : user.getOrganisations()) {
+            permissions.addAll(listPermissions(user, org.getOrganisation()));
+        }
+        return permissions;
+    }
+
+    @Override
+    public Set<String> listPermissions(UUID userId, UUID orgId) throws NotOwnerException, NotFoundException {
+        User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
+        Organisation org = getOrganisation(user, orgId, false);
+        return listPermissions(user, org);
+    }
+
     @Override
     public Set<String> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException {
         Organisation ownerOrg = getOrganisation(owner, orgId, true);
         User user = userDao.readUser(userId).orElseThrow(NotFoundException::new);
         getOrganisation(user, orgId, false);
-        Set<Permission> permissions = new HashSet<>(user.getPermissions());
-        user.getRoles().stream()
-                .filter(r -> r.getOrganisations().contains(ownerOrg))
-                .forEach(r -> permissions.addAll(r.getPermissions()));
-        user.getGroups().stream()
-                .filter(g -> g.getOrganisation().is(orgId))
-                .forEach(g -> g.getRoles().forEach(r -> permissions.addAll(r.getPermissions())));
-        return permissions.stream().map(Permission::getValue).collect(Collectors.toSet());
+        return listPermissions(user, ownerOrg);
     }
 
     @Override

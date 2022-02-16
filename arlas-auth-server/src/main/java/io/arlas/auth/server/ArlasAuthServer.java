@@ -4,11 +4,12 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.arlas.auth.core.AuthService;
-import io.arlas.auth.filter.impl.ArlasPolicyEnforcer;
+import io.arlas.auth.impl.ArlasPolicyEnforcer;
 import io.arlas.auth.impl.HibernateAuthService;
 import io.arlas.auth.model.*;
 import io.arlas.auth.rest.service.AuthRestService;
 import io.arlas.auth.util.ArlasAuthServerConfiguration;
+import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.config.ArlasCorsConfiguration;
 import io.arlas.commons.rest.utils.InsensitiveCaseFilter;
 import io.arlas.commons.rest.utils.PrettyPrintFilter;
@@ -21,6 +22,7 @@ import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.hibernate.HibernateBundle;
+import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
 import io.dropwizard.jersey.jackson.JsonProcessingExceptionMapper;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -92,12 +94,16 @@ public class ArlasAuthServer extends Application<ArlasAuthServerConfiguration> {
 
         AuthService authService = new HibernateAuthService(hibernate.getSessionFactory(), configuration);
         environment.jersey().register(new AuthRestService(authService, configuration));
-        environment.jersey().register(new ArlasPolicyEnforcer(configuration.arlasAuthConfiguration));
+
+        ArlasPolicyEnforcer arlasPolicyEnforcer = new UnitOfWorkAwareProxyFactory(hibernate)
+                .create(ArlasPolicyEnforcer.class, new Class[]{ AuthService.class, ArlasAuthConfiguration.class },
+                        new Object[]{ authService, configuration.arlasAuthConfiguration });
+        environment.jersey().register(arlasPolicyEnforcer);
 
         //cors
         if (configuration.arlasCorsConfiguration.enabled) {
-            configureCors(environment,configuration.arlasCorsConfiguration);
-        }else{
+            configureCors(environment, configuration.arlasCorsConfiguration);
+        } else {
             CrossOriginFilter filter = new CrossOriginFilter();
             final FilterRegistration.Dynamic cors = environment.servlets().addFilter("CrossOriginFilter", filter);
             // Expose always HttpHeaders.WWW_AUTHENTICATE to authenticate on client side a non public uri call
@@ -119,7 +125,7 @@ public class ArlasAuthServer extends Application<ArlasAuthServerConfiguration> {
         cors.setInitParameter(CrossOriginFilter.ALLOW_CREDENTIALS_PARAM, String.valueOf(configuration.allowedCredentials));
         String exposedHeader = configuration.exposedHeaders;
         // Expose always HttpHeaders.WWW_AUTHENTICATE to authentify on client side a non public uri call
-        if(configuration.exposedHeaders.indexOf(HttpHeaders.WWW_AUTHENTICATE) < 0) {
+        if (!configuration.exposedHeaders.contains(HttpHeaders.WWW_AUTHENTICATE)) {
             exposedHeader = configuration.exposedHeaders.concat(",").concat(HttpHeaders.WWW_AUTHENTICATE);
         }
         cors.setInitParameter(CrossOriginFilter.EXPOSED_HEADERS_PARAM, exposedHeader);

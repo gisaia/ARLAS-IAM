@@ -13,7 +13,7 @@ public class SMTPConfiguration {
     public String host;
 
     @JsonProperty("port")
-    public String port;
+    public String port = "25";
 
     @JsonProperty("from")
     public String from;

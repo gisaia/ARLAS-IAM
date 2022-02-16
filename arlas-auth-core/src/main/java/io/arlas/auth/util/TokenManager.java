@@ -6,6 +6,7 @@ import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import io.arlas.auth.core.TokenSecretDao;
+import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.auth.impl.HibernateTokenSecretDao;
 import io.arlas.auth.model.LoginSession;
@@ -14,6 +15,7 @@ import org.hibernate.SessionFactory;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
 import java.util.Date;
+import java.util.Set;
 import java.util.UUID;
 
 public class TokenManager {
@@ -24,12 +26,15 @@ public class TokenManager {
     private byte[] secret;
     private boolean isSecretStored = false;
     private final TokenSecretDao tokenSecretDao;
+    private final ArlasAuthConfiguration authConf;
+
 
     public TokenManager(SessionFactory factory, ArlasAuthServerConfiguration configuration) {
         this.tokenSecretDao = new HibernateTokenSecretDao(factory);
         this.accessTokenTTL = configuration.accessTokenTTL;
         this.refreshTokenTTL = configuration.refreshTokenTTL;
         this.secret = KeyGenerators.secureRandom(32).generateKey();
+        this.authConf = configuration.arlasAuthConfiguration;
     }
 
     private void storeSecret() {
@@ -52,6 +57,22 @@ public class TokenManager {
     public LoginSession getLoginSession(UUID subject, String issuer, Date iat) throws ArlasException {
         return new LoginSession(subject, createAccessToken(subject.toString(), issuer, iat),
                 createRefreshToken(), (iat.getTime() + this.refreshTokenTTL)/1000);
+    }
+
+    public String createPermissionToken(String subject, String issuer, Date iat, Set<String> permissions) throws ArlasException {
+        try {
+            storeSecret();
+            Date exp = new Date(iat.getTime() + this.accessTokenTTL);
+            return JWT.create()
+                    .withIssuer(issuer)
+                    .withSubject(subject)
+                    .withIssuedAt(iat)
+                    .withExpiresAt(exp)
+                    .withClaim(this.authConf.claimPermissions, permissions.stream().toList())
+                    .sign(this.algorithm);
+        } catch (JWTCreationException exception){
+            throw new ArlasException("Invalid Signing configuration / Couldn't convert Claims.");
+        }
     }
 
     private String createAccessToken(String subject, String issuer, Date iat) throws ArlasException {

@@ -15,6 +15,7 @@ module arlas.auth.server {
     requires dropwizard.jetty;
     requires dropwizard.swagger;
     requires java.servlet;
+    requires java.ws.rs;
     requires jersey.media.multipart;
     requires org.slf4j;
     requires org.eclipse.jetty.servlets;

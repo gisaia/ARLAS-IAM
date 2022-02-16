@@ -1,7 +1,7 @@
 package io.arlas.auth.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.arlas.auth.filter.impl.ArlasPolicyEnforcer;
+import io.arlas.auth.impl.ArlasPolicyEnforcer;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.config.ArlasCorsConfiguration;
 import io.arlas.commons.exceptions.ArlasConfigurationException;

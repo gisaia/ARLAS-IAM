@@ -20,14 +20,11 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
-@Path("/auth")
-@Api(value = "/auth")
+@Path("/")
+@Api(value = "/")
 @SwaggerDefinition(
         info = @Info(contact = @Contact(email = "contact@gisaia.com", name = "Gisaia", url = "http://www.gisaia.com/"),
                 title = "ARLAS auth API",
@@ -111,7 +108,7 @@ public class AuthRestService {
         authService.logout(getUser(headers).getId());
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity("Session deleted.")
-                .type("text/html")
+                .type("text/plain")
                 .build();
     }
 
@@ -176,7 +173,7 @@ public class AuthRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
+    @ApiOperation(
             value = "Verify a user (through link received by email)",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -260,7 +257,7 @@ public class AuthRestService {
         authService.deleteUser(UUID.fromString(id));
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity("User deleted.")
-                .type("text/html")
+                .type("text/plain")
                 .build();
 
     }
@@ -377,7 +374,7 @@ public class AuthRestService {
         authService.deleteOrganisation(getUser(headers), UUID.fromString(oid));
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity("organisation deleted")
-                .type("text/html")
+                .type("text/plain")
                 .build();
     }
 
@@ -756,6 +753,32 @@ public class AuthRestService {
     //----------------- permissions -----------------
 
     @Timed
+    @Path("permissions")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Get permissions for a user given access token",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork(readOnly = true)
+    public Response getPermissionToken(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers
+    ) throws ArlasException {
+
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.createPermissionToken(getIdentityParam(headers).userId, uriInfo.getBaseUri().getHost(), new Date()))
+                .type("text/plain")
+                .build();
+    }
+
+    @Timed
     @Path("organisations/{oid}/users/{uid}/permissions")
     @GET
     @Produces(UTF8JSON)
@@ -967,10 +990,10 @@ public class AuthRestService {
 
         List<String> groups = Arrays.stream(
                         Optional.ofNullable(headers.getHeaderString(this.groupsHeader)).orElse("group/public").split(","))
-                .map(g -> g.trim())
+                .map(String::trim)
                 .collect(Collectors.toList());
 
-        LOGGER.debug("User='" + userId + "' / Org='" + organization + "' / Groups='" + groups.toString() + "'");
+        LOGGER.debug("User='" + userId + "' / Org='" + organization + "' / Groups='" + groups + "'");
         return new IdentityParam(userId, organization, groups);
     }
 

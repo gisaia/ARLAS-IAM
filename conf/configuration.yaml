@@ -35,7 +35,7 @@ swagger: # Configuration of SWAGGER for generating documentation and APIs
   resourcePackage: io.arlas.auth.rest.service # The java package to process for extracting the APIs
   # temporary patch for bug https://github.com/smoketurner/dropwizard-swagger/issues/206
   # to be removed when version of dropwizard.swagger.version is upgraded
-  customJavascript: "/arlas_auth_server/swagger-static/custom-request-interceptor.js"
+  customJavascript: ${ARLAS_AUTH_CUSTOM_JS:-/arlas_auth_server/swagger-static/custom-request-interceptor.js}
 
 arlas-base-uri: ${ARLAS_AUTH_BASE_URI:-}
 
@@ -49,8 +49,9 @@ arlas_cors:
 
 arlas_auth:
   enabled: ${ARLAS_AUTH_ENABLED:-false}
-  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger.*:*,auth/session:POST,auth/users:POST}]
-  login_url: ${ARLAS_AUTH_LOGIN_URL:-}
+  policy_class: ${ARLAS_AUTH_POLICY_CLASS:-io.arlas.auth.impl.ArlasPolicyEnforcer}
+  permission_url: ${ARLAS_AUTH_PERMISSION_URL:-}
+  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST,permissions:GET}]
   # deprecated
   certificate_file: ${ARLAS_AUTH_CERT_FILE:-/opt/app/arlas.pem}
   certificate_url: ${ARLAS_AUTH_CERT_URL:-}
@@ -75,9 +76,8 @@ database:
   properties:
     charSet: UTF-8
     hibernate.dialect: ${ARLAS_AUTH_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}
-    hibernate.hbm2ddl.auto: update
+    hibernate.hbm2ddl.auto: ${ARLAS_AUTH_HIBERNATE_HBM2DDL:-update}
     hibernate.session.events.log: false
-    javax.persistence.schema-generation.database.action: update
   # the maximum amount of time to wait on an empty pool before throwing an exception
   maxWaitForConnection: 1s
   # the SQL query to run when validating a connection's liveness

@@ -8,7 +8,7 @@ function clean_docker {
 		-w /opt/maven \
 		-v $PWD:/opt/maven \
 		-v $HOME/.m2:/root/.m2 \
-		maven:3.8.2-openjdk-17 \
+		maven:3.8.4-openjdk-17 \
 		mvn clean
 }
 
@@ -62,7 +62,7 @@ function test_rest_server() {
         -e ARLAS_AUTH_APP_PATH=${ARLAS_AUTH_APP_PATH} \
         -e ARLAS_AUTH_DATADIR="/tmp/auth" \
         --network arlasauth_default \
-        maven:3.8.2-openjdk-17 \
+        maven:3.8.4-openjdk-17 \
         mvn -Dit.test=AuthIT verify -DskipTests=false -DfailIfNoTests=false
 }
 

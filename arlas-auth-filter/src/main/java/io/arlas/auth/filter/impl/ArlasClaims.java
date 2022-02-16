@@ -1,4 +1,4 @@
-package io.arlas.auth.filter;
+package io.arlas.auth.filter.impl;
 
 import co.elastic.apm.api.Transaction;
 import org.slf4j.Logger;
@@ -12,9 +12,9 @@ import java.util.regex.Pattern;
 // TODO: copy from ARLAS Server. To be refactored
 public class ArlasClaims {
     private final Logger LOGGER = LoggerFactory.getLogger(ArlasClaims.class);
-    private List<RuleClaim> rules;
-    private Map<String, List<String>> headers;
-    private Map<String, String> variables;
+    private final List<RuleClaim> rules;
+    private final Map<String, List<String>> headers;
+    private final Map<String, String> variables;
 
     public ArlasClaims(List<String> claims) {
         this.rules = new ArrayList<>();
@@ -27,32 +27,24 @@ public class ArlasClaims {
             String[] splitClaim = claim.split(":", 3);
             if (splitClaim.length == 3) {
                 switch (splitClaim[0].toLowerCase().trim()) {
-                    case "r":
-                    case "rule":
+                    case "r", "rule" -> {
                         String[] remains = splitClaim[2].split(":");
                         if (remains.length == 2) {
                             rules.add(new RuleClaim(splitClaim[1], remains[0], Integer.valueOf(remains[1].trim())));
                         } else {
                             LOGGER.warn("Invalid rule claim format: " + claim);
                         }
-                        break;
-                    case "h":
-                    case "header":
+                    }
+                    case "h", "header" -> {
                         List<String> v = headers.get(splitClaim[1]);
                         if (v == null) {
                             v = new ArrayList();
                         }
                         v.add(splitClaim[2]);
                         headers.put(splitClaim[1], v);
-
-                        break;
-                    case "v":
-                    case "var":
-                    case "variable":
-                        variables.put(splitClaim[1], splitClaim[2]);
-                        break;
-                    default:
-                        LOGGER.warn("Unknown claim format: " + claim);
+                    }
+                    case "v", "var", "variable" -> variables.put(splitClaim[1], splitClaim[2]);
+                    default -> LOGGER.warn("Unknown claim format: " + claim);
                 }
             } else {
                 LOGGER.warn("Skipping invalid claim format: " + claim);
@@ -60,16 +52,16 @@ public class ArlasClaims {
         }
 
         Collections.sort(rules);
-        variables.forEach((var,val) -> injectVariable(var,val));
+        variables.forEach(this::injectVariable);
     }
 
     public boolean isAllowed(String method, String path) {
         for (RuleClaim rule : rules) {
             if (rule.match(method, path)) {
-                LOGGER.debug("Matching rule '" + rule.toString() +"' for path '" + path + "' with method " + method);
+                LOGGER.debug("Matching rule '" + rule +"' for path '" + path + "' with method " + method);
                 return true; // stop at first matching rule
             }
-            LOGGER.debug("NON Matching rule '" + rule.toString() +"' for path '" + path + "' with method " + method);
+            LOGGER.debug("NON Matching rule '" + rule +"' for path '" + path + "' with method " + method);
         }
         return false;
     }

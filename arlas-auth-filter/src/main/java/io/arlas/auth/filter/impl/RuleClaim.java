@@ -1,4 +1,4 @@
-package io.arlas.auth.filter;
+package io.arlas.auth.filter.impl;
 
 // TODO: copy from ARLAS Server. To be refactored
 public class RuleClaim implements Comparable {

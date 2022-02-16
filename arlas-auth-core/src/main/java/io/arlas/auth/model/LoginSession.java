@@ -6,7 +6,7 @@ public class LoginSession {
     public String accessToken; // JWT
     public RefreshToken refreshToken;
 
-    public LoginSession(){};
+    public LoginSession(){}
 
     public LoginSession(UUID subject, String accessToken, String refreshToken, long refreshTokenExpiryDate) {
         this.accessToken = accessToken;
