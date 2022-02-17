@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y bash netcat-openbsd curl
 
 # application placed into /opt/app
 WORKDIR /opt/app
+ADD arlas-auth-core/src/main/resources/templates/*.ftlh /opt/app/
 ADD arlas-auth-server/target/arlas-auth-server*.jar /opt/app/arlas-auth-server.jar
 ADD conf/configuration.yaml /opt/app/configuration.yaml
 ADD docker/docker-resources/start.sh /opt/app/start.sh

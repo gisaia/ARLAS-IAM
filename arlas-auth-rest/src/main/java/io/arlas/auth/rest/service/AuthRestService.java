@@ -5,6 +5,7 @@ import io.arlas.auth.core.AuthService;
 import io.arlas.auth.exceptions.*;
 import io.arlas.auth.model.*;
 import io.arlas.auth.rest.model.LoginData;
+import io.arlas.auth.rest.model.NewUserData;
 import io.arlas.auth.rest.model.Permissions;
 import io.arlas.auth.rest.model.UpdateData;
 import io.arlas.auth.util.ArlasAuthServerConfiguration;
@@ -159,11 +160,11 @@ public class AuthRestService {
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "email", required = true)
-            @NotNull @Valid String email
+            @ApiParam(name = "userData", required = true)
+            @NotNull @Valid NewUserData userData
     ) throws AlreadyExistsException, InvalidEmailException, SendEmailException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.createUser(email))
+                .entity(authService.createUser(userData.email, userData.locale))
                 .type("application/json")
                 .build();
     }

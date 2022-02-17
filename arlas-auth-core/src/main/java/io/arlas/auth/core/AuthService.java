@@ -17,7 +17,7 @@ public interface AuthService {
     LoginSession refresh(UUID userId, String refreshToken, String issuer) throws ArlasException;
     String createPermissionToken(String subject, String issuer, Date iat) throws ArlasException;
 
-    User createUser(String email) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
+    User createUser(String email, String locale) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
     Optional<User> readUser(UUID userId);
     User updateUser(User user, String oldPassword, String newPassword) throws NonMatchingPasswordException;
     void deleteUser(UUID userId);
