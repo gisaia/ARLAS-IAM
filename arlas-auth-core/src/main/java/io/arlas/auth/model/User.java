@@ -8,6 +8,7 @@ import org.hibernate.annotations.NaturalId;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
 
@@ -38,6 +39,9 @@ public class User {
 
     @Column
     private String locale = Locale.ENGLISH.toString();
+
+    @Column
+    private String timezone = "Europe/Paris";
 
     @Column
     private LocalDateTime creationDate = LocalDateTime.now(ZoneOffset.UTC);
@@ -122,6 +126,14 @@ public class User {
     public User setLocale(String locale) {
         this.locale = locale;
         return this;
+    }
+
+    public String getTimezone() {
+        return timezone;
+    }
+
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
     }
 
     public LocalDateTime getCreationDate() {

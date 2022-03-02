@@ -29,6 +29,7 @@ public class HibernateAuthService implements AuthService {
     private final BCryptPasswordEncoder encoder;
     private final SMTPMailer mailer;
     private final TokenManager tokenManager;
+    private final boolean verifyEmail; // set to true in production, false in testing mode
 
     // this regex will do a basic check (verification will be done by sending an email to the user) and extract domain
     private static final Pattern emailRegex = Pattern.compile("(?<=@)[^.]+(?=\\.)");
@@ -44,6 +45,7 @@ public class HibernateAuthService implements AuthService {
         this.encoder = new BCryptPasswordEncoder();
         this.mailer = new SMTPMailer(conf.smtp);
         this.tokenManager = new TokenManager(factory, conf);
+        this.verifyEmail = conf.verifyEmail;
     }
 
     // ------- private ------------
@@ -82,15 +84,18 @@ public class HibernateAuthService implements AuthService {
     // ------- public ------------
 
     @Override
-    public User createUser(String email, String locale)
+    public User createUser(String email, String locale, String timezone)
             throws InvalidEmailException, AlreadyExistsException, SendEmailException {
         if (validateEmailDomain(email).isPresent()) {
             if (userDao.readUser(email).isEmpty()) {
                 User user = new User(email);
-                String verifyToken = KeyGenerators.string().generateKey();
+                // in testing mode, we set the password to a known value
+                String verifyToken = this.verifyEmail ? KeyGenerators.string().generateKey() : "secret";
                 // TODO add an expiration date to the token
                 user.setPassword(encode(verifyToken));
                 user.setLocale(locale);
+                user.setTimezone(timezone);
+                user.setVerified(!this.verifyEmail);
                 // TODO add more attributes
                 user = userDao.createUser(user);
                 sendActivationEmail(user, verifyToken);
@@ -123,7 +128,7 @@ public class HibernateAuthService implements AuthService {
             throws ArlasException {
         User user = userDao.readUser(email).orElseThrow(NotFoundException::new);
         if (user.isActive() && user.isVerified() && matches(password, user.getPassword())) {
-            LoginSession ls = tokenManager.getLoginSession(user.getId(), issuer, new Date());
+            LoginSession ls = tokenManager.getLoginSession(user, issuer, new Date());
             tokenDao.createOrUpdate(user.getId(), ls.refreshToken);
             return ls;
         } else {
@@ -143,10 +148,10 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public LoginSession refresh(UUID userId, String refreshToken, String issuer) throws ArlasException {
+    public LoginSession refresh(User user, String refreshToken, String issuer) throws ArlasException {
         RefreshToken token = tokenDao.read(refreshToken).orElseThrow(() -> new ArlasException("Invalid refresh token."));
-        if (token.getUserId().equals(userId) && token.getExpiryDate() >= System.currentTimeMillis() / 1000) {
-            LoginSession ls = tokenManager.getLoginSession(token.getUserId(), issuer, new Date());
+        if (user.is(token.getUserId()) && token.getExpiryDate() >= System.currentTimeMillis() / 1000) {
+            LoginSession ls = tokenManager.getLoginSession(user, issuer, new Date());
             tokenDao.createOrUpdate(token.getUserId(), ls.refreshToken);
             return ls;
         } else {

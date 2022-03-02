@@ -64,6 +64,8 @@ arlas_organization_header: ${ARLAS_ORGANIZATION_HEADER:-arlas-organization}
 anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}
 access_token_ttl: ${ARLAS_ACCESS_TOKEN_TTL:-600000}
 refresh_token_ttl: ${ARLAS_REFRESH_TOKEN_TTL:-3600000}
+# set this to "false" if you don't want new users to verify their email
+verify_email: ${ARLAS_AUTH_VERIFY_EMAIL:-true}
 
 database:
   # the name of your JDBC driver

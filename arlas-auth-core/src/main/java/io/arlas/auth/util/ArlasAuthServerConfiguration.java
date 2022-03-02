@@ -30,6 +30,9 @@ public class ArlasAuthServerConfiguration extends Configuration {
     @JsonProperty("refresh_token_ttl")
     public long refreshTokenTTL;
 
+    @JsonProperty("verify_email")
+    public boolean verifyEmail;
+
     @JsonProperty("arlas-base-uri")
     public String arlasBaseUri;
 
