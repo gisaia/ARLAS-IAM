@@ -6,6 +6,7 @@ import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import io.arlas.auth.core.TokenSecretDao;
+import io.arlas.auth.model.User;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.auth.impl.HibernateTokenSecretDao;
@@ -54,8 +55,8 @@ public class TokenManager {
         return jwtVerifier.verify(token);
     }
 
-    public LoginSession getLoginSession(UUID subject, String issuer, Date iat) throws ArlasException {
-        return new LoginSession(subject, createAccessToken(subject.toString(), issuer, iat),
+    public LoginSession getLoginSession(User subject, String issuer, Date iat) throws ArlasException {
+        return new LoginSession(subject, createAccessToken(subject, issuer, iat),
                 createRefreshToken(), (iat.getTime() + this.refreshTokenTTL)/1000);
     }
 
@@ -75,15 +76,17 @@ public class TokenManager {
         }
     }
 
-    private String createAccessToken(String subject, String issuer, Date iat) throws ArlasException {
+    private String createAccessToken(User subject, String issuer, Date iat) throws ArlasException {
         try {
             storeSecret();
             Date exp = new Date(iat.getTime() + this.accessTokenTTL);
             return JWT.create()
                     .withIssuer(issuer)
-                    .withSubject(subject)
+                    .withSubject(subject.getId().toString())
                     .withIssuedAt(iat)
                     .withExpiresAt(exp)
+                    .withClaim("locale", subject.getLocale())
+                    .withClaim("timezone", subject.getTimezone())
                     .sign(this.algorithm);
         } catch (JWTCreationException exception){
             throw new ArlasException("Invalid Signing configuration / Couldn't convert Claims.");

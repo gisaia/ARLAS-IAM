@@ -15,22 +15,22 @@ services:
     volumes:
       - ${ARLAS_AUTH_DATADIR:-/tmp}:/var/lib/postgresql/data
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: pgadmin
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: tech@gisaia.com
-      PGADMIN_DEFAULT_PASSWORD: secret
-      PGADMIN_LISTEN_PORT: 80
-    ports:
-      - "8080:80"
-    volumes:
-    # on your local host: chmod -R 777 /home/user/projects/postgis/pgadmin
-    #- /home/user/projects/postgis/pgadmin/servers.json:/pgadmin4/servers.json
-    #- /home/user/projects/postgis/pgadmin/data:/var/lib/pgadmin
-      - ${PGA_CONFIG}:/pgadmin4/servers.json
-      - ${PGA_DATADIR}:/var/lib/pgadmin
+#  pgadmin:
+#    image: dpage/pgadmin4:latest
+#    container_name: pgadmin
+#    restart: always
+#    environment:
+#      PGADMIN_DEFAULT_EMAIL: tech@gisaia.com
+#      PGADMIN_DEFAULT_PASSWORD: secret
+#      PGADMIN_LISTEN_PORT: 80
+#    ports:
+#      - "8080:80"
+#    volumes:
+#    # on your local host: chmod -R 777 /home/user/projects/postgis/pgadmin
+#    #- /home/user/projects/postgis/pgadmin/servers.json:/pgadmin4/servers.json
+#    #- /home/user/projects/postgis/pgadmin/data:/var/lib/pgadmin
+#      - ${PGA_CONFIG}:/pgadmin4/servers.json
+#      - ${PGA_DATADIR}:/var/lib/pgadmin
 
   arlas-auth-server:
     build:
@@ -44,6 +44,8 @@ services:
       - ARLAS_AUTH_PREFIX="${ARLAS_AUTH_PREFIX:-/arlas_auth_server}"
       - ARLAS_AUTH_APP_PATH="${ARLAS_AUTH_APP_PATH:-/}"
       - ARLAS_ANONYMOUS_VALUE="${ARLAS_ANONYMOUS_VALUE:-anonymous}"
+      - ARLAS_AUTH_PUBLIC_URIS="${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST,permissions:GET}"
+      - ARLAS_AUTH_VERIFY_EMAIL="${ARLAS_AUTH_VERIFY_EMAIL:-true}"
       - ARLAS_AUTH_HIBERNATE_URL="${ARLAS_AUTH_HIBERNATE_URL:-jdbc:postgresql://db:5432/arlas_auth}"
       - ARLAS_AUTH_HIBERNATE_USER="${ARLAS_AUTH_HIBERNATE_USER:-pg-user}"
       - ARLAS_AUTH_HIBERNATE_PASSWORD="${ARLAS_AUTH_HIBERNATE_PASSWORD:-iAMs00perSecrEET}"

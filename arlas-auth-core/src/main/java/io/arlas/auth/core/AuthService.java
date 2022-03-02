@@ -14,10 +14,10 @@ public interface AuthService {
     LoginSession login(String email, String password, String issuer) throws ArlasException;
     DecodedJWT verifyToken(String token);
     void logout(UUID userId);
-    LoginSession refresh(UUID userId, String refreshToken, String issuer) throws ArlasException;
+    LoginSession refresh(User user, String refreshToken, String issuer) throws ArlasException;
     String createPermissionToken(String subject, String issuer, Date iat) throws ArlasException;
 
-    User createUser(String email, String locale) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
+    User createUser(String email, String locale, String timezone) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
     Optional<User> readUser(UUID userId);
     User updateUser(User user, String oldPassword, String newPassword) throws NonMatchingPasswordException;
     void deleteUser(UUID userId);

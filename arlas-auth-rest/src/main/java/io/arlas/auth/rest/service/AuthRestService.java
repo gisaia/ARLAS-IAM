@@ -136,7 +136,7 @@ public class AuthRestService {
             @PathParam(value = "refreshToken") String refreshToken
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.refresh(getUser(headers).getId(), refreshToken, uriInfo.getBaseUri().getHost()))
+                .entity(authService.refresh(getUser(headers), refreshToken, uriInfo.getBaseUri().getHost()))
                 .type("application/json")
                 .build();
     }
@@ -164,7 +164,7 @@ public class AuthRestService {
             @NotNull @Valid NewUserData userData
     ) throws AlreadyExistsException, InvalidEmailException, SendEmailException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.createUser(userData.email, userData.locale))
+                .entity(authService.createUser(userData.email, userData.locale, userData.timezone))
                 .type("application/json")
                 .build();
     }
