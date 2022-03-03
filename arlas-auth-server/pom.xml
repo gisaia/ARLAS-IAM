@@ -3,8 +3,8 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>arlas-auth-parent</artifactId>
-        <groupId>io.arlas.auth</groupId>
+        <artifactId>arlas-ums-parent</artifactId>
+        <groupId>io.arlas.ums</groupId>
         <version>20.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -13,8 +13,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.arlas.auth</groupId>
-            <artifactId>arlas-auth-rest</artifactId>
+            <groupId>io.arlas.ums</groupId>
+            <artifactId>arlas-ums-rest</artifactId>
             <version>20.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>

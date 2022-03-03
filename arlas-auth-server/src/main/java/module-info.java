@@ -1,8 +1,8 @@
 module arlas.auth.server {
     exports io.arlas.auth.server;
 
-    requires arlas.auth.filter;
-    requires arlas.auth.rest;
+    requires arlas.ums.filter;
+    requires arlas.ums.rest;
 
     requires com.fasterxml.jackson.annotation;
     requires com.fasterxml.jackson.databind;

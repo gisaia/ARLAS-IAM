@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y bash netcat-openbsd curl
 WORKDIR /opt/app
 COPY --from=build /opt/build/arlas-auth-server.jar /opt/app/
 COPY --from=build /opt/build/conf/configuration.yaml /opt/app/
-COPY --from=build /opt/build/arlas-auth-core/src/main/resources/templates/*.ftlh /opt/app/
+COPY --from=build /opt/build/arlas-ums-core/src/main/resources/templates/*.ftlh /opt/app/
 COPY --from=build /opt/build/docker/docker-resources/start.sh /opt/app/
 EXPOSE 9997
 
