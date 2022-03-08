@@ -13,6 +13,7 @@
         <module>arlas-ums-rest</module>
         <module>arlas-ums-tests</module>
         <module>arlas-ums-filter</module>
+        <module>arlas-idp-server</module>
     </modules>
     <packaging>pom</packaging>
     <name>ARLAS UMS parent</name>

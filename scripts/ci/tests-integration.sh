@@ -29,9 +29,9 @@ cd ${SCRIPT_PATH}/../..
 
 function start_stack() {
   mkdir -p /tmp/auth
-  export ARLAS_AUTH_DATADIR="/tmp/auth"
-  export ARLAS_AUTH_VERIFY_EMAIL=false
-  export ARLAS_AUTH_PUBLIC_URIS=".*"
+  export ARLAS_UMS_DATADIR="/tmp/auth"
+  export ARLAS_UMS_VERIFY_EMAIL=false
+  export ARLAS_UMS_PUBLIC_URIS=".*"
   ./scripts/docker-clean.sh
   ./scripts/docker-run.sh --build
 }
@@ -43,11 +43,11 @@ function test_rest_server() {
         -w /opt/maven \
         -v $PWD:/opt/maven \
         -v $HOME/.m2:/root/.m2 \
-        -e ARLAS_AUTH_HOST="arlas-auth-server" \
-        -e ARLAS_AUTH_PREFIX="arlas_auth_server" \
-        -e ARLAS_AUTH_APP_PATH=${ARLAS_AUTH_APP_PATH} \
-        -e ARLAS_AUTH_DATADIR="/tmp/auth" \
-        --network arlasauth_default \
+        -e ARLAS_UMS_HOST="arlas-idp-server" \
+        -e ARLAS_UMS_PREFIX="arlas_idp_server" \
+        -e ARLAS_UMS_APP_PATH=${ARLAS_UMS_APP_PATH} \
+        -e ARLAS_UMS_DATADIR="/tmp/auth" \
+        --network arlasums_default \
         maven:3.8.4-openjdk-17 \
         mvn -Dit.test=AuthITUser verify -DskipTests=false -DfailIfNoTests=false
 }
