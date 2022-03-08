@@ -6,14 +6,14 @@ services:
     container_name: db
     restart: always
     environment:
-      POSTGRES_USER: ${ARLAS_AUTH_HIBERNATE_USER:-pg-user}
-      POSTGRES_PASSWORD: ${ARLAS_AUTH_HIBERNATE_PASSWORD:-iAMs00perSecrEET}
-      POSTGRES_DB: arlas_auth
+      POSTGRES_USER: ${ARLAS_UMS_HIBERNATE_USER:-pg-user}
+      POSTGRES_PASSWORD: ${ARLAS_UMS_HIBERNATE_PASSWORD:-iAMs00perSecrEET}
+      POSTGRES_DB: arlas_ums
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5432:5432"
     volumes:
-      - ${ARLAS_AUTH_DATADIR:-/tmp}:/var/lib/postgresql/data
+      - ${ARLAS_UMS_DATADIR:-/tmp}:/var/lib/postgresql/data
 
 #  pgadmin:
 #    image: dpage/pgadmin4:latest
@@ -35,22 +35,45 @@ services:
   arlas-auth-server:
     build:
       context: ../..
-      dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-package-only}
-    image: gisaia/arlas-auth-server:${ARLAS_AUTH_SERVER_VERSION:-latest}
+      dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-auth-package-only}
+    image: gisaia/arlas-auth-server:${ARLAS_UMS_SERVER_VERSION:-latest}
     container_name: arlas-auth-server
     environment:
-      - ARLAS_AUTH_HOST="${ARLAS_AUTH_HOST:-localhost}"
-      - ARLAS_AUTH_PORT="${ARLAS_AUTH_PORT:-9997}"
-      - ARLAS_AUTH_PREFIX="${ARLAS_AUTH_PREFIX:-/arlas_auth_server}"
-      - ARLAS_AUTH_APP_PATH="${ARLAS_AUTH_APP_PATH:-/}"
+      - ARLAS_UMS_HOST="${ARLAS_UMS_HOST:-localhost}"
+      - ARLAS_UMS_PORT="${ARLAS_UMS_PORT:-9997}"
+      - ARLAS_UMS_PREFIX="${ARLAS_UMS_PREFIX:-/arlas_auth_server}"
+      - ARLAS_UMS_APP_PATH="${ARLAS_UMS_APP_PATH:-/}"
       - ARLAS_ANONYMOUS_VALUE="${ARLAS_ANONYMOUS_VALUE:-anonymous}"
-      - ARLAS_AUTH_PUBLIC_URIS="${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST,permissions:GET}"
-      - ARLAS_AUTH_VERIFY_EMAIL="${ARLAS_AUTH_VERIFY_EMAIL:-true}"
-      - ARLAS_AUTH_HIBERNATE_URL="${ARLAS_AUTH_HIBERNATE_URL:-jdbc:postgresql://db:5432/arlas_auth}"
-      - ARLAS_AUTH_HIBERNATE_USER="${ARLAS_AUTH_HIBERNATE_USER:-pg-user}"
-      - ARLAS_AUTH_HIBERNATE_PASSWORD="${ARLAS_AUTH_HIBERNATE_PASSWORD:-iAMs00perSecrEET}"
-      - ARLAS_AUTH_HIBERNATE_DRIVER="${ARLAS_AUTH_HIBERNATE_DRIVER:-org.postgresql.Driver}"
-      - ARLAS_AUTH_HIBERNATE_DIALECT="${ARLAS_AUTH_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}"
+      - ARLAS_UMS_PUBLIC_URIS=${ARLAS_UMS_PUBLIC_URIS:-swagger,swagger.*,permissions:GET}
+      - ARLAS_UMS_VERIFY_EMAIL="${ARLAS_UMS_VERIFY_EMAIL:-true}"
+      - ARLAS_UMS_HIBERNATE_URL="${ARLAS_UMS_HIBERNATE_URL:-jdbc:postgresql://db:5432/arlas_ums}"
+      - ARLAS_UMS_HIBERNATE_USER="${ARLAS_UMS_HIBERNATE_USER:-pg-user}"
+      - ARLAS_UMS_HIBERNATE_PASSWORD="${ARLAS_UMS_HIBERNATE_PASSWORD:-iAMs00perSecrEET}"
+      - ARLAS_UMS_HIBERNATE_DRIVER="${ARLAS_UMS_HIBERNATE_DRIVER:-org.postgresql.Driver}"
+      - ARLAS_UMS_HIBERNATE_DIALECT="${ARLAS_UMS_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}"
+    ports:
+      - "9990:9997"
+    command: ["/opt/app/start.sh"]
+
+  arlas-idp-server:
+    build:
+      context: ../..
+      dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-idp-package-only}
+    image: gisaia/arlas-idp-server:${ARLAS_UMS_SERVER_VERSION:-latest}
+    container_name: arlas-idp-server
+    environment:
+      - ARLAS_UMS_HOST="${ARLAS_UMS_HOST:-localhost}"
+      - ARLAS_UMS_PORT="${ARLAS_UMS_PORT:-9997}"
+      - ARLAS_UMS_PREFIX="${ARLAS_UMS_PREFIX:-/arlas_idp_server}"
+      - ARLAS_UMS_APP_PATH="${ARLAS_UMS_APP_PATH:-/}"
+      - ARLAS_ANONYMOUS_VALUE="${ARLAS_ANONYMOUS_VALUE:-anonymous}"
+      - ARLAS_UMS_PUBLIC_URIS=${ARLAS_UMS_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST}
+      - ARLAS_UMS_VERIFY_EMAIL="${ARLAS_UMS_VERIFY_EMAIL:-true}"
+      - ARLAS_UMS_HIBERNATE_URL="${ARLAS_UMS_HIBERNATE_URL:-jdbc:postgresql://db:5432/arlas_ums}"
+      - ARLAS_UMS_HIBERNATE_USER="${ARLAS_UMS_HIBERNATE_USER:-pg-user}"
+      - ARLAS_UMS_HIBERNATE_PASSWORD="${ARLAS_UMS_HIBERNATE_PASSWORD:-iAMs00perSecrEET}"
+      - ARLAS_UMS_HIBERNATE_DRIVER="${ARLAS_UMS_HIBERNATE_DRIVER:-org.postgresql.Driver}"
+      - ARLAS_UMS_HIBERNATE_DIALECT="${ARLAS_UMS_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}"
       - ARLAS_SMTP_ACTIVATED="${ARLAS_SMTP_ACTIVATED:-false}"
       - ARLAS_SMTP_HOST="${ARLAS_SMTP_HOST:-}"
       - ARLAS_SMTP_PORT="${ARLAS_SMTP_PORT:-25}"
@@ -59,5 +82,5 @@ services:
       - ARLAS_SMTP_FROM="${ARLAS_SMTP_FROM:-}"
       - ARLAS_SMTP_VERIFY_LINK="${ARLAS_SMTP_VERIFY_LINK:-/users/%s/verify/%s}"
     ports:
-      - "9997:9997"
+      - "9991:9997"
     command: ["/opt/app/start.sh"]

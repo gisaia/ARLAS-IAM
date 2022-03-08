@@ -43,13 +43,13 @@ public class AuthITUser {
     static {
         userHeader = Optional.ofNullable(System.getenv("ARLAS_USER_HEADER")).orElse("arlas-user");
 
-        String arlasHost = Optional.ofNullable(System.getenv("ARLAS_AUTH_HOST")).orElse("localhost");
-        int arlasPort = Integer.parseInt(Optional.ofNullable(System.getenv("ARLAS_AUTH_PORT")).orElse("9997"));
+        String arlasHost = Optional.ofNullable(System.getenv("ARLAS_UMS_HOST")).orElse("localhost");
+        int arlasPort = Integer.parseInt(Optional.ofNullable(System.getenv("ARLAS_UMS_PORT")).orElse("9997"));
         RestAssured.baseURI = "http://" + arlasHost;
         RestAssured.port = arlasPort;
         RestAssured.basePath = "";
-        String arlasPrefix = Optional.ofNullable(System.getenv("ARLAS_AUTH_PREFIX")).orElse("/arlas_auth_server");
-        arlasAppPath = Optional.ofNullable(System.getenv("ARLAS_AUTH_APP_PATH")).orElse("/");
+        String arlasPrefix = Optional.ofNullable(System.getenv("ARLAS_UMS_PREFIX")).orElse("/arlas_idp_server");
+        arlasAppPath = Optional.ofNullable(System.getenv("ARLAS_UMS_APP_PATH")).orElse("/");
         if (arlasAppPath.endsWith("/")) arlasAppPath = arlasAppPath.substring(0, arlasAppPath.length() - 1);
         arlasAppPath = arlasAppPath + arlasPrefix;
         if (arlasAppPath.endsWith("//")) arlasAppPath = arlasAppPath.substring(0, arlasAppPath.length() - 1);

@@ -1,0 +1,22 @@
+###################
+# PACKAGING STAGE #
+###################
+FROM gisaia/arlas-openjdk:17
+
+# install script dependencies
+RUN apt-get update && apt-get install -y bash netcat-openbsd curl
+
+# application placed into /opt/app
+WORKDIR /opt/app
+ADD arlas-ums-core/src/main/resources/templates/*.ftlh /opt/app/
+ADD arlas-idp-server/target/arlas-idp-server*.jar /opt/app/arlas-idp-server.jar
+ADD conf/configuration.yaml /opt/app/configuration.yaml
+ADD docker/docker-resources/start-idp.sh /opt/app/start.sh
+EXPOSE 9997
+
+HEALTHCHECK --interval=5m --timeout=3s \
+  CMD curl http://localhost:9997/admin/healthcheck | grep -v "\"healthy\":false" || exit 1
+
+ENV ARLAS_UMS_REST_PACKAGE io.arlas.ums.rest.service.idp
+ENTRYPOINT ["bash", "-c"]
+CMD ["/opt/app/start.sh"]

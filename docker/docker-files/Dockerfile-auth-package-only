@@ -8,14 +8,14 @@ RUN apt-get update && apt-get install -y bash netcat-openbsd curl
 
 # application placed into /opt/app
 WORKDIR /opt/app
-ADD arlas-ums-core/src/main/resources/templates/*.ftlh /opt/app/
 ADD arlas-auth-server/target/arlas-auth-server*.jar /opt/app/arlas-auth-server.jar
 ADD conf/configuration.yaml /opt/app/configuration.yaml
-ADD docker/docker-resources/start.sh /opt/app/start.sh
+ADD docker/docker-resources/start-auth.sh /opt/app/start.sh
 EXPOSE 9997
 
 HEALTHCHECK --interval=5m --timeout=3s \
   CMD curl http://localhost:9997/admin/healthcheck | grep -v "\"healthy\":false" || exit 1
 
+ENV ARLAS_UMS_REST_PACKAGE io.arlas.ums.rest.service.auth
 ENTRYPOINT ["bash", "-c"]
 CMD ["/opt/app/start.sh"]

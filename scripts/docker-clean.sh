@@ -12,4 +12,4 @@ function clean_exit {
 trap clean_exit EXIT
 
 echo "===> stop arlas-auth-server stack"
-docker-compose -f ${DOCKER_COMPOSE} --project-name arlasauth down -v
+docker-compose -f ${DOCKER_COMPOSE} --project-name arlasums down -v

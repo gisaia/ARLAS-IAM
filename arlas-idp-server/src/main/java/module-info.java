@@ -1,4 +1,4 @@
-module arlas.auth.server {
+module arlas.idp.server {
     requires arlas.ums.rest;
     requires dropwizard.core;
 }
