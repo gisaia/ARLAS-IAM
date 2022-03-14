@@ -17,6 +17,5 @@ EXPOSE 9997
 HEALTHCHECK --interval=5m --timeout=3s \
   CMD curl http://localhost:9997/admin/healthcheck | grep -v "\"healthy\":false" || exit 1
 
-ENV ARLAS_UMS_REST_PACKAGE io.arlas.ums.rest.service.idp
 ENTRYPOINT ["bash", "-c"]
 CMD ["/opt/app/start.sh"]

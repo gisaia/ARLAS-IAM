@@ -6,15 +6,15 @@ module arlas.ums.core {
     exports io.arlas.ums.util;
 
     requires transitive arlas.commons;
-    requires arlas.ums.filter;
+    requires transitive arlas.ums.filter;
 
-    requires com.auth0.jwt;
     requires com.fasterxml.jackson.annotation;
     requires dropwizard.core;
     requires dropwizard.db;
     requires dropwizard.hibernate;
     requires dropwizard.jackson;
     requires dropwizard.swagger;
+    requires freemarker;
     requires jakarta.mail;
     requires java.annotation;
     requires java.persistence;
@@ -23,5 +23,4 @@ module arlas.ums.core {
     requires org.hibernate.orm.core;
     requires org.slf4j;
     requires spring.security.crypto;
-    requires freemarker;
 }

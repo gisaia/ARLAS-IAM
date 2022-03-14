@@ -15,8 +15,8 @@ function clean_docker {
 function clean_exit {
   ARG=$?
   echo "===> Exit status = ${ARG}"
-  echo "===> arlas-auth-server logs"
-  docker logs arlas-auth-server
+  echo "===> arlas-idp-server logs"
+  docker logs arlas-idp-server
   clean_docker
   sudo rm -rf /tmp/auth
   exit $ARG
@@ -31,7 +31,7 @@ function start_stack() {
   mkdir -p /tmp/auth
   export ARLAS_UMS_DATADIR="/tmp/auth"
   export ARLAS_UMS_VERIFY_EMAIL=false
-  export ARLAS_UMS_PUBLIC_URIS=".*"
+  export ARLAS_AUTH_PUBLIC_URIS=".*"
   ./scripts/docker-clean.sh
   ./scripts/docker-run.sh --build
 }

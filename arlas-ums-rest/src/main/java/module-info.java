@@ -1,10 +1,10 @@
 module arlas.ums.rest {
     exports io.arlas.ums.rest.model;
-    exports io.arlas.ums.rest.service.idp;
-    exports io.arlas.ums.rest.service.auth;
+    exports io.arlas.ums.rest.service;
     exports io.arlas.ums.server;
 
     requires transitive arlas.ums.core;
+    requires transitive arlas.ums.filter;
 
     requires com.codahale.metrics.annotation;
     requires com.fasterxml.jackson.annotation;

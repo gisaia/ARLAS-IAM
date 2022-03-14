@@ -10,6 +10,7 @@ import io.arlas.commons.exceptions.ConstraintViolationExceptionMapper;
 import io.arlas.commons.exceptions.IllegalArgumentExceptionMapper;
 import io.arlas.commons.rest.utils.InsensitiveCaseFilter;
 import io.arlas.commons.rest.utils.PrettyPrintFilter;
+import io.arlas.ums.config.AuthConfiguration;
 import io.arlas.ums.core.AuthService;
 import io.arlas.ums.impl.ArlasPolicyEnforcer;
 import io.arlas.ums.impl.HibernateAuthService;
@@ -91,8 +92,8 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
         this.authService = new HibernateAuthService(hibernate.getSessionFactory(), configuration);
 
         ArlasPolicyEnforcer arlasPolicyEnforcer = new UnitOfWorkAwareProxyFactory(hibernate)
-                .create(ArlasPolicyEnforcer.class, new Class[]{ AuthService.class, ArlasAuthConfiguration.class },
-                        new Object[]{ this.authService, configuration.arlasAuthConfiguration });
+                .create(ArlasPolicyEnforcer.class, new Class[]{ AuthService.class, AuthConfiguration.class },
+                        new Object[]{ this.authService, configuration.authConf});
         environment.jersey().register(arlasPolicyEnforcer);
 
         //cors

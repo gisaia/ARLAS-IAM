@@ -5,8 +5,8 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
-import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.exceptions.ArlasException;
+import io.arlas.ums.config.AuthConfiguration;
 import io.arlas.ums.core.TokenSecretDao;
 import io.arlas.ums.impl.HibernateTokenSecretDao;
 import io.arlas.ums.model.LoginSession;
@@ -26,15 +26,15 @@ public class TokenManager {
     private byte[] secret;
     private boolean isSecretStored = false;
     private final TokenSecretDao tokenSecretDao;
-    private final ArlasAuthConfiguration authConf;
+    private final AuthConfiguration authConf;
 
 
     public TokenManager(SessionFactory factory, ArlasAuthServerConfiguration configuration) {
         this.tokenSecretDao = new HibernateTokenSecretDao(factory);
-        this.accessTokenTTL = configuration.accessTokenTTL;
-        this.refreshTokenTTL = configuration.refreshTokenTTL;
+        this.accessTokenTTL = configuration.authConf.accessTokenTTL;
+        this.refreshTokenTTL = configuration.authConf.refreshTokenTTL;
         this.secret = KeyGenerators.secureRandom(32).generateKey();
-        this.authConf = configuration.arlasAuthConfiguration;
+        this.authConf = configuration.authConf;
     }
 
     private void storeSecret() {

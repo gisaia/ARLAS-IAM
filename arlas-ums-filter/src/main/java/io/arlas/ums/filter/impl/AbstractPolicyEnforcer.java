@@ -6,6 +6,7 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.rest.auth.PolicyEnforcer;
+import io.arlas.ums.config.AuthConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,26 +25,34 @@ import java.util.stream.Collectors;
 @Priority(Priorities.AUTHORIZATION)
 public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
     private final Logger LOGGER = LoggerFactory.getLogger(AbstractPolicyEnforcer.class);
-    protected ArlasAuthConfiguration authConf;
+    protected AuthConfiguration authConf;
 
     protected AbstractPolicyEnforcer() {}
 
-    protected abstract DecodedJWT getPermissionToken(String accessToken) throws Exception;
-    protected String getSubject(DecodedJWT token) {
-        return token.getSubject();
+    @Override
+    public PolicyEnforcer setAuthConf(ArlasAuthConfiguration conf) throws Exception {
+        this.authConf = (AuthConfiguration) conf;
+        return this;
     }
 
-    protected Collection<String> getRolesClaim(DecodedJWT token) {
-        Claim jwtClaimRoles = token.getClaim(authConf.claimRoles);
+    protected abstract Object getObjectToken(String accessToken) throws Exception;
+
+    protected String getSubject(Object token) {
+        return ((DecodedJWT)token).getSubject();
+    }
+
+    protected Collection<String> getRolesClaim(Object token) {
+        Claim jwtClaimRoles = ((DecodedJWT)token).getClaim(authConf.claimRoles);
         if (!jwtClaimRoles.isNull()) {
             return jwtClaimRoles.asList(String.class);
         } else {
             return Collections.emptyList();
         }
+
     }
 
-    protected List<String> getPermissionsClaim(DecodedJWT token){
-        Claim jwtClaimPermissions = token.getClaim(authConf.claimPermissions);
+    protected List<String> getPermissionsClaim(Object token){
+        Claim jwtClaimPermissions = ((DecodedJWT)token).getClaim(authConf.claimPermissions);
         if (!jwtClaimPermissions.isNull()) {
             return jwtClaimPermissions.asList(String.class);
         } else {
@@ -56,16 +65,16 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
         Transaction transaction = ElasticApm.currentTransaction();
         boolean isPublic = ctx.getUriInfo().getPath().concat(":").concat(ctx.getMethod()).matches(authConf.getPublicRegex());
         String header = ctx.getHeaderString(HttpHeaders.AUTHORIZATION);
-        if (header == null || !header.toLowerCase().startsWith("bearer ")) {
-            if (!isPublic && !ctx.getMethod().equals("OPTIONS")) {
+        if (header == null || (header != null && !header.toLowerCase().startsWith("bearer "))) {
+            if (isPublic || ctx.getMethod() == "OPTIONS") {
+                return;
+            } else {
                 ctx.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
             }
-            return;
         }
 
         try {
-            DecodedJWT token = getPermissionToken(header.substring(7));
-
+            Object token = getObjectToken(header.substring(7));
             ctx.getHeaders().remove(authConf.headerUser); // remove it in case it's been set manually
             String userId = getSubject(token);
             if (userId != null && !userId.isEmpty()) {
@@ -76,7 +85,7 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
 
             ctx.getHeaders().remove(authConf.headerGroup); // remove it in case it's been set manually
             Collection<String> roles = getRolesClaim(token);
-            if (roles != null && !roles.isEmpty()) {
+            if (!roles.isEmpty()) {
                 List<String> groups = roles.stream()
                         .filter(r -> r.toLowerCase().startsWith("group"))
                         .collect(Collectors.toList());
@@ -86,8 +95,8 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
             }
 
             List<String> permissions = getPermissionsClaim(token);
-            LOGGER.debug("Permissions: " + permissions);
-            if (permissions != null && !permissions.isEmpty()) {
+            LOGGER.debug("Permissions: " + permissions.toString());
+            if (!permissions.isEmpty()) {
                 ArlasClaims arlasClaims = new ArlasClaims(permissions);
                 ctx.setProperty("claims", arlasClaims);
                 if (arlasClaims.isAllowed(ctx.getMethod(), ctx.getUriInfo().getPath())) {
