@@ -17,7 +17,8 @@ RUN mvn package -f arlas-ums-filter \
 ###################
 # PACKAGING STAGE #
 ###################
-FROM gisaia/arlas-server:20.7.1-SNAPSHOT
+ARG TAG=latest
+FROM gisaia/arlas-server:$TAG
 
 WORKDIR /opt/app
 

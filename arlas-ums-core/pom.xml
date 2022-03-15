@@ -21,7 +21,7 @@
         <dependency>
             <groupId>io.arlas</groupId>
             <artifactId>arlas-commons</artifactId>
-            <version>20.7.1-SNAPSHOT</version>
+            <version>${arlas-commons.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>jackson-databind</artifactId>
