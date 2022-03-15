@@ -35,8 +35,11 @@ function clean_exit {
 }
 
 function start_stack() {
-    ./scripts/docker-clean.sh
-    ./scripts/docker-run.sh --build
+  ./scripts/docker-clean.sh
+  export ARLAS_UMS_DATADIR="/tmp/auth"
+  export ARLAS_UMS_VERIFY_EMAIL=false
+  export ARLAS_AUTH_PUBLIC_URIS=".*"
+  ./scripts/docker-run.sh --build
 }
 
 trap clean_exit EXIT

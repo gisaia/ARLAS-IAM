@@ -1,18 +1,18 @@
 #####################
 # COMPILATION STAGE #
 #####################
-FROM maven:3.8.4-openjdk-17 as build
-WORKDIR /opt/build
-
-# selectively add the POM file
-ADD pom.xml /opt/build/
-# get all the downloads out of the way
-RUN mvn verify clean --fail-never
-
-# build all project
-COPY . /opt/build/
-RUN mvn package -f arlas-ums-filter \
-    && mv /opt/build/arlas-ums-filter/target/arlas-ums-filter-*.jar /opt/build/arlas-ums-filter.jar
+#FROM maven:3.8.4-openjdk-17 as build
+#WORKDIR /opt/build
+#
+## selectively add the POM file
+#ADD pom.xml /opt/build/
+## get all the downloads out of the way
+#RUN mvn verify clean --fail-never
+#
+## build all project
+#COPY . /opt/build/
+#RUN mvn package -f arlas-ums-filter \
+#    && mv /opt/build/arlas-ums-filter/target/arlas-ums-filter-*.jar /opt/build/arlas-ums-filter.jar
 
 ###################
 # PACKAGING STAGE #
