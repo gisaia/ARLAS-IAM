@@ -5,7 +5,7 @@
     <parent>
         <artifactId>arlas-ums-parent</artifactId>
         <groupId>io.arlas.ums</groupId>
-        <version>20.0.0-SNAPSHOT</version>
+        <version>21.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
