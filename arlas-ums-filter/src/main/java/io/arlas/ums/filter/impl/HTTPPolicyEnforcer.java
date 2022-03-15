@@ -1,6 +1,7 @@
 package io.arlas.ums.filter.impl;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.exceptions.ArlasException;
@@ -18,6 +19,9 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 @Provider
 @Priority(Priorities.AUTHORIZATION)
@@ -32,19 +36,15 @@ public class HTTPPolicyEnforcer extends AbstractPolicyEnforcer {
 
     public HTTPPolicyEnforcer() {}
 
-    protected HTTPPolicyEnforcer(ArlasAuthConfiguration conf) {
-        this.authConf = conf;
-    }
-
     @Override
     public PolicyEnforcer setAuthConf(ArlasAuthConfiguration conf) throws Exception {
-        this.authConf = conf;
+        super.setAuthConf(conf);
         this.resource = client.target(authConf.permissionUrl);
         return this;
     }
 
     @Override
-    protected DecodedJWT getPermissionToken(String accessToken) throws Exception {
+    protected Object getObjectToken(String accessToken) throws Exception {
         Invocation.Builder request = resource.request();
         request.header(HttpHeaders.AUTHORIZATION, "bearer " + accessToken);
         request.accept(MediaType.APPLICATION_JSON);

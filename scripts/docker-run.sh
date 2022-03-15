@@ -32,20 +32,17 @@ SCRIPT_PATH=`cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd`
 cd ${SCRIPT_PATH}/..
 
 # PACKAGE
-echo "===> compile UMS servers"
+echo "===> compile IDP server"
 docker run --rm \
     -w /opt/maven \
 	-v $PWD:/opt/maven \
 	-v $HOME/.m2:/root/.m2 \
 	maven:3.8.4-openjdk-17 \
 	mvn clean install -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
-echo "arlas-auth-server:${ARLAS_UMS_SERVER_VERSION}"
 echo "arlas-idp-server:${ARLAS_UMS_SERVER_VERSION}"
 
-echo "===> start ARLAS UMS stack"
+echo "===> start ARLAS IDP stack"
 docker-compose -f ${DOCKER_COMPOSE} --project-name arlasums up -d ${BUILD_OPTS}
 
-echo "===> wait for arlas-auth-server up and running"
-docker run --network arlasums_default --rm busybox sh -c 'i=1; until nc -w 2 arlas-auth-server 9990; do if [ $i -lt 30 ]; then sleep 1; else break; fi; i=$(($i + 1)); done'
 echo "===> wait for arlas-idp-server up and running"
-docker run --network arlasums_default --rm busybox sh -c 'i=1; until nc -w 2 arlas-idp-server 9991; do if [ $i -lt 30 ]; then sleep 1; else break; fi; i=$(($i + 1)); done'
+docker run --network arlasums_default --rm busybox sh -c 'i=1; until nc -w 2 arlas-idp-server 9997; do if [ $i -lt 30 ]; then sleep 1; else break; fi; i=$(($i + 1)); done'

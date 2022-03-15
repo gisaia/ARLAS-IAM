@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// TODO: copy from ARLAS Server. To be refactored
 public class ArlasClaims {
     private final Logger LOGGER = LoggerFactory.getLogger(ArlasClaims.class);
     private final List<RuleClaim> rules;

@@ -1,4 +1,30 @@
+#####################
+# COMPILATION STAGE #
+#####################
+FROM maven:3.8.4-openjdk-17 as build
+WORKDIR /opt/build
+
+# selectively add the POM file
+ADD pom.xml /opt/build/
+# get all the downloads out of the way
+RUN mvn verify clean --fail-never
+
+# build all project
+COPY . /opt/build/
+RUN mvn package -f arlas-ums-filter \
+    && mv /opt/build/arlas-ums-filter/target/arlas-ums-filter-*.jar /opt/build/arlas-ums-filter.jar
+
+###################
+# PACKAGING STAGE #
+###################
 FROM gisaia/arlas-server:20.7.1-SNAPSHOT
 
-COPY arlas-auth-filter/target/arlas-ums-filter-*.jar /opt/app/arlas-ums-filter.jar
+WORKDIR /opt/app
+
+# add auth configuration fragment to server configuration
+ADD conf/auth-fragment.yaml /opt/app/auth-fragment.yaml
+RUN cat /opt/app/auth-fragment.yaml >> /opt/app/configuration.yaml
+
+COPY --from=build /opt/build/arlas-ums-filter.jar /opt/app/arlas-ums-filter.jar
 ENV CP="./arlas-ums-filter.jar:./arlas-server.jar"
+ENV ARLAS_AUTH_TYPE="auth"

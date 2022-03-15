@@ -6,7 +6,7 @@ server:
         archivedLogFilenamePattern: ${ARLAS_UMS_LOG_FILE_ARCHIVE:-arlas-ums-access-%d.log.gz}
   registerDefaultExceptionMappers: false
   type: simple
-  rootPath: ${ARLAS_UMS_PREFIX:-/arlas_auth_server}
+  rootPath: ${ARLAS_UMS_PREFIX:-/arlas_idp_server}
   applicationContextPath: ${ARLAS_UMS_APP_PATH:-/}
   adminContextPath: ${ARLAS_UMS_ADMIN_PATH:-/admin}
   connector:
@@ -32,12 +32,10 @@ logging:
       archivedFileCount: ${ARLAS_UMS_LOGGING_FILE_ARCHIVE_FILE_COUNT:-5}
 
 swagger: # Configuration of SWAGGER for generating documentation and APIs
-  resourcePackage: ${ARLAS_UMS_REST_PACKAGE:-io.arlas.ums.rest.service.auth} # The java package to process for extracting the APIs
+  resourcePackage: io.arlas.ums.rest.service # The java package to process for extracting the APIs
   # temporary patch for bug https://github.com/smoketurner/dropwizard-swagger/issues/206
   # to be removed when version of dropwizard.swagger.version is upgraded
-  customJavascript: ${ARLAS_UMS_CUSTOM_JS:-/arlas_auth_server/swagger-static/custom-request-interceptor.js}
-
-arlas-base-uri: ${ARLAS_UMS_BASE_URI:-}
+  customJavascript: ${ARLAS_UMS_CUSTOM_JS:-/arlas_idp_server/swagger-static/custom-request-interceptor.js}
 
 arlas_cors:
   enabled: ${ARLAS_CORS_ENABLED:-true}
@@ -48,22 +46,27 @@ arlas_cors:
   exposed_headers: ${ARLAS_CORS_EXPOSED_HEADERS:-"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,Location,WWW-Authenticate"}
 
 arlas_auth:
-  enabled: ${ARLAS_UMS_ENABLED:-false}
-  policy_class: ${ARLAS_UMS_POLICY_CLASS:-io.arlas.ums.impl.ArlasPolicyEnforcer}
-  permission_url: ${ARLAS_UMS_PERMISSION_URL:-}
-  public_uris: [${ARLAS_UMS_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST,permissions:GET}]
-  # deprecated
-  certificate_file: ${ARLAS_UMS_CERT_FILE:-/opt/app/arlas.pem}
-  certificate_url: ${ARLAS_UMS_CERT_URL:-}
+  type: auth
+  access_token_ttl: ${ARLAS_ACCESS_TOKEN_TTL:-600000}
+  refresh_token_ttl: ${ARLAS_REFRESH_TOKEN_TTL:-3600000}
+  permission_url: ${ARLAS_AUTH_PERMISSION_URL:-http://arlas-idp-server/arlas_idp_server/permissions}
+  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST,permissions:GET}]
+  # deprecated, use it only for Integration tests
+  certificate_file: ${ARLAS_AUTH_CERT_FILE:-/opt/app/arlas.pem}
+  certificate_url: ${ARLAS_AUTH_CERT_URL:-}
   header_user: ${ARLAS_HEADER_USER:-arlas-user}
   header_group: ${ARLAS_HEADER_GROUP:-arlas-groups}
   claim_roles: ${ARLAS_CLAIM_ROLES:-http://arlas.io/roles}
   claim_permissions: ${ARLAS_CLAIM_PERMISSIONS:-http://arlas.io/permissions}
+  keycloak:
+    realm: ${ARLAS_AUTH_KEYCLOAK_REALM:-arlas}
+    auth-server-url: ${ARLAS_AUTH_KEYCLOAK_URL:-http://keycloak:8080/auth}
+    resource: ${ARLAS_AUTH_KEYCLOAK_RESOURCE:-arlas}
+    credentials:
+      secret: ${ARLAS_AUTH_KEYCLOAK_SECRET:-2ec98d5c-7a6d-4f7f-9214-99d0a4ba3907}
 
 arlas_organization_header: ${ARLAS_ORGANIZATION_HEADER:-arlas-organization}
 anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}
-access_token_ttl: ${ARLAS_ACCESS_TOKEN_TTL:-600000}
-refresh_token_ttl: ${ARLAS_REFRESH_TOKEN_TTL:-3600000}
 # set this to "false" if you don't want new users to verify their email
 verify_email: ${ARLAS_UMS_VERIFY_EMAIL:-true}
 

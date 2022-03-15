@@ -1,10 +1,9 @@
 package io.arlas.ums.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.config.ArlasCorsConfiguration;
 import io.arlas.commons.exceptions.ArlasConfigurationException;
-import io.arlas.ums.impl.ArlasPolicyEnforcer;
+import io.arlas.ums.config.AuthConfiguration;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
@@ -24,20 +23,11 @@ public class ArlasAuthServerConfiguration extends Configuration {
     @JsonProperty("smtp")
     public SMTPConfiguration smtp = new SMTPConfiguration();
 
-    @JsonProperty("access_token_ttl")
-    public long accessTokenTTL;
-
-    @JsonProperty("refresh_token_ttl")
-    public long refreshTokenTTL;
-
     @JsonProperty("verify_email")
     public boolean verifyEmail;
 
-    @JsonProperty("arlas-base-uri")
-    public String arlasBaseUri;
-
     @JsonProperty("arlas_auth")
-    public ArlasAuthConfiguration arlasAuthConfiguration;
+    public AuthConfiguration authConf;
 
     @JsonProperty("arlas_cors")
     public ArlasCorsConfiguration arlasCorsConfiguration;
@@ -53,12 +43,7 @@ public class ArlasAuthServerConfiguration extends Configuration {
         if (swaggerBundleConfiguration == null) {
             throw new ArlasConfigurationException("Swagger configuration missing in config file.");
         }
-        if (arlasAuthConfiguration == null) {
-            arlasAuthConfiguration = new ArlasAuthConfiguration();
-            arlasAuthConfiguration.policyClass = ArlasPolicyEnforcer.class.getCanonicalName();
-        } else {
-            arlasAuthConfiguration.check();
-        }
+        authConf.check();
         if (arlasCorsConfiguration == null) {
             arlasCorsConfiguration = new ArlasCorsConfiguration();
             arlasCorsConfiguration.enabled = false;

@@ -1,6 +1,5 @@
 package io.arlas.ums.filter.impl;
 
-// TODO: copy from ARLAS Server. To be refactored
 public class RuleClaim implements Comparable {
     public String resource; // regex
     public String verbs; // comma separated list of verbs: GET,POST
