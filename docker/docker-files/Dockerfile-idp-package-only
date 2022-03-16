@@ -11,7 +11,7 @@ WORKDIR /opt/app
 ADD arlas-ums-core/src/main/resources/templates/*.ftlh /opt/app/
 ADD arlas-idp-server/target/arlas-idp-server*.jar /opt/app/arlas-idp-server.jar
 ADD conf/configuration.yaml /opt/app/configuration.yaml
-ADD docker/docker-resources/start-idp.sh /opt/app/start.sh
+ADD docker/docker-resources/start.sh /opt/app/
 EXPOSE 9997
 
 HEALTHCHECK --interval=5m --timeout=3s \
