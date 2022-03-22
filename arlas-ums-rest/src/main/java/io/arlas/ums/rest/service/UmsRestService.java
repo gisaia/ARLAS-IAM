@@ -181,6 +181,7 @@ public class UmsRestService {
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = User.class),
             @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
+            @ApiResponse(code = 412, message = "Verification token expired. A new one is sent.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -196,7 +197,7 @@ public class UmsRestService {
 
             @ApiParam(name = "password", required = true)
             @NotNull @Valid String password
-    ) throws NonMatchingPasswordException, AlreadyVerifiedException {
+    ) throws NonMatchingPasswordException, AlreadyVerifiedException, ExpiredTokenException, SendEmailException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.verifyUser(UUID.fromString(id), token, password))
                 .type("application/json")

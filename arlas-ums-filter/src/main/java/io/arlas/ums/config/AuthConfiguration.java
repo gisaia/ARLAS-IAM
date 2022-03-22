@@ -63,6 +63,9 @@ public class AuthConfiguration implements ArlasAuthConfiguration {
     @JsonProperty("refresh_token_ttl")
     public long refreshTokenTTL;
 
+    @JsonProperty("verify_token_ttl")
+    public long verifyTokenTTL;
+
     @JsonProperty("keycloak")
     public AdapterConfig keycloakConfiguration = new AdapterConfig();
 
