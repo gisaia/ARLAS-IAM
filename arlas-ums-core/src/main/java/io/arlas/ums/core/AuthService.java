@@ -21,11 +21,12 @@ public interface AuthService {
     String createPermissionToken(String subject, String issuer, Date iat) throws ArlasException;
 
     User createUser(String email, String locale, String timezone) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
+
     Optional<User> readUser(UUID userId);
     User updateUser(User user, String oldPassword, String newPassword) throws NonMatchingPasswordException;
     void deleteUser(UUID userId);
     Optional<User> activateUser(UUID userId);
-    Optional<User> verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException;
+    Optional<User> verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException, ExpiredTokenException, SendEmailException;
 
     Optional<User> deactivateUser(UUID userId);
     Set<User> listUsers(User user); // list users from the same organisations as the requesting user

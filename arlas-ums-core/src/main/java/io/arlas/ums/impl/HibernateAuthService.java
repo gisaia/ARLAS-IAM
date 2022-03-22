@@ -13,6 +13,8 @@ import org.hibernate.SessionFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,6 +32,7 @@ public class HibernateAuthService implements AuthService {
     private final SMTPMailer mailer;
     private final TokenManager tokenManager;
     private final boolean verifyEmail; // set to true in production, false in testing mode
+    private final long verifyTokenTtl;
 
     // this regex will do a basic check (verification will be done by sending an email to the user) and extract domain
     private static final Pattern emailRegex = Pattern.compile("(?<=@)[^.]+(?=\\.)");
@@ -46,6 +49,7 @@ public class HibernateAuthService implements AuthService {
         this.mailer = new SMTPMailer(conf.smtp);
         this.tokenManager = new TokenManager(factory, conf);
         this.verifyEmail = conf.verifyEmail;
+        this.verifyTokenTtl = conf.authConf.verifyTokenTTL;
     }
 
     // ------- private ------------
@@ -91,12 +95,11 @@ public class HibernateAuthService implements AuthService {
                 User user = new User(email);
                 // in testing mode, we set the password to a known value
                 String verifyToken = this.verifyEmail ? KeyGenerators.string().generateKey() : "secret";
-                // TODO add an expiration date to the token
                 user.setPassword(encode(verifyToken));
                 user.setLocale(locale);
                 user.setTimezone(timezone);
                 user.setVerified(!this.verifyEmail);
-                // TODO add more attributes
+                // TODO add more attributes as needed
                 user = userDao.createUser(user);
                 sendActivationEmail(user, verifyToken);
                 return user;
@@ -191,13 +194,26 @@ public class HibernateAuthService implements AuthService {
         return user;
     }
 
+    private void generateNewVerificationToken(User user) throws SendEmailException {
+        String verifyToken = KeyGenerators.string().generateKey();
+        user.setCreationDate(LocalDateTime.now(ZoneOffset.UTC));
+        user.setPassword(encode(verifyToken));
+        userDao.updateUser(user);
+        sendActivationEmail(user, verifyToken);
+    }
+
     @Override
-    public Optional<User> verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException {
+    public Optional<User> verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException, ExpiredTokenException, SendEmailException {
         Optional<User> user = readUser(userId);
         if (user.isPresent()) {
             User u = user.get();
             if (u.isVerified()) {
                 throw new AlreadyVerifiedException();
+            }
+            if (u.getCreationDate().toEpochSecond(ZoneOffset.UTC) + this.verifyTokenTtl/1000 <
+                    LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)) {
+                generateNewVerificationToken(u);
+                throw new ExpiredTokenException();
             }
             if (matches(verifyToken, u.getPassword())) {
                 u.setPassword(encode(password));
