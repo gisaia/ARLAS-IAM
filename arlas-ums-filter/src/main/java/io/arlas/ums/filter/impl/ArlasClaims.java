@@ -1,6 +1,7 @@
 package io.arlas.ums.filter.impl;
 
 import co.elastic.apm.api.Transaction;
+import io.arlas.commons.rest.auth.RuleClaim;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +38,7 @@ public class ArlasClaims {
                     case "h", "header" -> {
                         List<String> v = headers.get(splitClaim[1]);
                         if (v == null) {
-                            v = new ArrayList();
+                            v = new ArrayList<>();
                         }
                         v.add(splitClaim[2]);
                         headers.put(splitClaim[1], v);

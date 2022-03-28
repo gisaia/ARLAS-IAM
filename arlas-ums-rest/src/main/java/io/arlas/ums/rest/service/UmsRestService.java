@@ -3,6 +3,7 @@ package io.arlas.ums.rest.service;
 import com.codahale.metrics.annotation.Timed;
 import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.commons.exceptions.NotFoundException;
+import io.arlas.ums.config.AuthConfiguration;
 import io.arlas.ums.core.AuthService;
 import io.arlas.ums.exceptions.*;
 import io.arlas.ums.model.*;
@@ -51,9 +52,9 @@ public class UmsRestService {
 
     public UmsRestService(AuthService authService, ArlasAuthServerConfiguration configuration) {
         this.authService = authService;
-        this.userHeader = configuration.authConf.headerUser;
+        this.userHeader = ((AuthConfiguration)configuration.arlasAuthConfiguration).headerUser;
         this.organizationHeader = configuration.organizationHeader;
-        this.groupsHeader = configuration.authConf.headerGroup;
+        this.groupsHeader = ((AuthConfiguration)configuration.arlasAuthConfiguration).headerGroup;
         this.anonymousValue = configuration.anonymousValue;
     }
 

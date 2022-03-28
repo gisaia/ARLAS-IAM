@@ -29,12 +29,12 @@ public class TokenManager {
     private final AuthConfiguration authConf;
 
 
-    public TokenManager(SessionFactory factory, ArlasAuthServerConfiguration configuration) {
+    public TokenManager(SessionFactory factory, AuthConfiguration configuration) {
         this.tokenSecretDao = new HibernateTokenSecretDao(factory);
-        this.accessTokenTTL = configuration.authConf.accessTokenTTL;
-        this.refreshTokenTTL = configuration.authConf.refreshTokenTTL;
+        this.accessTokenTTL = configuration.accessTokenTTL;
+        this.refreshTokenTTL = configuration.refreshTokenTTL;
         this.secret = KeyGenerators.secureRandom(32).generateKey();
-        this.authConf = configuration.authConf;
+        this.authConf = configuration;
     }
 
     private void storeSecret() {

@@ -6,7 +6,7 @@
 
     <groupId>io.arlas.ums</groupId>
     <artifactId>arlas-ums-parent</artifactId>
-    <version>21.0.0-beta.0</version>
+    <version>21.0.0-SNAPSHOT</version>
     <modules>
         <module>arlas-ums-core</module>
         <module>arlas-ums-rest</module>
@@ -30,7 +30,7 @@
 
     <properties>
         <!-- PROJECT-->
-        <arlas-commons.version>20.7.1-SNAPSHOT</arlas-commons.version>
+        <arlas-commons.version>21.0.0-SNAPSHOT</arlas-commons.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <skipTests>true</skipTests>

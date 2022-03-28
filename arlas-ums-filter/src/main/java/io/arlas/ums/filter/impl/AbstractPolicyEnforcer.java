@@ -66,11 +66,10 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
         boolean isPublic = ctx.getUriInfo().getPath().concat(":").concat(ctx.getMethod()).matches(authConf.getPublicRegex());
         String header = ctx.getHeaderString(HttpHeaders.AUTHORIZATION);
         if (header == null || (header != null && !header.toLowerCase().startsWith("bearer "))) {
-            if (isPublic || ctx.getMethod() == "OPTIONS") {
-                return;
-            } else {
+            if (!isPublic && ctx.getMethod() != "OPTIONS") {
                 ctx.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
             }
+            return;
         }
 
         try {
@@ -98,7 +97,7 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
             LOGGER.debug("Permissions: " + permissions.toString());
             if (!permissions.isEmpty()) {
                 ArlasClaims arlasClaims = new ArlasClaims(permissions);
-                ctx.setProperty("claims", arlasClaims);
+                ctx.setProperty("claims", arlasClaims.getRules());
                 if (arlasClaims.isAllowed(ctx.getMethod(), ctx.getUriInfo().getPath())) {
                     arlasClaims.injectHeaders(ctx.getHeaders(), transaction);
                     return;

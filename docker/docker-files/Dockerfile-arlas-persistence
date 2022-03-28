@@ -1,5 +1,5 @@
 ARG TAG=latest
-FROM gisaia/arlas-server:$TAG
+FROM gisaia/arlas-persistence-server:$TAG
 
 WORKDIR /opt/app
 
@@ -8,5 +8,5 @@ ADD conf/auth-fragment.yaml /opt/app/auth-fragment.yaml
 RUN cat /opt/app/auth-fragment.yaml >> /opt/app/configuration.yaml
 
 COPY arlas-ums-filter/target/arlas-ums-filter-*.jar /opt/app/arlas-ums-filter.jar
-ENV CP="./arlas-ums-filter.jar:./arlas-server.jar"
+ENV CP="./arlas-ums-filter.jar:./arlas-persistence-server.jar"
 ENV ARLAS_AUTH_TYPE="auth"

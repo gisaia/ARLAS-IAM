@@ -9,11 +9,8 @@ module arlas.ums.core {
     requires transitive arlas.ums.filter;
 
     requires com.fasterxml.jackson.annotation;
-    requires dropwizard.core;
-    requires dropwizard.db;
     requires dropwizard.hibernate;
     requires dropwizard.jackson;
-    requires dropwizard.swagger;
     requires freemarker;
     requires jakarta.mail;
     requires java.annotation;
