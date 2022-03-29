@@ -72,6 +72,16 @@ public class AuthConfiguration implements ArlasAuthConfiguration {
     private String publicRegex;
 
     @Override
+    public String getHeaderUser() {
+        return headerUser;
+    }
+
+    @Override
+    public String getHeaderGroup() {
+        return headerGroup;
+    }
+
+    @Override
     public String getPublicRegex()  {
         // [swagger.*:*, persist.*:GET/POST/DELETE}]
         if (this.publicRegex == null) {

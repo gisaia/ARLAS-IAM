@@ -3,6 +3,8 @@ package io.arlas.ums.server;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smoketurner.dropwizard.zipkin.ZipkinBundle;
+import com.smoketurner.dropwizard.zipkin.ZipkinFactory;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.config.ArlasCorsConfiguration;
 import io.arlas.commons.exceptions.ArlasExceptionMapper;
@@ -72,6 +74,12 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
                 return configuration.swaggerBundleConfiguration;
             }
         });
+        bootstrap.addBundle(new ZipkinBundle<>(getName()) {
+            @Override
+            public ZipkinFactory getZipkinFactory(ArlasAuthServerConfiguration configuration) {
+                return configuration.zipkinConfiguration;
+            }
+        });
         bootstrap.addBundle(hibernate);
         bootstrap.addBundle(new AssetsBundle("/assets/", "/", "index.html"));
     }
@@ -93,7 +101,7 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
 
         ArlasPolicyEnforcer arlasPolicyEnforcer = new UnitOfWorkAwareProxyFactory(hibernate)
                 .create(ArlasPolicyEnforcer.class, new Class[]{ AuthService.class, AuthConfiguration.class },
-                        new Object[]{ this.authService, configuration.authConf});
+                        new Object[]{ this.authService, (AuthConfiguration) configuration.arlasAuthConfiguration});
         environment.jersey().register(arlasPolicyEnforcer);
 
         //cors

@@ -36,7 +36,7 @@ services:
     build:
       context: ../..
       dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-idp-package-only}
-    image: gisaia/arlas-idp-server:${ARLAS_UMS_SERVER_VERSION:-latest}
+    image: docker.cloudsmith.io/gisaia/private/arlas-idp-server:${ARLAS_UMS_SERVER_VERSION:-latest}
     container_name: arlas-idp-server
     environment:
       - ARLAS_UMS_HOST="${ARLAS_UMS_HOST:-localhost}"
