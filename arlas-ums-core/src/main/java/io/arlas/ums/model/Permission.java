@@ -28,6 +28,9 @@ public class Permission {
     @Column(unique = true)
     private String value;
 
+    @Column
+    private String description;
+
     @Type(type = "org.hibernate.type.NumericBooleanType")
     @Column(name="is_system")
     private boolean isSystem = false; // system permissions are shared among all organisations
@@ -72,6 +75,14 @@ public class Permission {
         this.value = value;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public boolean isSystem() {
         return isSystem;
     }
@@ -107,5 +118,13 @@ public class Permission {
     @Override
     public int hashCode() {
         return Objects.hash(getValue());
+    }
+
+    @Override
+    public String toString() {
+        return "Permission{" +
+                "value='" + value + '\'' +
+                ", description='" + description + '\'' +
+                '}';
     }
 }

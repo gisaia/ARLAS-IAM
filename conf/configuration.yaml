@@ -60,11 +60,17 @@ arlas_auth:
   refresh_token_ttl: ${ARLAS_REFRESH_TOKEN_TTL:-3600000}
   # Verify token time to live in millisecond
   verify_token_ttl: ${ARLAS_VERIFY_TOKEN_TTL:-86400000}
-  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST,permissions:GET}]
+  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST,permissions:GET,_init:POST}]
   header_user: ${ARLAS_HEADER_USER:-arlas-user}
   header_group: ${ARLAS_HEADER_GROUP:-arlas-groups}
   claim_roles: ${ARLAS_CLAIM_ROLES:-http://arlas.io/roles}
   claim_permissions: ${ARLAS_CLAIM_PERMISSIONS:-http://arlas.io/permissions}
+  init:
+    admin: ${ARLAS_AUTH_INIT_ADMIN:-auth.arlas.cloud@gisaia.com}
+    password: ${ARLAS_AUTH_INIT_PASSWORD:-admin}
+    timezone: ${ARLAS_AUTH_INIT_TIMEZONE:-Europe/Paris}
+    locale: ${ARLAS_AUTH_INIT_LOCALE:-en}
+    organisation: ${ARLAS_AUTH_INIT_ORG:-all}
 
 arlas_organization_header: ${ARLAS_ORGANIZATION_HEADER:-arlas-organization}
 anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}

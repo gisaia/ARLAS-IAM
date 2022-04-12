@@ -9,6 +9,8 @@ module arlas.ums.core {
     requires transitive arlas.ums.filter;
 
     requires com.fasterxml.jackson.annotation;
+    requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.dataformat.yaml;
     requires dropwizard.hibernate;
     requires dropwizard.jackson;
     requires freemarker;

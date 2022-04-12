@@ -4,11 +4,14 @@ import io.arlas.ums.model.Organisation;
 import io.arlas.ums.model.Permission;
 import io.arlas.ums.model.User;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 public interface UserDao {
+
+    List<User> listUsers();
 
     User createUser(User user);
 

@@ -1,9 +1,13 @@
 package io.arlas.ums.impl;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.arlas.commons.exceptions.ArlasException;
+import io.arlas.commons.exceptions.InvalidParameterException;
 import io.arlas.commons.exceptions.NotFoundException;
 import io.arlas.ums.config.AuthConfiguration;
+import io.arlas.ums.config.InitConfiguration;
 import io.arlas.ums.core.*;
 import io.arlas.ums.exceptions.*;
 import io.arlas.ums.model.*;
@@ -14,6 +18,8 @@ import org.hibernate.SessionFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -34,6 +40,10 @@ public class HibernateAuthService implements AuthService {
     private final TokenManager tokenManager;
     private final boolean verifyEmail; // set to true in production, false in testing mode
     private final long verifyTokenTtl;
+    private final InitConfiguration defaultInitConf;
+
+    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    private static final String DEFAULT_CONF_FILE_NAME = "roles.yaml";
 
     // this regex will do a basic check (verification will be done by sending an email to the user) and extract domain
     private static final Pattern emailRegex = Pattern.compile("(?<=@)[^.]+(?=\\.)");
@@ -51,6 +61,7 @@ public class HibernateAuthService implements AuthService {
         this.tokenManager = new TokenManager(factory, (AuthConfiguration) conf.arlasAuthConfiguration);
         this.verifyEmail = conf.verifyEmail;
         this.verifyTokenTtl = ((AuthConfiguration)conf.arlasAuthConfiguration).verifyTokenTTL;
+        this.defaultInitConf = ((AuthConfiguration) conf.arlasAuthConfiguration).initConfiguration;
     }
 
     // ------- private ------------
@@ -87,6 +98,48 @@ public class HibernateAuthService implements AuthService {
     }
 
     // ------- public ------------
+
+    @Override
+    public void initDatabase(InitConfiguration initData) throws ArlasException {
+        if (userDao.listUsers().size() == 0) {
+            User user = new User(Optional.ofNullable(initData.admin).orElseGet(() -> defaultInitConf.admin));
+            user.setPassword(encode(Optional.ofNullable(initData.password).orElseGet(() -> defaultInitConf.password)));
+            user.setLocale(Optional.ofNullable(initData.locale).orElseGet(() -> defaultInitConf.locale));
+            user.setTimezone(Optional.ofNullable(initData.timezone).orElseGet(() -> defaultInitConf.timezone));
+            user.setVerified(true);
+            user = userDao.createUser(user);
+            user.setRoles(importDefaultConfiguration(user));
+            userDao.updateUser(user);
+        } else {
+            throw new ArlasException("Database is not empty. Init is not allowed.");
+        }
+    }
+
+    @Override
+    public Set<Role> importDefaultConfiguration(User user) throws InvalidParameterException {
+        return importConfiguration(user, this.getClass().getClassLoader().getResourceAsStream(DEFAULT_CONF_FILE_NAME));
+    }
+
+    @Override
+    public Set<Role> importConfiguration(User user, InputStream is) throws InvalidParameterException {
+        try {
+            Set<Role> dbRoles = new HashSet<>();
+            for (Role r : mapper.readValue(is, Role[].class)) {
+                if (r.getPermissions() != null) {
+                    r.getPermissions().forEach(p -> {
+                        p.setSystem(true);
+                        permissionDao.createPermission(p);
+                    });
+                }
+                r.setSystem(true);
+                r.setUsers(Set.of(user));
+                dbRoles.add(roleDao.createRole(r, r.getPermissions()));
+            }
+            return dbRoles;
+        } catch (IOException e) {
+            throw new InvalidParameterException("Malformed json input file.");
+        }
+    }
 
     @Override
     public User createUser(String email, String locale, String timezone)

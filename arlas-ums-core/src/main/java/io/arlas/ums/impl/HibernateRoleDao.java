@@ -18,8 +18,10 @@ public class HibernateRoleDao extends AbstractDAO<Role> implements RoleDao {
 
     @Override
     public Role createRole(Role role, Set<Permission> permissions) {
-        role.setPermissions(permissions);
-        permissions.forEach(p -> p.getRoles().add(role));
+        if (permissions != null) {
+            role.setPermissions(permissions);
+            permissions.forEach(p -> p.getRoles().add(role));
+        }
         return persist(role);
     }
 

@@ -26,6 +26,9 @@ public class Role {
     @Column
     private String name;
 
+    @Column
+    private String description;
+
     @Type(type = "org.hibernate.type.NumericBooleanType")
     @Column(name="is_system")
     private boolean isSystem = false; // system roles are shared among all organisations
@@ -75,6 +78,14 @@ public class Role {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public boolean isSystem() {
@@ -133,5 +144,14 @@ public class Role {
     @Override
     public int hashCode() {
         return Objects.hash(getName());
+    }
+
+    @Override
+    public String toString() {
+        return "Role{" +
+                "name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", permissions=" + permissions +
+                '}';
     }
 }

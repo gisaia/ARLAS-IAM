@@ -8,6 +8,7 @@ import io.arlas.ums.model.User;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -16,6 +17,11 @@ import java.util.stream.Collectors;
 public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
     public HibernateUserDao(SessionFactory sessionFactory) {
         super(sessionFactory);
+    }
+
+    @Override
+    public List<User> listUsers() {
+        return currentSession().createQuery("SELECT u FROM User u", User.class).getResultList();
     }
 
     @Override
