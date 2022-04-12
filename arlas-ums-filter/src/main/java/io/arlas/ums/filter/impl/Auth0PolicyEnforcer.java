@@ -44,6 +44,7 @@ public class Auth0PolicyEnforcer extends AbstractPolicyEnforcer {
 
     @Override
     protected Object getObjectToken(String accessToken) {
+        LOGGER.debug("accessToken (decode with https://jwt.io/)=" + accessToken);
         return jwtVerifier.verify(accessToken);
     }
 

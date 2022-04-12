@@ -3,18 +3,19 @@ package io.arlas.ums.rest.service;
 import com.codahale.metrics.annotation.Timed;
 import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.commons.exceptions.NotFoundException;
+import io.arlas.commons.rest.response.Error;
 import io.arlas.ums.config.AuthConfiguration;
+import io.arlas.ums.config.InitConfiguration;
 import io.arlas.ums.core.AuthService;
 import io.arlas.ums.exceptions.*;
 import io.arlas.ums.model.*;
-import io.arlas.ums.rest.model.LoginData;
-import io.arlas.ums.rest.model.NewUserData;
-import io.arlas.ums.rest.model.Permissions;
-import io.arlas.ums.rest.model.UpdateData;
+import io.arlas.ums.rest.model.*;
 import io.arlas.ums.util.ArlasAuthServerConfiguration;
 import io.arlas.ums.util.IdentityParam;
 import io.dropwizard.hibernate.UnitOfWork;
 import io.swagger.annotations.*;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +23,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -963,6 +965,59 @@ public class UmsRestService {
 
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.createPermissionToken(getIdentityParam(headers).userId, uriInfo.getBaseUri().getHost(), new Date()))
+                .type("text/plain")
+                .build();
+    }
+
+//    @Timed
+//    @Path("/_import")
+//    @POST
+//    @Produces(UTF8JSON)
+//    @Consumes(MediaType.MULTIPART_FORM_DATA)
+//    @ApiOperation(
+//            value = "Import default permissions and roles",
+//            produces = UTF8JSON,
+//            consumes = MediaType.MULTIPART_FORM_DATA
+//    )
+//    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class),
+//            @ApiResponse(code = 500, message = "Arlas Server Error.", response = Error.class)})
+//    public Response importConfiguration(
+//            @Context UriInfo uriInfo,
+//            @Context HttpHeaders headers,
+//            @FormDataParam("file") InputStream inputStream,
+//            @FormDataParam("file") FormDataContentDisposition fileDetail
+//    ) throws ArlasException {
+//        authService.importConfiguration(inputStream);
+//        return Response.ok(uriInfo.getRequestUriBuilder().build())
+//                .entity("ok")
+//                .type("text/plain")
+//                .build();
+//    }
+
+    @Timed
+    @Path("_init")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Init database",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response init(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "initData", required = true)
+            @NotNull @Valid InitConfiguration initData
+    ) throws ArlasException {
+        authService.initDatabase(initData);
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity("ok")
                 .type("text/plain")
                 .build();
     }

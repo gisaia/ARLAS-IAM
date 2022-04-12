@@ -2,16 +2,19 @@ package io.arlas.ums.core;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.commons.exceptions.ArlasException;
+import io.arlas.commons.exceptions.InvalidParameterException;
 import io.arlas.commons.exceptions.NotFoundException;
+import io.arlas.ums.config.InitConfiguration;
 import io.arlas.ums.exceptions.*;
 import io.arlas.ums.model.*;
 
-import java.util.Date;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.io.InputStream;
+import java.util.*;
 
 public interface AuthService {
+    void initDatabase(InitConfiguration initData) throws ArlasException;
+    Set<Role> importDefaultConfiguration(User user) throws InvalidParameterException;
+    Set<Role> importConfiguration(User user, InputStream is) throws InvalidParameterException;
     User readUser(UUID userId, boolean checkActiveVerified) throws NotFoundException;
 
     LoginSession login(String email, String password, String issuer) throws ArlasException;

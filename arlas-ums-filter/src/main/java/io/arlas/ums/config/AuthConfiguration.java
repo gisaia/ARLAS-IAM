@@ -69,6 +69,9 @@ public class AuthConfiguration implements ArlasAuthConfiguration {
     @JsonProperty("keycloak")
     public AdapterConfig keycloakConfiguration = new AdapterConfig();
 
+    @JsonProperty("init")
+    public InitConfiguration initConfiguration = new InitConfiguration();
+
     private String publicRegex;
 
     @Override
