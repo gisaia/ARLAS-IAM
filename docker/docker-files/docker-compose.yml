@@ -44,7 +44,7 @@ services:
       - ARLAS_UMS_PREFIX="${ARLAS_UMS_PREFIX:-/arlas_idp_server}"
       - ARLAS_UMS_APP_PATH="${ARLAS_UMS_APP_PATH:-/}"
       - ARLAS_ANONYMOUS_VALUE="${ARLAS_ANONYMOUS_VALUE:-anonymous}"
-      - ARLAS_AUTH_PUBLIC_URIS=${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST,_init:POST}
+      - ARLAS_AUTH_PUBLIC_URIS=${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST}
       - ARLAS_UMS_VERIFY_EMAIL="${ARLAS_UMS_VERIFY_EMAIL:-true}"
       - ARLAS_UMS_HIBERNATE_URL="${ARLAS_UMS_HIBERNATE_URL:-jdbc:postgresql://db:5432/arlas_ums}"
       - ARLAS_UMS_HIBERNATE_USER="${ARLAS_UMS_HIBERNATE_USER:-pg-user}"
