@@ -994,34 +994,6 @@ public class UmsRestService {
 //                .build();
 //    }
 
-    @Timed
-    @Path("_init")
-    @POST
-    @Produces(UTF8JSON)
-    @Consumes(UTF8JSON)
-    @ApiOperation(
-            value = "Init database",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
-    )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = String.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
-
-    @UnitOfWork
-    public Response init(
-            @Context UriInfo uriInfo,
-            @Context HttpHeaders headers,
-
-            @ApiParam(name = "initData", required = true)
-            @NotNull @Valid InitConfiguration initData
-    ) throws ArlasException {
-        authService.initDatabase(initData);
-        return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity("ok")
-                .type("text/plain")
-                .build();
-    }
-
     //----------------- private -----------------
 
     protected void checkLoggedInUser(HttpHeaders headers, String id) throws NotFoundException {

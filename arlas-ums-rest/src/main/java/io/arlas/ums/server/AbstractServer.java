@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smoketurner.dropwizard.zipkin.ZipkinBundle;
 import com.smoketurner.dropwizard.zipkin.ZipkinFactory;
-import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.config.ArlasCorsConfiguration;
 import io.arlas.commons.exceptions.ArlasExceptionMapper;
 import io.arlas.commons.exceptions.ConstraintViolationExceptionMapper;
@@ -44,7 +43,7 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
     Logger LOGGER = LoggerFactory.getLogger(AbstractServer.class);
     protected AuthService authService;
 
-    private final HibernateBundle<ArlasAuthServerConfiguration> hibernate =
+    protected final HibernateBundle<ArlasAuthServerConfiguration> hibernate =
             new HibernateBundle<>(
                     Group.class,
                     Organisation.class,
@@ -88,7 +87,7 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
     public void run(ArlasAuthServerConfiguration configuration, Environment environment) throws Exception {
 
         configuration.check();
-        LOGGER.info("Checked configuration: " + (new ObjectMapper()).writer().writeValueAsString(configuration));
+        LOGGER.info("Checked configuration: " + environment.getObjectMapper().writer().writeValueAsString(configuration));
 
         environment.getObjectMapper().setSerializationInclusion(Include.NON_NULL);
         environment.jersey().register(MultiPartFeature.class);
@@ -101,7 +100,7 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
 
         ArlasPolicyEnforcer arlasPolicyEnforcer = new UnitOfWorkAwareProxyFactory(hibernate)
                 .create(ArlasPolicyEnforcer.class, new Class[]{ AuthService.class, AuthConfiguration.class },
-                        new Object[]{ this.authService, (AuthConfiguration) configuration.arlasAuthConfiguration});
+                        new Object[]{ this.authService, (AuthConfiguration) configuration.arlasAuthConfiguration });
         environment.jersey().register(arlasPolicyEnforcer);
 
         //cors
