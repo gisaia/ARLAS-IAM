@@ -24,7 +24,7 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 
 public class SMTPMailer {
-    Logger LOGGER = LoggerFactory.getLogger(SMTPMailer.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(SMTPMailer.class);
     private final SMTPConfiguration conf;
     private final Session session;
     private Configuration freemarkerConf = null;

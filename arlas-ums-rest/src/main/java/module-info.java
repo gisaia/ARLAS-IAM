@@ -2,7 +2,6 @@ module arlas.ums.rest {
     exports io.arlas.ums.rest.model;
     exports io.arlas.ums.rest.service;
     exports io.arlas.ums.server;
-    exports io.arlas.ums.task;
 
     requires transitive arlas.ums.core;
     requires transitive arlas.ums.filter;

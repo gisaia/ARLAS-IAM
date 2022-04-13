@@ -1,13 +1,11 @@
 package io.arlas.ums.impl;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.arlas.commons.exceptions.ArlasException;
-import io.arlas.commons.exceptions.InvalidParameterException;
 import io.arlas.commons.exceptions.NotFoundException;
 import io.arlas.ums.config.AuthConfiguration;
 import io.arlas.ums.config.InitConfiguration;
+import io.arlas.ums.config.TechnicalRoles;
 import io.arlas.ums.core.*;
 import io.arlas.ums.exceptions.*;
 import io.arlas.ums.model.*;
@@ -15,11 +13,11 @@ import io.arlas.ums.util.ArlasAuthServerConfiguration;
 import io.arlas.ums.util.SMTPMailer;
 import io.arlas.ums.util.TokenManager;
 import org.hibernate.SessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -28,6 +26,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class HibernateAuthService implements AuthService {
+    private final Logger LOGGER = LoggerFactory.getLogger(HibernateAuthService.class);
     private final GroupDao groupDao;
     private final OrganisationDao organisationDao;
     private final OrganisationMemberDao organisationMemberDao;
@@ -40,10 +39,7 @@ public class HibernateAuthService implements AuthService {
     private final TokenManager tokenManager;
     private final boolean verifyEmail; // set to true in production, false in testing mode
     private final long verifyTokenTtl;
-    private final InitConfiguration defaultInitConf;
-
-    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    private static final String DEFAULT_CONF_FILE_NAME = "roles.yaml";
+    private final InitConfiguration initConf;
 
     // this regex will do a basic check (verification will be done by sending an email to the user) and extract domain
     private static final Pattern emailRegex = Pattern.compile("(?<=@)[^.]+(?=\\.)");
@@ -61,7 +57,7 @@ public class HibernateAuthService implements AuthService {
         this.tokenManager = new TokenManager(factory, (AuthConfiguration) conf.arlasAuthConfiguration);
         this.verifyEmail = conf.verifyEmail;
         this.verifyTokenTtl = ((AuthConfiguration)conf.arlasAuthConfiguration).verifyTokenTTL;
-        this.defaultInitConf = ((AuthConfiguration) conf.arlasAuthConfiguration).initConfiguration;
+        this.initConf = ((AuthConfiguration) conf.arlasAuthConfiguration).initConfiguration;
     }
 
     // ------- private ------------
@@ -100,45 +96,31 @@ public class HibernateAuthService implements AuthService {
     // ------- public ------------
 
     @Override
-    public void initDatabase(InitConfiguration initData) throws ArlasException {
+    public void initDatabase() throws ArlasException {
         if (userDao.listUsers().size() == 0) {
-            User user = new User(Optional.ofNullable(initData.admin).orElseGet(() -> defaultInitConf.admin));
-            user.setPassword(encode(Optional.ofNullable(initData.password).orElseGet(() -> defaultInitConf.password)));
-            user.setLocale(Optional.ofNullable(initData.locale).orElseGet(() -> defaultInitConf.locale));
-            user.setTimezone(Optional.ofNullable(initData.timezone).orElseGet(() -> defaultInitConf.timezone));
+            LOGGER.info("***** Database is empty. Init is executed.");
+            User user = new User(initConf.admin);
+            user.setPassword(encode(initConf.password));
+            user.setLocale(initConf.locale);
+            user.setTimezone(initConf.timezone);
             user.setVerified(true);
             user = userDao.createUser(user);
-            user.setRoles(importDefaultConfiguration(user));
+            user.setRoles(importDefaultRoles(user));
             userDao.updateUser(user);
         } else {
-            throw new ArlasException("Database is not empty. Init is not allowed.");
+            LOGGER.info("***** Database is not empty. Init is skipped.");
         }
     }
 
-    @Override
-    public Set<Role> importDefaultConfiguration(User user) throws InvalidParameterException {
-        return importConfiguration(user, this.getClass().getClassLoader().getResourceAsStream(DEFAULT_CONF_FILE_NAME));
-    }
-
-    @Override
-    public Set<Role> importConfiguration(User user, InputStream is) throws InvalidParameterException {
-        try {
-            Set<Role> dbRoles = new HashSet<>();
-            for (Role r : mapper.readValue(is, Role[].class)) {
-                if (r.getPermissions() != null) {
-                    r.getPermissions().forEach(p -> {
-                        p.setSystem(true);
-                        permissionDao.createPermission(p);
-                    });
-                }
-                r.setSystem(true);
-                r.setUsers(Set.of(user));
-                dbRoles.add(roleDao.createRole(r, r.getPermissions()));
-            }
-            return dbRoles;
-        } catch (IOException e) {
-            throw new InvalidParameterException("Malformed json input file.");
-        }
+    public Set<Role> importDefaultRoles(User user) {
+        return TechnicalRoles.getTechnicalRolesList().stream()
+                .map(s -> {
+                    Role r = new Role(s);
+                    r.setSystem(true);
+                    r.setUsers(Set.of(user));
+                    return roleDao.createRole(r, null);
+                })
+                .collect(Collectors.toSet());
     }
 
     @Override

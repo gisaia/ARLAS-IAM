@@ -7,6 +7,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.rest.auth.PolicyEnforcer;
 import io.arlas.ums.config.AuthConfiguration;
+import io.arlas.ums.config.TechnicalRoles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
     private final Logger LOGGER = LoggerFactory.getLogger(AbstractPolicyEnforcer.class);
     protected AuthConfiguration authConf;
+    protected boolean injectPermissions = true;
 
     protected AbstractPolicyEnforcer() {}
 
@@ -60,13 +62,21 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
         }
     }
 
+    private void addTechnicalRolesToPermissions(List<String> permissions, Collection<String> roles) {
+        if (injectPermissions) {
+            LOGGER.debug("Adding permissions of roles " + roles.toString() + " from map technical roles " + TechnicalRoles.getTechnicalRolesPermissions().toString());
+            TechnicalRoles.getTechnicalRolesPermissions().entrySet().stream()
+                    .filter(e -> roles.contains(e.getKey()))
+                    .forEach(e -> permissions.addAll(e.getValue()));
+        }
+    }
     @Override
     public void filter(ContainerRequestContext ctx) {
         Transaction transaction = ElasticApm.currentTransaction();
         boolean isPublic = ctx.getUriInfo().getPath().concat(":").concat(ctx.getMethod()).matches(authConf.getPublicRegex());
         String header = ctx.getHeaderString(HttpHeaders.AUTHORIZATION);
-        if (header == null || (header != null && !header.toLowerCase().startsWith("bearer "))) {
-            if (!isPublic && ctx.getMethod() != "OPTIONS") {
+        if (header == null || !header.toLowerCase().startsWith("bearer ")) {
+            if (!isPublic && !"OPTIONS".equals(ctx.getMethod())) {
                 ctx.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
             }
             return;
@@ -94,6 +104,7 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
             }
 
             List<String> permissions = getPermissionsClaim(token);
+            addTechnicalRolesToPermissions(permissions, roles);
             LOGGER.debug("Permissions: " + permissions.toString());
             if (!permissions.isEmpty()) {
                 ArlasClaims arlasClaims = new ArlasClaims(permissions);

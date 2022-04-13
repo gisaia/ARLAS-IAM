@@ -2,8 +2,6 @@ package io.arlas.ums.filter.impl;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.interfaces.Claim;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.rest.auth.PolicyEnforcer;
@@ -19,21 +17,20 @@ import java.net.URL;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 @Provider
 @Priority(Priorities.AUTHORIZATION)
-/**
- * This is the policy enforcer to be used with Auth0 in Arlas Server.
- * Set ARLAS_AUTH_POLICY_CLASS=io.arlas.ums.filter.impl.Auth0PolicyEnforcer
+/*
+  This is the policy enforcer to be used with Auth0 in Arlas Server.
+  Set ARLAS_AUTH_POLICY_CLASS=io.arlas.ums.filter.impl.Auth0PolicyEnforcer
  */
 public class Auth0PolicyEnforcer extends AbstractPolicyEnforcer {
     private final Logger LOGGER = LoggerFactory.getLogger(Auth0PolicyEnforcer.class);
     private JWTVerifier jwtVerifier;
 
-    public Auth0PolicyEnforcer() {}
+    public Auth0PolicyEnforcer() {
+        this.injectPermissions = false; // permissions are in Auth0
+    }
 
     @Override
     public PolicyEnforcer setAuthConf(ArlasAuthConfiguration conf) throws Exception {

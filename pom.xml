@@ -6,7 +6,7 @@
 
     <groupId>io.arlas.ums</groupId>
     <artifactId>arlas-ums-parent</artifactId>
-    <version>22.0.0-SNAPSHOT</version>
+    <version>21.0.0-SNAPSHOT</version>
     <modules>
         <module>arlas-ums-core</module>
         <module>arlas-ums-rest</module>

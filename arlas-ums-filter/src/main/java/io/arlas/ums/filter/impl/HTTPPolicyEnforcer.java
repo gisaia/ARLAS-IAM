@@ -1,8 +1,6 @@
 package io.arlas.ums.filter.impl;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.interfaces.Claim;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.commons.rest.auth.PolicyEnforcer;
@@ -19,15 +17,12 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 @Provider
 @Priority(Priorities.AUTHORIZATION)
-/**
- * This is the policy enforcer to be used with Arlas Auth in Arlas Server.
- * Set ARLAS_AUTH_POLICY_CLASS=io.arlas.ums.filter.impl.HTTPPolicyEnforcer
+/*
+  This is the policy enforcer to be used with Arlas Auth in Arlas Server.
+  Set ARLAS_AUTH_POLICY_CLASS=io.arlas.ums.filter.impl.HTTPPolicyEnforcer
  */
 public class HTTPPolicyEnforcer extends AbstractPolicyEnforcer {
     private final Logger LOGGER = LoggerFactory.getLogger(HTTPPolicyEnforcer.class);

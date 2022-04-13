@@ -16,8 +16,8 @@ import java.util.Date;
 
 @Provider
 @Priority(Priorities.AUTHORIZATION)
-/**
- * This is the policy enforcer to be used in Arlas Auth (this microservice)
+/*
+  This is the policy enforcer to be used in Arlas Auth (this microservice)
  */
 public class ArlasPolicyEnforcer extends AbstractPolicyEnforcer {
     private final Logger LOGGER = LoggerFactory.getLogger(ArlasPolicyEnforcer.class);
