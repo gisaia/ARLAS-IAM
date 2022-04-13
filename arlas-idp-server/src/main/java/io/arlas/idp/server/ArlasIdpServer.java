@@ -3,7 +3,7 @@ package io.arlas.idp.server;
 import io.arlas.ums.core.AuthService;
 import io.arlas.ums.rest.service.UmsRestService;
 import io.arlas.ums.server.AbstractServer;
-import io.arlas.ums.task.InitDatabaseTask;
+import io.arlas.ums.util.InitDatabaseTask;
 import io.arlas.ums.util.ArlasAuthServerConfiguration;
 import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
 import io.dropwizard.setup.Environment;
@@ -21,6 +21,6 @@ public class ArlasIdpServer extends AbstractServer {
 
         InitDatabaseTask initDatabaseTask = new UnitOfWorkAwareProxyFactory(hibernate)
                 .create(InitDatabaseTask.class, new Class[]{ AuthService.class }, new Object[]{ this.authService });
-        environment.admin().addTask(initDatabaseTask);
+        initDatabaseTask.execute();
     }
 }

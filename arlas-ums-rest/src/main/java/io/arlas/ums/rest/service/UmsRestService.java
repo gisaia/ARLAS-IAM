@@ -5,7 +5,6 @@ import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.commons.exceptions.NotFoundException;
 import io.arlas.commons.rest.response.Error;
 import io.arlas.ums.config.AuthConfiguration;
-import io.arlas.ums.config.InitConfiguration;
 import io.arlas.ums.core.AuthService;
 import io.arlas.ums.exceptions.*;
 import io.arlas.ums.model.*;
@@ -14,8 +13,6 @@ import io.arlas.ums.util.ArlasAuthServerConfiguration;
 import io.arlas.ums.util.IdentityParam;
 import io.dropwizard.hibernate.UnitOfWork;
 import io.swagger.annotations.*;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +20,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,7 +39,7 @@ import java.util.stream.Collectors;
         )
 )
 public class UmsRestService {
-    Logger LOGGER = LoggerFactory.getLogger(UmsRestService.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(UmsRestService.class);
     public static final String UTF8JSON = MediaType.APPLICATION_JSON + ";charset=utf-8";
 
     protected final AuthService authService;

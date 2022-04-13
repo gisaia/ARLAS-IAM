@@ -14,6 +14,8 @@ module arlas.ums.filter {
     requires co.elastic.apm.api;
     requires transitive com.auth0.jwt;
     requires com.fasterxml.jackson.annotation;
+    requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.dataformat.yaml;
     requires java.annotation;
     requires java.ws.rs;
     requires keycloak.authz.client;

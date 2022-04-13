@@ -2,7 +2,6 @@ package io.arlas.ums.server;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smoketurner.dropwizard.zipkin.ZipkinBundle;
 import com.smoketurner.dropwizard.zipkin.ZipkinFactory;
 import io.arlas.commons.config.ArlasCorsConfiguration;
@@ -40,7 +39,7 @@ import javax.ws.rs.core.HttpHeaders;
 import java.util.EnumSet;
 
 public abstract class AbstractServer extends Application<ArlasAuthServerConfiguration> {
-    Logger LOGGER = LoggerFactory.getLogger(AbstractServer.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(AbstractServer.class);
     protected AuthService authService;
 
     protected final HibernateBundle<ArlasAuthServerConfiguration> hibernate =

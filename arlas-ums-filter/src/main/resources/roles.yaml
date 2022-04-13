@@ -1,0 +1,41 @@
+technicalRoles:
+  group/public: []
+  
+  role/arlas/user:
+    - rule:explore/.*:GET,POST:1
+    - rule:collections/.*:GET:1
+    - rule:explore/_list:GET:1
+    - rule:explore/ogc/opensearch/.*:GET:1
+    - rule:ogc/.*:GET:1
+    - rule:stac/.*:GET,POST:1
+    - rule:persist/resource/.*:GET:1
+    - rule:persist/groups/.*:GET:1
+    - rule:persist/resources/.*:GET:1
+    - rule:authorize/resources:GET:1
+    - rule:session:POST:1
+    - rule:session/.*:PUT:1
+    - rule:permissions:GET:1
+
+  role/arlas/tagger:
+    - rule:write/.*:POST:1
+    - rule:status/.*:GET:1
+
+  role/arlas/owner:
+    - rule:collections:GET:1
+    - rule:collections/.*:PUT,DELETE:1
+    - rule:collections/_import:POST:1
+    - rule:persist/resource/.*:PUT,POST,DELETE:1
+    - rule:storage/.*:GET,DELETE:1
+    - rule:data/.*:GET,POST,DELETE:1
+    - rule:process/.*:GET,POST:1
+    - rule:usage:GET:1
+
+  role/idp/admin:
+    - "var:org:"
+
+  role/idp/owner:
+    - rule:organisations:GET,POST:1
+    - rule:organisations/.*:GET,POST,DELETE:1
+    - rule:permissions/.*:POST,DELETE:1
+    - rule:users:GET,POST:1
+    - rule:users/.*:GET,PUT,POST,DELETE:1

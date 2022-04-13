@@ -1,6 +1,5 @@
 package io.arlas.ums.filter.impl;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.rest.auth.PolicyEnforcer;
 import org.keycloak.TokenVerifier;
@@ -8,6 +7,7 @@ import org.keycloak.authorization.client.AuthzClient;
 import org.keycloak.authorization.client.Configuration;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.idm.authorization.AuthorizationRequest;
+import org.keycloak.representations.idm.authorization.Permission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,10 +55,9 @@ public class KeycloakPolicyEnforcer extends AbstractPolicyEnforcer {
         List<String> permissions = ((AccessToken)token).getAuthorization().getPermissions().stream()
                 .flatMap(p -> p.getScopes().stream().map(s -> p.getResourceName() + ":" + s + ":1"))
                 .collect(Collectors.toList());
-        List<String> headerAndVars = ((AccessToken)token).getAuthorization().getPermissions().stream()
+        List<String> headerAndVars = ((AccessToken) token).getAuthorization().getPermissions().stream()
                 .filter(p -> p.getScopes().isEmpty())
-                .map(p -> p.getResourceName())
-                .collect(Collectors.toList());
+                .map(Permission::getResourceName).toList();
 
         permissions.add("var:ws:" + authConf.keycloakConfiguration.getRealm());
         permissions.addAll(headerAndVars);

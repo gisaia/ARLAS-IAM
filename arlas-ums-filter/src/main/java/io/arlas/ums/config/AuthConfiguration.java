@@ -67,10 +67,10 @@ public class AuthConfiguration implements ArlasAuthConfiguration {
     public long verifyTokenTTL;
 
     @JsonProperty("keycloak")
-    public AdapterConfig keycloakConfiguration = new AdapterConfig();
+    public final AdapterConfig keycloakConfiguration = new AdapterConfig();
 
     @JsonProperty("init")
-    public InitConfiguration initConfiguration = new InitConfiguration();
+    public final InitConfiguration initConfiguration = new InitConfiguration();
 
     private String publicRegex;
 
@@ -117,7 +117,7 @@ public class AuthConfiguration implements ArlasAuthConfiguration {
 
         if (invalidVerbs.size() > 0) {
             throw new ArlasConfigurationException("Public uris and verbs list is invalid. Format is 'path' or 'path:*' " +
-                    "or 'path:GET/POST/DELETE'. Invalid verbs: " + invalidVerbs.toString());
+                    "or 'path:GET/POST/DELETE'. Invalid verbs: " + invalidVerbs);
         }
     }
 }
