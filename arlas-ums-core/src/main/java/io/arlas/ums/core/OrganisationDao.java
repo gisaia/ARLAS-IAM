@@ -1,7 +1,7 @@
 package io.arlas.ums.core;
 
 import io.arlas.ums.model.Organisation;
-import io.arlas.ums.model.User;
+import io.arlas.ums.model.OrganisationMember;
 
 import java.util.Optional;
 import java.util.Set;
@@ -17,6 +17,6 @@ public interface OrganisationDao {
 
     void deleteOrganisation(Organisation organisation);
 
-    Set<User> listUsers(User user); // list users from the same organisations as the requesting user
+    Set<OrganisationMember> listUsers(Organisation organisation); // list users from the same organisations as the requesting user
 
 }

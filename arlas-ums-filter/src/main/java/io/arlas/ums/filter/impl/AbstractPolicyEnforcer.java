@@ -20,6 +20,7 @@ import javax.ws.rs.ext.Provider;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Provider
@@ -95,11 +96,11 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
             ctx.getHeaders().remove(authConf.headerGroup); // remove it in case it's been set manually
             Collection<String> roles = getRolesClaim(token);
             if (!roles.isEmpty()) {
-                List<String> groups = roles.stream()
+                Set<String> groups = roles.stream()
                         .filter(r -> r.toLowerCase().startsWith("group"))
-                        .collect(Collectors.toList());
-                ctx.setProperty("groups", groups);
-                ctx.getHeaders().put(authConf.headerGroup, groups);
+                        .collect(Collectors.toSet());
+                ctx.setProperty("groups", groups.stream().toList());
+                ctx.getHeaders().put(authConf.headerGroup, groups.stream().toList());
                 LOGGER.debug("Add Header [" + authConf.headerGroup +": " + groups + "]");
             }
 

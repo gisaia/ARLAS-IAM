@@ -3,14 +3,12 @@ package io.arlas.ums.impl;
 import io.arlas.ums.core.OrganisationDao;
 import io.arlas.ums.model.Organisation;
 import io.arlas.ums.model.OrganisationMember;
-import io.arlas.ums.model.User;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class HibernateOrganisationDao extends AbstractDAO<Organisation> implements OrganisationDao {
     public HibernateOrganisationDao(SessionFactory sessionFactory) {
@@ -38,10 +36,7 @@ public class HibernateOrganisationDao extends AbstractDAO<Organisation> implemen
     }
 
     @Override
-    public Set<User> listUsers(User user) {
-        return user.getOrganisations().stream()
-                .flatMap(om -> om.getOrganisation().getMembers().stream())
-                .map(OrganisationMember::getUser)
-                .collect(Collectors.toSet());
+    public Set<OrganisationMember> listUsers(Organisation organisation) {
+        return organisation.getMembers();
     }
 }

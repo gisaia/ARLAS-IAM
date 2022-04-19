@@ -21,6 +21,7 @@ logging:
   loggers:
     "javax.management.mbeanserver": ${ARLAS_UMS_LOGGING_MBEAN_LEVEL:-INFO}
     "org.hibernate": ${ARLAS_UMS_LOGGING_HIBERNATE_LEVEL:-INFO}
+    "org.eclipse.jetty": ${ARLAS_UMS_LOGGING_JETTY_LEVEL:-INFO}
   appenders:
     - type: console
       threshold:  ${ARLAS_UMS_LOGGING_CONSOLE_LEVEL:-INFO}
@@ -72,7 +73,6 @@ arlas_auth:
     locale: ${ARLAS_AUTH_INIT_LOCALE:-en}
     organisation: ${ARLAS_AUTH_INIT_ORG:-all}
 
-arlas_organization_header: ${ARLAS_ORGANIZATION_HEADER:-arlas-organization}
 anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}
 # set this to "false" if you don't want new users to verify their email
 verify_email: ${ARLAS_UMS_VERIFY_EMAIL:-true}

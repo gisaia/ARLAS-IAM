@@ -1,41 +1,51 @@
 technicalRoles:
   group/public: []
-  
+
   role/arlas/user:
-    - rule:explore/.*:GET,POST:1
-    - rule:collections/.*:GET:1
-    - rule:explore/_list:GET:1
-    - rule:explore/ogc/opensearch/.*:GET:1
-    - rule:ogc/.*:GET:1
-    - rule:stac/.*:GET,POST:1
-    - rule:persist/resource/.*:GET:1
-    - rule:persist/groups/.*:GET:1
-    - rule:persist/resources/.*:GET:1
-    - rule:authorize/resources:GET:1
-    - rule:session:POST:1
-    - rule:session/.*:PUT:1
-    - rule:permissions:GET:1
+# ARLAS explore
+    - r:explore/.*:GET,POST
+    - r:collections/.*:GET
+    - r:explore/_list:GET
+    - r:explore/ogc/opensearch/.*:GET
+    - r:ogc/.*:GET
+    - r:stac/.*:GET,POST
+# ARLAS persistence
+    - r:persist/resource/.*:GET
+    - r:persist/groups/.*:GET
+    - r:persist/resources/.*:GET
+# ARLAS permissions
+    - r:authorize/resources:GET
+# ARLAS IDP session management
+    - r:session:POST,DELETE
+    - r:session/.*:PUT
+    - r:permissions:GET
 
   role/arlas/tagger:
-    - rule:write/.*:POST:1
-    - rule:status/.*:GET:1
+    - r:write/.*:POST
+    - r:status/.*:GET
 
   role/arlas/owner:
-    - rule:collections:GET:1
-    - rule:collections/.*:PUT,DELETE:1
-    - rule:collections/_import:POST:1
-    - rule:persist/resource/.*:PUT,POST,DELETE:1
-    - rule:storage/.*:GET,DELETE:1
-    - rule:data/.*:GET,POST,DELETE:1
-    - rule:process/.*:GET,POST:1
-    - rule:usage:GET:1
+# ARLAS explore
+    - r:collections:GET
+    - r:collections/.*:PUT,DELETE
+    - r:persist/resource/.*:PUT,POST,DELETE
+#    - r:collections/_import:POST
+# ARLAS city
+    - r:storage/.*:GET,DELETE
+    - r:data/.*:GET,POST,DELETE
+    - r:process/.*:GET,POST
+    - r:usage:GET
+# ARLAS IDP
+    - r:organisations:GET,POST
+    - r:organisations/.*:GET,POST,DELETE
+    - r:users:POST
+    - r:users/.*:GET,PUT,POST,DELETE
 
   role/idp/admin:
-    - "var:org:"
-
-  role/idp/owner:
-    - rule:organisations:GET,POST:1
-    - rule:organisations/.*:GET,POST,DELETE:1
-    - rule:permissions/.*:POST,DELETE:1
-    - rule:users:GET,POST:1
-    - rule:users/.*:GET,PUT,POST,DELETE:1
+    - r:organisations:GET,POST
+    - r:organisations/.*:GET,POST,DELETE
+    - r:users:POST
+    - r:users/.*:GET,PUT,POST,DELETE
+    - r:session:POST,DELETE
+    - r:session/.*:PUT
+    - r:permissions:GET

@@ -44,7 +44,6 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
 
     protected final HibernateBundle<ArlasAuthServerConfiguration> hibernate =
             new HibernateBundle<>(
-                    Group.class,
                     Organisation.class,
                     OrganisationMember.class,
                     Permission.class,
@@ -99,7 +98,7 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
 
         ArlasPolicyEnforcer arlasPolicyEnforcer = new UnitOfWorkAwareProxyFactory(hibernate)
                 .create(ArlasPolicyEnforcer.class, new Class[]{ AuthService.class, AuthConfiguration.class },
-                        new Object[]{ this.authService, (AuthConfiguration) configuration.arlasAuthConfiguration });
+                        new Object[]{ this.authService, configuration.arlasAuthConfiguration });
         environment.jersey().register(arlasPolicyEnforcer);
 
         //cors

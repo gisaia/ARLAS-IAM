@@ -32,6 +32,8 @@ public class ArlasPolicyEnforcer extends AbstractPolicyEnforcer {
     @UnitOfWork
     protected Object getObjectToken(String token) throws Exception {
         DecodedJWT accessToken = authService.verifyToken(token);
-        return JWT.decode(authService.createPermissionToken(accessToken.getSubject(), accessToken.getIssuer(), new Date()));
+        String rpt = authService.createPermissionToken(accessToken.getSubject(), accessToken.getIssuer(), new Date());
+        LOGGER.debug("Permission token=" + rpt);
+        return JWT.decode(rpt);
     }
 }

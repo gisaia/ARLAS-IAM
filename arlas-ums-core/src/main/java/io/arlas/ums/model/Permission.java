@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import io.dropwizard.jackson.JsonSnakeCase;
 import org.hibernate.annotations.NaturalId;
-import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -31,28 +30,22 @@ public class Permission {
     @Column
     private String description;
 
-    @Type(type = "org.hibernate.type.NumericBooleanType")
-    @Column(name="is_system")
-    private boolean isSystem = false; // system permissions are shared among all organisations
-
     @ManyToMany()
     @JoinTable(name = "RolePermission",
             joinColumns = @JoinColumn(name = "id_permission"),
             inverseJoinColumns = @JoinColumn(name = "id_role"))
     private Set<Role> roles = new HashSet<>();
 
-    @ManyToMany()
-    @JoinTable(name = "UserPermission",
-            joinColumns = @JoinColumn(name = "id_permission"),
-            inverseJoinColumns = @JoinColumn(name = "id_user"))
-    private Set<User> users = new HashSet<>();
-
+    @ManyToOne
+    @JoinColumn(name = "id_organisation")
+    private Organisation organisation;
 
     private Permission() {}
 
-    public Permission(String value, boolean isSystem) {
+    public Permission(String value, String description, Organisation org) {
         this.value = value;
-        this.isSystem = isSystem;
+        this.description = description;
+        this.organisation = org;
     }
 
     public UUID getId() {
@@ -83,14 +76,6 @@ public class Permission {
         this.description = description;
     }
 
-    public boolean isSystem() {
-        return isSystem;
-    }
-
-    public void setSystem(boolean isSystem) {
-        this.isSystem = isSystem;
-    }
-
     public Set<Role> getRoles() {
         return roles;
     }
@@ -99,12 +84,12 @@ public class Permission {
         this.roles = roles;
     }
 
-    public Set<User> getUsers() {
-        return users;
+    public Organisation getOrganisation() {
+        return organisation;
     }
 
-    public void setUsers(Set<User> users) {
-        this.users = users;
+    public void setOrganisation(Organisation organisation) {
+        this.organisation = organisation;
     }
 
     @Override

@@ -57,14 +57,8 @@ public class User {
     @OneToMany(mappedBy = "pk.user", cascade= CascadeType.REMOVE)
     private Set<OrganisationMember> organisations = new HashSet<>();
 
-    @ManyToMany(mappedBy = "members", cascade= CascadeType.REMOVE)
-    private Set<Group> groups = new HashSet<>();
-
     @ManyToMany(mappedBy="users", cascade= CascadeType.REMOVE)
     private Set<Role> roles = new HashSet<>();
-
-    @ManyToMany(mappedBy="users", cascade= CascadeType.REMOVE)
-    private Set<Permission> permissions = new HashSet<>();
 
     private User() {}
 
@@ -177,28 +171,12 @@ public class User {
         this.organisations = organisations;
     }
 
-    public Set<Group> getGroups() {
-        return groups;
-    }
-
-    public void setGroups(Set<Group> groups) {
-        this.groups = groups;
-    }
-
     public Set<Role> getRoles() {
         return roles;
     }
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
-    }
-
-    public Set<Permission> getPermissions() {
-        return permissions;
-    }
-
-    public void setPermissions(Set<Permission> permissions) {
-        this.permissions = permissions;
     }
 
     @Override
