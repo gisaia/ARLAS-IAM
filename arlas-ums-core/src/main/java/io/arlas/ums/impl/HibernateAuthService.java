@@ -160,7 +160,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     private Set<Role> importDefaultRoles(User admin) {
-        List<String> defaultAdminRoles = List.of(GROUP_PUBLIC, ROLE_IDP_ADMIN);
+        List<String> defaultAdminRoles = List.of(ROLE_IDP_ADMIN);
         return TechnicalRoles.getTechnicalRolesList().stream()
                 .map(s -> {
                     Role r = new Role(s, true);
@@ -358,7 +358,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Set<OrganisationMember> listOrganisationUsers(User user, UUID orgId) throws NotOwnerException, NotFoundException {
+    public Set<OrganisationMember> listOrganisationUsers(User user, UUID orgId) throws NotOwnerException {
         return organisationDao.listUsers(getOrganisation(user, orgId));
 
     }
@@ -388,11 +388,9 @@ public class HibernateAuthService implements AuthService {
                     ArlasClaims.getHeaderColumnFilterDefault(domain),
                     "View all organisation's collections' data.");
             // create default roles
-            createRole(organisation, TechnicalRoles.getDefaultDashboardGroupRole(domain),
+            Role defaultGroup = createRole(organisation, TechnicalRoles.getDefaultGroup(domain),
                     "Default organisation group for dashboard sharing.");
-            Role allDataRole = createRole(organisation, TechnicalRoles.getAllDataRole(domain),
-                    "View all organisation's collections' data.");
-            roleDao.addPermissionToRole(allDataPermission, allDataRole);
+            roleDao.addPermissionToRole(allDataPermission, defaultGroup);
             return organisation;
         } else {
             if (org.get().getMembers().stream().anyMatch(om -> om.getUser().is(user.getId()) && om.isOwner())) {
@@ -405,7 +403,7 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public void deleteOrganisation(User owner, UUID orgId)
-            throws NotOwnerException, NotFoundException {
+            throws NotOwnerException {
         organisationDao.deleteOrganisation(getOrganisation(owner, orgId));
         // TODO : delete associated resources
     }
@@ -425,14 +423,14 @@ public class HibernateAuthService implements AuthService {
         }
         organisationMemberDao.addUserToOrganisation(user, org, isOwner);
         List<String> userDefaultRoles = List.of(
-                TechnicalRoles.getDefaultDashboardGroupRole(org.getName()),
-                TechnicalRoles.getAllDataRole(org.getName()),
+                TechnicalRoles.getDefaultGroup(org.getName()),
                 ROLE_ARLAS_USER,
                 GROUP_PUBLIC);
+        List<String> ownerDefaultRoles = List.of(ROLE_ARLAS_OWNER, ROLE_ARLAS_BUILDER, ROLE_ARLAS_TAGGER);
         // add default roles
         listAvailableRoles(org).stream()
                 .filter(r -> userDefaultRoles.contains(r.getName())
-                        || (isOwner && TechnicalRoles.ROLE_ARLAS_OWNER.equals(r.getName())))
+                        || (isOwner && ownerDefaultRoles.contains(r.getName())))
                 .forEach(r -> roleDao.addRoleToUser(user, r));
         return org;
     }
@@ -461,13 +459,12 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public Role createRole(User owner, String name, String description, UUID orgId)
-            throws AlreadyExistsException, NotOwnerException, NotFoundException {
-        Organisation org = getOrganisation(owner, orgId);
-        return createRole(org, TechnicalRoles.getDataRole(org.getName(), name), description);
+            throws AlreadyExistsException, NotOwnerException {
+        return createRole(getOrganisation(owner, orgId), name, description);
     }
 
     @Override
-    public List<Role> listRoles(User owner, UUID orgId) throws NotFoundException, NotOwnerException {
+    public List<Role> listRoles(User owner, UUID orgId) throws NotOwnerException {
         return listAvailableRoles(getOrganisation(owner, orgId));
     }
 
@@ -536,7 +533,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Permission createPermission(User owner, UUID orgId, String value, String description) throws NotOwnerException, NotFoundException {
+    public Permission createPermission(User owner, UUID orgId, String value, String description) throws NotOwnerException {
         return createPermission(getOrganisation(owner, orgId), value, description);
     }
     @Override

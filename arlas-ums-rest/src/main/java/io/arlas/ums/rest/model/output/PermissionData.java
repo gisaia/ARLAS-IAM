@@ -15,6 +15,6 @@ public class PermissionData {
         this.id = p.getId();
         this.value = p.getValue();
         this.description = p.getDescription();
-        this.roles = p.getRoles().stream().map(r -> new RoleData(r)).toList();
+        this.roles = p.getRoles().stream().map(RoleData::new).toList();
     }
 }

@@ -176,12 +176,12 @@ public class AuthITUser {
     @Test
     public void test20AddRoleToOrganisation() {
         fooRoleId1 = createRole(userId1, ROLE1, ROLE1_DESC).then().statusCode(201)
-                .body("name", equalTo(String.format("role/%s/data/%s", ORG, ROLE1)))
+                .body("name", equalTo(ROLE1))
                 .body("description", equalTo(ROLE1_DESC))
                 .extract().jsonPath().get("id");
 
         fooRoleId2 = createRole(userId1, ROLE2, ROLE2_DESC).then().statusCode(201)
-                .body("name", equalTo(String.format("role/%s/data/%s", ORG, ROLE2)))
+                .body("name", equalTo(ROLE2))
                 .body("description", equalTo(ROLE2_DESC))
                 .extract().jsonPath().get("id");
     }
@@ -238,10 +238,10 @@ public class AuthITUser {
     @Test
     public void test93DeleteUserFromRole() {
         getUser(userId2, userId2).then().statusCode(200)
-                .body("roles", hasSize(6)); // 4 automatic roles + 2 created
+                .body("roles", hasSize(5)); // 3 automatic roles + 2 created
         deleteUserFromRole(userId1, userId2, fooRoleId2).then().statusCode(202);
         getUser(userId2, userId2).then().statusCode(200)
-                .body("roles", hasSize(5));
+                .body("roles", hasSize(4));
     }
 
     @Test
