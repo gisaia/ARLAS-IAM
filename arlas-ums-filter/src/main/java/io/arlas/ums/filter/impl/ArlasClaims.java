@@ -32,7 +32,7 @@ public class ArlasClaims {
                         if (remains.length == 2) {
                             rules.add(new RuleClaim(splitClaim[1], remains[0], Integer.valueOf(remains[1].trim())));
                         } else {
-                            LOGGER.warn("Invalid rule claim format: " + claim);
+                            rules.add(new RuleClaim(splitClaim[1], remains[0], 1));
                         }
                     }
                     case "h", "header" -> {
@@ -99,5 +99,9 @@ public class ArlasClaims {
 
     public Map<String, String> getVariables() {
         return variables;
+    }
+
+    public static String getHeaderColumnFilterDefault(String org) {
+        return String.format("h:column-filter:%s_*:*", org);
     }
 }

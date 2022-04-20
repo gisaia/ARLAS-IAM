@@ -1,7 +1,6 @@
 package io.arlas.ums.core;
 
 import io.arlas.ums.model.Organisation;
-import io.arlas.ums.model.Permission;
 import io.arlas.ums.model.User;
 
 import java.util.List;
@@ -27,14 +26,5 @@ public interface UserDao {
 
     User deactivateUser(UUID userId);
 
-    User verifyUser(UUID userId);
-
     Set<Organisation> listOrganisations(User user);
-
-    Set<Permission> listPermissions(User user);
-
-    User addPermissionToUser(User user, Permission permission);
-
-    User removePermissionFromUser(User user, Permission permission);
-
 }

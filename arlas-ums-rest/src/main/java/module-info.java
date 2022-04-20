@@ -1,6 +1,7 @@
 module arlas.ums.rest {
-    exports io.arlas.ums.rest.model;
     exports io.arlas.ums.rest.service;
+    exports io.arlas.ums.rest.model.input;
+    exports io.arlas.ums.rest.model.output;
     exports io.arlas.ums.server;
 
     requires transitive arlas.ums.core;

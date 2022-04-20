@@ -33,17 +33,9 @@ public class Role {
     @Column(name="is_system")
     private boolean isSystem = false; // system roles are shared among all organisations
 
-    @ManyToMany()
-    @JoinTable(name = "OrganisationRole",
-            joinColumns = @JoinColumn(name = "id_role"),
-            inverseJoinColumns = @JoinColumn(name = "id_organisation"))
-    private Set<Organisation> organisations = new HashSet<>();
-
-    @ManyToMany()
-    @JoinTable(name = "GroupRole",
-            joinColumns = @JoinColumn(name = "id_role"),
-            inverseJoinColumns = @JoinColumn(name = "id_group"))
-    private Set<Group> groups = new HashSet<>();
+    @ManyToOne
+    @JoinColumn(name = "id_organisation")
+    private Organisation organisation;
 
     @ManyToMany()
     @JoinTable(name = "UserRole",
@@ -56,8 +48,14 @@ public class Role {
 
     private Role() {}
 
-    public Role(String name) {
+    public Role(String name, String description) {
         this.name = name;
+        this.description = description;
+    }
+
+    public Role(String name, boolean isSystem) {
+        this.name = name;
+        this.isSystem = isSystem;
     }
 
     public UUID getId() {
@@ -96,25 +94,13 @@ public class Role {
         this.isSystem = isSystem;
     }
 
-    public Set<Organisation> getOrganisations() {
-        return organisations;
+    public Organisation getOrganisation() {
+        return organisation;
     }
 
-    public void setOrganisations(Set<Organisation> organisations) {
-        this.organisations = organisations;
-    }
-
-    public Role addOrganisation(Organisation organisation) {
-        this.organisations.add(organisation);
+    public Role setOrganisation(Organisation organisation) {
+        this.organisation = organisation;
         return this;
-    }
-
-    public Set<Group> getGroups() {
-        return groups;
-    }
-
-    public void setGroups(Set<Group> groups) {
-        this.groups = groups;
     }
 
     public Set<User> getUsers() {

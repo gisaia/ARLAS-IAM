@@ -12,6 +12,13 @@ import java.util.Map;
 import java.util.Set;
 
 public class TechnicalRoles {
+    // permissions of these roles are defined in arlas-ums-filter/src/main/resources/roles.yaml
+    public static final String ROLE_IDP_ADMIN = "role/idp/admin";
+    public static final String ROLE_ARLAS_OWNER = "role/arlas/owner";
+    public static final String ROLE_ARLAS_USER = "role/arlas/user";
+    public static final String ROLE_ARLAS_TAGGER = "role/arlas/tagger";
+    public static final String GROUP_PUBLIC = "group/public";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TechnicalRoles.class);
     private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
     private static Map<String, List<String>> technicalRolesPermissions;
@@ -33,5 +40,21 @@ public class TechnicalRoles {
 
     public static Set<String> getTechnicalRolesList() {
         return technicalRolesPermissions.keySet();
+    }
+
+    public static String getDefaultDashboardGroupRole(String org) {
+        return String.format("group/config.json/%s", org);
+    }
+
+    public static String getNewDashboardGroupRole(String org, String group) {
+        return String.format("group/config.json/%s/%s", org, group);
+    }
+
+    public static String getDataRole(String org, String role) {
+        return String.format("role/%s/data/%s", org, role);
+    }
+
+    public static String getAllDataRole(String org) {
+        return String.format("role/%s/data/all", org);
     }
 }

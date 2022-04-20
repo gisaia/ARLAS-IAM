@@ -30,9 +30,9 @@ public class Organisation {
     private Set<OrganisationMember> members = new HashSet<>();
 
     @OneToMany(mappedBy="organisation", cascade = CascadeType.REMOVE)
-    private Set<Group> groups = new HashSet<>();
+    private Set<Permission> permissions = new HashSet<>();
 
-    @ManyToMany(mappedBy="organisations", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy="organisation", cascade = CascadeType.REMOVE)
     private Set<Role> roles = new HashSet<>();
 
     private Organisation() {}
@@ -51,6 +51,10 @@ public class Organisation {
 
     public boolean is(UUID uuid) {
         return this.id.equals(uuid);
+    }
+
+    public boolean is(Organisation o) {
+        return o != null && this.id.equals(o.getId());
     }
 
     public String getName() {
@@ -77,18 +81,6 @@ public class Organisation {
         return this.members.remove(organisationMember);
     }
 
-    public Set<Group> getGroups() {
-        return groups;
-    }
-
-    public void setGroups(Set<Group> groups) {
-        this.groups = groups;
-    }
-
-    public void addGroup(Group group) {
-        this.groups.add(group);
-    }
-
     public Set<Role> getRoles() {
         return roles;
     }
@@ -99,6 +91,14 @@ public class Organisation {
 
     public void addRole(Role role) {
         this.roles.add(role);
+    }
+
+    public Set<Permission> getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(Set<Permission> permissions) {
+        this.permissions = permissions;
     }
 
     @Override

@@ -10,6 +10,7 @@ import io.arlas.ums.config.AuthConfiguration;
 import io.arlas.ums.core.TokenSecretDao;
 import io.arlas.ums.impl.HibernateTokenSecretDao;
 import io.arlas.ums.model.LoginSession;
+import io.arlas.ums.model.Role;
 import io.arlas.ums.model.TokenSecret;
 import io.arlas.ums.model.User;
 import org.hibernate.SessionFactory;
@@ -59,7 +60,7 @@ public class TokenManager {
                 createRefreshToken(), (iat.getTime() + this.refreshTokenTTL)/1000);
     }
 
-    public String createPermissionToken(String subject, String issuer, Date iat, Set<String> permissions) throws ArlasException {
+    public String createPermissionToken(String subject, String issuer, Date iat, Set<String> permissions, Set<String> roles) throws ArlasException {
         try {
             storeSecret();
             Date exp = new Date(iat.getTime() + this.accessTokenTTL);
@@ -69,6 +70,7 @@ public class TokenManager {
                     .withIssuedAt(iat)
                     .withExpiresAt(exp)
                     .withClaim(this.authConf.claimPermissions, permissions.stream().toList())
+                    .withClaim(this.authConf.claimRoles, roles.stream().toList())
                     .sign(this.algorithm);
         } catch (JWTCreationException exception){
             throw new ArlasException("Invalid Signing configuration / Couldn't convert Claims.");
@@ -84,8 +86,9 @@ public class TokenManager {
                     .withSubject(subject.getId().toString())
                     .withIssuedAt(iat)
                     .withExpiresAt(exp)
-                    .withClaim("locale", subject.getLocale())
-                    .withClaim("timezone", subject.getTimezone())
+                    .withClaim("http://arlas.io/locale", subject.getLocale())
+                    .withClaim("http://arlas.io/timezone", subject.getTimezone())
+                    .withClaim(this.authConf.claimRoles, subject.getRoles().stream().map(Role::getName).toList())
                     .sign(this.algorithm);
         } catch (JWTCreationException exception){
             throw new ArlasException("Invalid Signing configuration / Couldn't convert Claims.");
