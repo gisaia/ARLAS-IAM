@@ -16,6 +16,7 @@ public class TechnicalRoles {
     public static final String ROLE_IDP_ADMIN = "role/idp/admin";
     public static final String ROLE_ARLAS_OWNER = "role/arlas/owner";
     public static final String ROLE_ARLAS_USER = "role/arlas/user";
+    public static final String ROLE_ARLAS_BUILDER = "role/arlas/builder";
     public static final String ROLE_ARLAS_TAGGER = "role/arlas/tagger";
     public static final String GROUP_PUBLIC = "group/public";
 
@@ -42,19 +43,11 @@ public class TechnicalRoles {
         return technicalRolesPermissions.keySet();
     }
 
-    public static String getDefaultDashboardGroupRole(String org) {
+    public static String getDefaultGroup(String org) {
         return String.format("group/config.json/%s", org);
     }
 
     public static String getNewDashboardGroupRole(String org, String group) {
         return String.format("group/config.json/%s/%s", org, group);
-    }
-
-    public static String getDataRole(String org, String role) {
-        return String.format("role/%s/data/%s", org, role);
-    }
-
-    public static String getAllDataRole(String org) {
-        return String.format("role/%s/data/all", org);
     }
 }
