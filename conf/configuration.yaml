@@ -2,41 +2,41 @@ server:
   requestLog:
     appenders:
       - type: file
-        currentLogFilename: ${ARLAS_UMS_ACCESS_LOG_FILE:-arlas-ums-access.log}
-        archivedLogFilenamePattern: ${ARLAS_UMS_LOG_FILE_ARCHIVE:-arlas-ums-access-%d.log.gz}
+        currentLogFilename: ${ARLAS_IAM_ACCESS_LOG_FILE:-arlas-iam-access.log}
+        archivedLogFilenamePattern: ${ARLAS_IAM_LOG_FILE_ARCHIVE:-arlas-iam-access-%d.log.gz}
   registerDefaultExceptionMappers: false
   type: simple
-  rootPath: ${ARLAS_UMS_PREFIX:-/arlas_idp_server}
-  applicationContextPath: ${ARLAS_UMS_APP_PATH:-/}
-  adminContextPath: ${ARLAS_UMS_ADMIN_PATH:-/admin}
+  rootPath: ${ARLAS_IAM_PREFIX:-/arlas_idp_server}
+  applicationContextPath: ${ARLAS_IAM_APP_PATH:-/}
+  adminContextPath: ${ARLAS_IAM_ADMIN_PATH:-/admin}
   connector:
     type: http
-    port: ${ARLAS_UMS_PORT:-9997}
-  maxThreads: ${ARLAS_UMS_MAX_THREADS:-1024}
-  minThreads: ${ARLAS_UMS_MIN_THREADS:-8}
-  maxQueuedRequests: ${ARLAS_UMS_MAX_QUEUED_REQUESTS:-1024}
+    port: ${ARLAS_IAM_PORT:-9997}
+  maxThreads: ${ARLAS_IAM_MAX_THREADS:-1024}
+  minThreads: ${ARLAS_IAM_MIN_THREADS:-8}
+  maxQueuedRequests: ${ARLAS_IAM_MAX_QUEUED_REQUESTS:-1024}
 
 logging:
-  level: ${ARLAS_UMS_LOGGING_LEVEL:-INFO}
+  level: ${ARLAS_IAM_LOGGING_LEVEL:-INFO}
   loggers:
-    "javax.management.mbeanserver": ${ARLAS_UMS_LOGGING_MBEAN_LEVEL:-INFO}
-    "org.hibernate": ${ARLAS_UMS_LOGGING_HIBERNATE_LEVEL:-INFO}
-    "org.eclipse.jetty": ${ARLAS_UMS_LOGGING_JETTY_LEVEL:-INFO}
+    "javax.management.mbeanserver": ${ARLAS_IAM_LOGGING_MBEAN_LEVEL:-INFO}
+    "org.hibernate": ${ARLAS_IAM_LOGGING_HIBERNATE_LEVEL:-INFO}
+    "org.eclipse.jetty": ${ARLAS_IAM_LOGGING_JETTY_LEVEL:-INFO}
   appenders:
     - type: console
-      threshold:  ${ARLAS_UMS_LOGGING_CONSOLE_LEVEL:-INFO}
+      threshold:  ${ARLAS_IAM_LOGGING_CONSOLE_LEVEL:-INFO}
     - type: file
-      currentLogFilename: ${ARLAS_UMS_LOGGING_FILE:-arlas-ums.log}
-      threshold: ${ARLAS_UMS_LOGGING_FILE_LEVEL:-INFO}
-      archive: ${ARLAS_UMS_LOGGING_FILE_ARCHIVE:-true}
-      archivedLogFilenamePattern: ${ARLAS_UMS_LOGGING_FILE_ARCHIVE_FILE_PATTERN:-arlas-ums-%d.log}
-      archivedFileCount: ${ARLAS_UMS_LOGGING_FILE_ARCHIVE_FILE_COUNT:-5}
+      currentLogFilename: ${ARLAS_IAM_LOGGING_FILE:-arlas-iam.log}
+      threshold: ${ARLAS_IAM_LOGGING_FILE_LEVEL:-INFO}
+      archive: ${ARLAS_IAM_LOGGING_FILE_ARCHIVE:-true}
+      archivedLogFilenamePattern: ${ARLAS_IAM_LOGGING_FILE_ARCHIVE_FILE_PATTERN:-arlas-iam-%d.log}
+      archivedFileCount: ${ARLAS_IAM_LOGGING_FILE_ARCHIVE_FILE_COUNT:-5}
 
 swagger: # Configuration of SWAGGER for generating documentation and APIs
-  resourcePackage: io.arlas.ums.rest.service # The java package to process for extracting the APIs
+  resourcePackage: io.arlas.iam.rest.service # The java package to process for extracting the APIs
   # temporary patch for bug https://github.com/smoketurner/dropwizard-swagger/issues/206
   # to be removed when version of dropwizard.swagger.version is upgraded
-  customJavascript: ${ARLAS_UMS_CUSTOM_JS:-/arlas_idp_server/swagger-static/custom-request-interceptor.js}
+  customJavascript: ${ARLAS_IAM_CUSTOM_JS:-/arlas_idp_server/swagger-static/custom-request-interceptor.js}
 
 zipkin: # The ZIPKIN configuration, not active by default
   enabled: ${ARLAS_ZIPKIN_ENABLED:-false} # Do we want zipkin to collect the API calls? Not by default.
@@ -75,20 +75,20 @@ arlas_auth:
 
 anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}
 # set this to "false" if you don't want new users to verify their email
-verify_email: ${ARLAS_UMS_VERIFY_EMAIL:-true}
+verify_email: ${ARLAS_IAM_VERIFY_EMAIL:-true}
 
 database:
   # the name of your JDBC driver
-  driverClass: ${ARLAS_UMS_HIBERNATE_DRIVER:-org.postgresql.Driver}
-  user: ${ARLAS_UMS_HIBERNATE_USER:-pg-user}
-  password: ${ARLAS_UMS_HIBERNATE_PASSWORD:-iAMs00perSecrEET}
+  driverClass: ${ARLAS_IAM_HIBERNATE_DRIVER:-org.postgresql.Driver}
+  user: ${ARLAS_IAM_HIBERNATE_USER:-pg-user}
+  password: ${ARLAS_IAM_HIBERNATE_PASSWORD:-iAMs00perSecrEET}
   # the JDBC URL
-  url: ${ARLAS_UMS_HIBERNATE_URL:-jdbc:postgresql://localhost:5432/arlas_ums}
+  url: ${ARLAS_IAM_HIBERNATE_URL:-jdbc:postgresql://localhost:5432/arlas_iam}
   # any properties specific to your JDBC driver:
   properties:
     charSet: UTF-8
-    hibernate.dialect: ${ARLAS_UMS_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}
-    hibernate.hbm2ddl.auto: ${ARLAS_UMS_HIBERNATE_HBM2DDL:-update}
+    hibernate.dialect: ${ARLAS_IAM_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}
+    hibernate.hbm2ddl.auto: ${ARLAS_IAM_HIBERNATE_HBM2DDL:-update}
     hibernate.session.events.log: false
   # the maximum amount of time to wait on an empty pool before throwing an exception
   maxWaitForConnection: 1s

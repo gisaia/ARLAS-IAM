@@ -1,3 +1,0 @@
-io.arlas.ums.filter.impl.Auth0PolicyEnforcer
-io.arlas.ums.filter.impl.HTTPPolicyEnforcer
-io.arlas.ums.filter.impl.KeycloakPolicyEnforcer

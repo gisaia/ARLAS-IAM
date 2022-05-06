@@ -16,14 +16,14 @@ docker run --rm \
         -v $PWD:/opt/maven \
         -v $HOME/.m2:/root/.m2 \
         -e RELEASE_VERSION=${RELEASE_VERSION} \
-        maven:3.8.4-openjdk-17 \
+        maven:3.8.5-openjdk-17 \
         mvn -q clean versions:set -DnewVersion=${RELEASE_VERSION}
-sed -i.bak 's/\"API_VERSION\"/\"'${RELEASE_VERSION}'\"/' ${PROJECT_ROOT_DIRECTORY}/arlas-ums-rest/src/main/java/io/arlas/ums/rest/service/UmsRestService.java
+sed -i.bak 's/\"API_VERSION\"/\"'${RELEASE_VERSION}'\"/' ${PROJECT_ROOT_DIRECTORY}/arlas-iam-rest/src/main/java/io/arlas/iam/rest/service/UmsRestService.java
 
 echo "===> build arlas-idp-server v${RELEASE_VERSION}"
 docker run --rm \
     -w /opt/maven \
 	-v $PWD:/opt/maven \
 	-v $HOME/.m2:/root/.m2 \
-	maven:3.8.4-openjdk-17 \
+	maven:3.8.5-openjdk-17 \
 	mvn -q clean install
