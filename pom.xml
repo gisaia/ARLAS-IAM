@@ -4,26 +4,26 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.arlas.ums</groupId>
-    <artifactId>arlas-ums-parent</artifactId>
+    <groupId>io.arlas.iam</groupId>
+    <artifactId>arlas-iam-parent</artifactId>
     <version>22.0.0-beta.2</version>
     <modules>
-        <module>arlas-ums-core</module>
-        <module>arlas-ums-rest</module>
-        <module>arlas-ums-tests</module>
-        <module>arlas-ums-filter</module>
+        <module>arlas-iam-core</module>
+        <module>arlas-iam-rest</module>
+        <module>arlas-iam-tests</module>
+        <module>arlas-iam-filter</module>
         <module>arlas-idp-server</module>
     </modules>
     <packaging>pom</packaging>
-    <name>ARLAS UMS parent</name>
+    <name>ARLAS IAM parent</name>
 
     <distributionManagement>
         <snapshotRepository>
-            <id>io.arlas.ums.parent</id>
+            <id>io.arlas.iam.parent</id>
             <url>https://maven.cloudsmith.io/gisaia/private/</url>
         </snapshotRepository>
         <repository>
-            <id>io.arlas.ums.parent</id>
+            <id>io.arlas.iam.parent</id>
             <url>https://maven.cloudsmith.io/gisaia/private/</url>
         </repository>
     </distributionManagement>

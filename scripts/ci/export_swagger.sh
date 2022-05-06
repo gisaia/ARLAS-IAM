@@ -23,7 +23,7 @@ function clean_docker {
     -w /opt/maven \
     -v $PWD:/opt/maven \
     -v $HOME/.m2:/root/.m2 \
-    maven:3.8.4-openjdk-17 \
+    maven:3.8.5-openjdk-17 \
     mvn -q clean
 }
 
@@ -36,8 +36,8 @@ function clean_exit {
 
 function start_stack() {
   ./scripts/docker-clean.sh
-  export ARLAS_UMS_DATADIR="/tmp/auth"
-  export ARLAS_UMS_VERIFY_EMAIL=false
+  export ARLAS_IAM_DATADIR="/tmp/iam"
+  export ARLAS_IAM_VERIFY_EMAIL=false
   export ARLAS_AUTH_PUBLIC_URIS=".*"
   ./scripts/docker-run.sh --build
 }
@@ -55,4 +55,4 @@ i=1; until curl -XGET http://${DOCKER_IP}:9997/arlas_idp_server/swagger.json -o 
 i=1; until curl -XGET http://${DOCKER_IP}:9997/arlas_idp_server/swagger.yaml -o ${PROJECT_ROOT_DIRECTORY}/tmp/swagger.yaml; do if [ $i -lt 60 ]; then sleep 1; else break; fi; i=$(($i + 1)); done
 
 echo "=> Stop arlas-idp-server stack"
-docker-compose -f ${DOCKER_COMPOSE} --project-name arlasums down -v
+docker-compose -f ${DOCKER_COMPOSE} --project-name arlasiam down -v

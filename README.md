@@ -1,10 +1,10 @@
-# ARLAS-UMS
+# ARLAS-IAM
 
 ## What is it?
-This module aims at adding a User Management System (UMS) to the ARLAS stack.  
-UMS provides authentication (user login) and authorisation (permissions to access data and APIs) services to ARLAS components: server, WUI, hub, builder...  
+This module aims at adding a Identity and Access Management (IAM) to the ARLAS stack.  
+IAM provides authentication (user login) and authorisation (permissions to access data and APIs) services to ARLAS components: server, WUI, hub, builder...  
 
-The stack can be started with or without UMS. When started with, ARLAS can be connected to various "auth" platforms:
+The stack can be started with or without IAM. When started with, ARLAS can be connected to various "auth" platforms:
 - [Auth0](https://auth0.com/)
 - [Keycloak](https://www.keycloak.org/)
 - [ARLAS IDP](#idp-server)
@@ -12,26 +12,26 @@ The stack can be started with or without UMS. When started with, ARLAS can be co
 The platform to connect to is selected by the way of a specific **Policy Enforcer** which basically is a servlet request 
 filter activated in backend components (server, persistence...).  
 
-The open source ARLAS stack cannot be started with UMS activated. It is packaged with a "do nothing" policy enforcer.  
-UMS is only available with ARLAS Enterprise, which includes the implementations required to communicate with the supported "auth" platforms.
+The open source ARLAS stack cannot be started with IAM activated. It is packaged with a "do nothing" policy enforcer.  
+IAM is only available with ARLAS Enterprise, which includes the implementations required to communicate with the supported "auth" platforms.
 
-![UMS diagram](ums.png)
+![IAM diagram](iam.png)
 
 This project is composed of 2 main components:
 1. a set of implementations of ARLAS PolicyEnforcer (interface available in the ARLAS-server/arlas-commons module: `io.arlas.commons.rest.auth.PolicyEnforcer`)
-   - Auth0 implementation (`io.arlas.ums.filter.impl.Auth0PolicyEnforcer`)
-   - Keycloak implementation (`io.arlas.ums.filter.impl.KeycloakPolicyEnforcer`)
-   - ARLAS IDP implementation (`io.arlas.ums.filter.impl.HTTPPolicyEnforcer`)
+   - Auth0 implementation (`io.arlas.iam.filter.impl.Auth0PolicyEnforcer`)
+   - Keycloak implementation (`io.arlas.iam.filter.impl.KeycloakPolicyEnforcer`)
+   - ARLAS IDP implementation (`io.arlas.iam.filter.impl.HTTPPolicyEnforcer`)
 2. an IDP server
 
 ## Policy Enforcers configuration
-The policy enforcers are in the `arlas-ums-filter` module.  
+The policy enforcers are in the `arlas-iam-filter` module.  
 The implementation to be activated must be defined in the backend component configuration:
 
 
 | Environment variable    | configuration variable  | Default                                     | Possible values                                                                                                                                  |
 |-------------------------|-------------------------|---------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| ARLAS_AUTH_POLICY_CLASS | arlas_auth_policy_class | io.arlas.commons.rest.auth.NoPolicyEnforcer | io.arlas.ums.filter.impl.Auth0PolicyEnforcer<br/>io.arlas.ums.filter.impl.KeycloakPolicyEnforcer<br/>io.arlas.ums.filter.impl.HTTPPolicyEnforcer |
+| ARLAS_AUTH_POLICY_CLASS | arlas_auth_policy_class | io.arlas.commons.rest.auth.NoPolicyEnforcer | io.arlas.iam.filter.impl.Auth0PolicyEnforcer<br/>io.arlas.iam.filter.impl.KeycloakPolicyEnforcer<br/>io.arlas.iam.filter.impl.HTTPPolicyEnforcer |
 
 Further configuration may be required depending on the chosen implementation:
 
@@ -50,7 +50,7 @@ Further configuration may be required depending on the chosen implementation:
 | ARLAS_AUTH_KEYCLOAK_SECRET   | arlas_auth.keycloak.credentials.secret | none                                                      | Keycloak        |
 
 ## Protection rules
-ARLAS UMS allows the enforcement of two kinds of protection mechanisms. They are achieved by the definition of rules and
+ARLAS IAM allows the enforcement of two kinds of protection mechanisms. They are achieved by the definition of rules and
 (HTTP) headers that are collected by the *Policy Enforcer* and transferred to the ARLAS backend component it protects.  
 They are strings of characters with a specific formatting that are expected to be found in the access token and/or permission token 
 (RPT: requesting party token) in specific claims.
@@ -75,7 +75,7 @@ Examples:
 - `r:explore/.*:GET,POST`
 - `r:collections/.*:GET`
 
-These rules do not need to be configured as they are already associated to default roles defined in the UMS module.  
+These rules do not need to be configured as they are already associated to default roles defined in the IAM module.  
 These roles are:
 - `role/arlas/user` (rules to view data)
 - `role/arlas/tagger` (rules to use the Tagger backend)
@@ -84,7 +84,7 @@ These roles are:
 - `role/arlas/importer` (rule to import collections via the dedicated ARLAS server endpoint, mainly used by M2M processes)
 - `role/idp/admin` (rules to manage organisations and users in ARLAS IDP server)
 
-The associated rules configured for these roles can be found in the file `arlas-ums-filter/src/main/resources/roles.yaml`.
+The associated rules configured for these roles can be found in the file `arlas-iam-filter/src/main/resources/roles.yaml`.
 
 ### Protection of data: headers
 The collections and data a user can read or write can be limited by the use of existing ARLAS mechanisms (column filter,
@@ -97,7 +97,7 @@ Examples (refer to ARLAS documentation for details on how to write them):
 These must be defined and associated to roles (preferably 'group' roles) in order to be available in the permission token.
 
 ## Protection flow
-ARLAS backend components follow several steps in order to enforce UMS, once a user is logged in and has acquired ID and access tokens.
+ARLAS backend components follow several steps in order to enforce IAM, once a user is logged in and has acquired ID and access tokens.
 
 1. The request to a given ARLAS URI is intercepted by the configured *Policy Enforcer*:
     1. if no HTTP header `Authorization: bearer <access token>` is provided

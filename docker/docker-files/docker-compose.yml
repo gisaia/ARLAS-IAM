@@ -6,14 +6,14 @@ services:
     container_name: db
     restart: always
     environment:
-      POSTGRES_USER: ${ARLAS_UMS_HIBERNATE_USER:-pg-user}
-      POSTGRES_PASSWORD: ${ARLAS_UMS_HIBERNATE_PASSWORD:-iAMs00perSecrEET}
-      POSTGRES_DB: arlas_ums
+      POSTGRES_USER: ${ARLAS_IAM_HIBERNATE_USER:-pg-user}
+      POSTGRES_PASSWORD: ${ARLAS_IAM_HIBERNATE_PASSWORD:-iAMs00perSecrEET}
+      POSTGRES_DB: arlas_iam
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5432:5432"
     volumes:
-      - ${ARLAS_UMS_DATADIR:-/tmp}:/var/lib/postgresql/data
+      - ${ARLAS_IAM_DATADIR:-/tmp}:/var/lib/postgresql/data
 
 #  pgadmin:
 #    image: dpage/pgadmin4:latest
@@ -31,26 +31,26 @@ services:
 #    #- /home/user/projects/postgis/pgadmin/data:/var/lib/pgadmin
 #      - ${PGA_CONFIG}:/pgadmin4/servers.json
 #      - ${PGA_DATADIR}:/var/lib/pgadmin
-
+#
   arlas-idp-server:
     build:
       context: ../..
       dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-idp-package-only}
-    image: docker.cloudsmith.io/gisaia/private/arlas-idp-server:${ARLAS_UMS_SERVER_VERSION:-latest}
+    image: docker.cloudsmith.io/gisaia/private/arlas-idp-server:${ARLAS_IAM_SERVER_VERSION:-latest}
     container_name: arlas-idp-server
     environment:
-      - ARLAS_UMS_HOST="${ARLAS_UMS_HOST:-localhost}"
-      - ARLAS_UMS_PORT="${ARLAS_UMS_PORT:-9997}"
-      - ARLAS_UMS_PREFIX="${ARLAS_UMS_PREFIX:-/arlas_idp_server}"
-      - ARLAS_UMS_APP_PATH="${ARLAS_UMS_APP_PATH:-/}"
+      - ARLAS_IAM_HOST="${ARLAS_IAM_HOST:-localhost}"
+      - ARLAS_IAM_PORT="${ARLAS_IAM_PORT:-9997}"
+      - ARLAS_IAM_PREFIX="${ARLAS_IAM_PREFIX:-/arlas_idp_server}"
+      - ARLAS_IAM_APP_PATH="${ARLAS_IAM_APP_PATH:-/}"
       - ARLAS_ANONYMOUS_VALUE="${ARLAS_ANONYMOUS_VALUE:-anonymous}"
       - ARLAS_AUTH_PUBLIC_URIS=${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST}
-      - ARLAS_UMS_VERIFY_EMAIL="${ARLAS_UMS_VERIFY_EMAIL:-true}"
-      - ARLAS_UMS_HIBERNATE_URL="${ARLAS_UMS_HIBERNATE_URL:-jdbc:postgresql://db:5432/arlas_ums}"
-      - ARLAS_UMS_HIBERNATE_USER="${ARLAS_UMS_HIBERNATE_USER:-pg-user}"
-      - ARLAS_UMS_HIBERNATE_PASSWORD="${ARLAS_UMS_HIBERNATE_PASSWORD:-iAMs00perSecrEET}"
-      - ARLAS_UMS_HIBERNATE_DRIVER="${ARLAS_UMS_HIBERNATE_DRIVER:-org.postgresql.Driver}"
-      - ARLAS_UMS_HIBERNATE_DIALECT="${ARLAS_UMS_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}"
+      - ARLAS_IAM_VERIFY_EMAIL="${ARLAS_IAM_VERIFY_EMAIL:-true}"
+      - ARLAS_IAM_HIBERNATE_URL="${ARLAS_IAM_HIBERNATE_URL:-jdbc:postgresql://db:5432/arlas_iam}"
+      - ARLAS_IAM_HIBERNATE_USER="${ARLAS_IAM_HIBERNATE_USER:-pg-user}"
+      - ARLAS_IAM_HIBERNATE_PASSWORD="${ARLAS_IAM_HIBERNATE_PASSWORD:-iAMs00perSecrEET}"
+      - ARLAS_IAM_HIBERNATE_DRIVER="${ARLAS_IAM_HIBERNATE_DRIVER:-org.postgresql.Driver}"
+      - ARLAS_IAM_HIBERNATE_DIALECT="${ARLAS_IAM_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}"
       - ARLAS_SMTP_ACTIVATED="${ARLAS_SMTP_ACTIVATED:-false}"
       - ARLAS_SMTP_HOST="${ARLAS_SMTP_HOST:-}"
       - ARLAS_SMTP_PORT="${ARLAS_SMTP_PORT:-25}"

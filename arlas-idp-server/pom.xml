@@ -3,8 +3,8 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>arlas-ums-parent</artifactId>
-        <groupId>io.arlas.ums</groupId>
+        <artifactId>arlas-iam-parent</artifactId>
+        <groupId>io.arlas.iam</groupId>
         <version>22.0.0-beta.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -13,8 +13,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.arlas.ums</groupId>
-            <artifactId>arlas-ums-rest</artifactId>
+            <groupId>io.arlas.iam</groupId>
+            <artifactId>arlas-iam-rest</artifactId>
             <version>22.0.0-beta.2</version>
         </dependency>
     </dependencies>

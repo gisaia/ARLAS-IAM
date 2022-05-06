@@ -1,11 +1,11 @@
 #!/bin/sh
 
 fetchConfiguration(){
-  echo "Downloading the ARLAS configuration file from "${ARLAS_UMS_CONFIGURATION_URL}" ..."
-  curl ${ARLAS_UMS_CONFIGURATION_URL} -o /opt/app/configuration.yaml && echo "Configuration file downloaded with success." || (echo "Failed to download the configuration file. ARLAS auth server will not start."; exit 1)
+  echo "Downloading the ARLAS configuration file from "${ARLAS_IAM_CONFIGURATION_URL}" ..."
+  curl ${ARLAS_IAM_CONFIGURATION_URL} -o /opt/app/configuration.yaml && echo "Configuration file downloaded with success." || (echo "Failed to download the configuration file. ARLAS auth server will not start."; exit 1)
 }
 
-if [ -z "${ARLAS_UMS_CONFIGURATION_URL}" ]; then
+if [ -z "${ARLAS_IAM_CONFIGURATION_URL}" ]; then
   echo "The default ARLAS IDP server container configuration file is used"
 else
   fetchConfiguration;
