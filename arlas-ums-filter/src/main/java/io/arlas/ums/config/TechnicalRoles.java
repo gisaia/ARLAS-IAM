@@ -18,6 +18,7 @@ public class TechnicalRoles {
     public static final String ROLE_ARLAS_USER = "role/arlas/user";
     public static final String ROLE_ARLAS_BUILDER = "role/arlas/builder";
     public static final String ROLE_ARLAS_TAGGER = "role/arlas/tagger";
+    public static final String ROLE_ARLAS_IMPORTER = "role/arlas/importer";
     public static final String GROUP_PUBLIC = "group/public";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TechnicalRoles.class);

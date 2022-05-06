@@ -6,7 +6,7 @@
 
     <groupId>io.arlas.ums</groupId>
     <artifactId>arlas-ums-parent</artifactId>
-    <version>21.0.0-SNAPSHOT</version>
+    <version>22.0.0-beta.2</version>
     <modules>
         <module>arlas-ums-core</module>
         <module>arlas-ums-rest</module>
@@ -30,7 +30,7 @@
 
     <properties>
         <!-- PROJECT-->
-        <arlas-commons.version>21.0.1-SNAPSHOT</arlas-commons.version>
+        <arlas-commons.version>22.0.0-beta.2</arlas-commons.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <skipTests>true</skipTests>
@@ -39,15 +39,14 @@
         <maven.compiler.version>3.8.1</maven.compiler.version>
         <maven.shade.version>3.2.4</maven.shade.version>
 
-        <log4j.version>2.17.0</log4j.version>
-        <postgresql.version>42.3.3</postgresql.version>
-        <spring.security.version>5.6.2</spring.security.version>
+        <postgresql.version>42.3.5</postgresql.version>
+        <spring.security.version>5.6.3</spring.security.version>
         <jackson.databind.version>2.13.2.2</jackson.databind.version>
         <jakartamail.version>2.0.1</jakartamail.version>
-        <jwt.version>3.19.1</jwt.version>
-        <elastic-apm.version>1.30.0</elastic-apm.version>
+        <jwt.version>3.19.2</jwt.version>
+        <elastic-apm.version>1.30.1</elastic-apm.version>
         <activation.version>2.0.1</activation.version>
-        <keycloak.version>17.0.1</keycloak.version>
+        <keycloak.version>18.0.0</keycloak.version>
         <httpclient.version>4.5.13</httpclient.version>
 
         <!-- TESTS -->
@@ -56,7 +55,7 @@
         <io.rest-assured.version>5.0.1</io.rest-assured.version>
 
         <!-- REST AND DROPWIZARD-->
-        <dropwizard.version>2.1.0-beta.8</dropwizard.version>
+        <dropwizard.version>2.1.0</dropwizard.version>
         <dropwizard.swagger.version>2.0.12-1</dropwizard.swagger.version>
 
         <!-- DOCUMENTATION GENERATION-->

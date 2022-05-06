@@ -52,15 +52,7 @@ public class KeycloakPolicyEnforcer extends AbstractPolicyEnforcer {
     }
 
     protected List<String> getPermissionsClaim(Object token){
-        List<String> permissions = ((AccessToken)token).getAuthorization().getPermissions().stream()
-                .flatMap(p -> p.getScopes().stream().map(s -> p.getResourceName() + ":" + s + ":1"))
-                .collect(Collectors.toList());
-        List<String> headerAndVars = ((AccessToken) token).getAuthorization().getPermissions().stream()
-                .filter(p -> p.getScopes().isEmpty())
+        return ((AccessToken) token).getAuthorization().getPermissions().stream()
                 .map(Permission::getResourceName).toList();
-
-        permissions.add("var:ws:" + authConf.keycloakConfiguration.getRealm());
-        permissions.addAll(headerAndVars);
-        return permissions;
     }
 }

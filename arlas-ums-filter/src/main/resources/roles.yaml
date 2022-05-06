@@ -31,7 +31,6 @@ technicalRoles:
   role/arlas/owner:
 # ARLAS explore
     - r:collections/.*:PUT,DELETE
-#    - r:collections/_import:POST
 # ARLAS city
     - r:storage/.*:GET,DELETE
     - r:data/.*:GET,POST,DELETE
@@ -42,6 +41,9 @@ technicalRoles:
     - r:organisations/.*:GET,POST,DELETE
     - r:users:POST
     - r:users/.*:GET,PUT,POST,DELETE
+
+  role/arlas/importer:
+    - r:collections/_import:POST
 
   role/idp/admin:
     - r:organisations:GET,POST
