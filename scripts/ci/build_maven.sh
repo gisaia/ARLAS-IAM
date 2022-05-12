@@ -9,7 +9,7 @@ PROJECT_ROOT_DIRECTORY="$SCRIPT_DIRECTORY"/../..
 echo "=> Docker login"
 echo "${DOCKER_PASSWORD}" | docker login -u ${DOCKER_USERNAME} --password-stdin
 
-echo "=> Build arlas-idp-server jar v${RELEASE_VERSION}"
+echo "=> Build arlas-iam-server jar v${RELEASE_VERSION}"
 echo "===> update project version to ${RELEASE_VERSION}"
 docker run --rm \
         -w /opt/maven \
@@ -20,7 +20,7 @@ docker run --rm \
         mvn -q clean versions:set -DnewVersion=${RELEASE_VERSION}
 sed -i.bak 's/\"API_VERSION\"/\"'${RELEASE_VERSION}'\"/' ${PROJECT_ROOT_DIRECTORY}/arlas-iam-rest/src/main/java/io/arlas/iam/rest/service/UmsRestService.java
 
-echo "===> build arlas-idp-server v${RELEASE_VERSION}"
+echo "===> build arlas-iam-server v${RELEASE_VERSION}"
 docker run --rm \
     -w /opt/maven \
 	-v $PWD:/opt/maven \

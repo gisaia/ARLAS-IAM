@@ -15,7 +15,7 @@ technicalRoles:
     - r:persist/resources/.*:GET
 # ARLAS permissions
     - r:authorize/resources:GET
-# ARLAS IDP session management
+# ARLAS IAM session management
     - r:session:POST,DELETE
     - r:session/.*:PUT
     - r:permissions:GET
@@ -36,7 +36,7 @@ technicalRoles:
     - r:data/.*:GET,POST,DELETE
     - r:process/.*:GET,POST
     - r:usage:GET
-# ARLAS IDP
+# ARLAS IAM
     - r:organisations:GET,POST
     - r:organisations/.*:GET,POST,DELETE
     - r:users:POST
@@ -45,7 +45,7 @@ technicalRoles:
   role/arlas/importer:
     - r:collections/_import:POST
 
-  role/idp/admin:
+  role/iam/admin:
     - r:organisations:GET,POST
     - r:organisations/.*:GET,POST,DELETE
     - r:users:POST

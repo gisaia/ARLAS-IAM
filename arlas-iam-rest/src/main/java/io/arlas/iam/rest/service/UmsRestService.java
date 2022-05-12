@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
 @Api(value = "/")
 @SwaggerDefinition(
         info = @Info(contact = @Contact(email = "contact@gisaia.com", name = "Gisaia", url = "http://www.gisaia.com/"),
-                title = "ARLAS IAM API - IDP",
-                description = "IDP REST services",
+                title = "ARLAS IAM API",
+                description = "IAM REST services",
                 license = @License(name = "Proprietary"),
                 version = "API_VERSION"),
         schemes = { SwaggerDefinition.Scheme.HTTP, SwaggerDefinition.Scheme.HTTPS },
@@ -335,7 +335,7 @@ public class UmsRestService {
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Create an organisation with a name. Only for IDP admin.",
+            value = "Create an organisation with a name. Only for IAM admin.",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )

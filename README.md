@@ -7,7 +7,7 @@ IAM provides authentication (user login) and authorisation (permissions to acces
 The stack can be started with or without IAM. When started with, ARLAS can be connected to various "auth" platforms:
 - [Auth0](https://auth0.com/)
 - [Keycloak](https://www.keycloak.org/)
-- [ARLAS IDP](#idp-server)
+- [ARLAS IAM](#iam-server)
 
 The platform to connect to is selected by the way of a specific **Policy Enforcer** which basically is a servlet request 
 filter activated in backend components (server, persistence...).  
@@ -21,8 +21,8 @@ This project is composed of 2 main components:
 1. a set of implementations of ARLAS PolicyEnforcer (interface available in the ARLAS-server/arlas-commons module: `io.arlas.commons.rest.auth.PolicyEnforcer`)
    - Auth0 implementation (`io.arlas.iam.filter.impl.Auth0PolicyEnforcer`)
    - Keycloak implementation (`io.arlas.iam.filter.impl.KeycloakPolicyEnforcer`)
-   - ARLAS IDP implementation (`io.arlas.iam.filter.impl.HTTPPolicyEnforcer`)
-2. an IDP server
+   - ARLAS IAM implementation (`io.arlas.iam.filter.impl.HTTPPolicyEnforcer`)
+2. an IAM server
 
 ## Policy Enforcers configuration
 The policy enforcers are in the `arlas-iam-filter` module.  
@@ -43,7 +43,7 @@ Further configuration may be required depending on the chosen implementation:
 | ARLAS_CLAIM_ROLES            | arlas_auth.claim_roles                 | http://arlas.io/roles                                     | Auth0,HTTP      |
 | ARLAS_CLAIM_PERMISSIONS      | arlas_auth.claim_permissions           | http://arlas.io/permissions                               | Auth0,HTTP      |
 | ARLAS_AUTH_CERT_URL          | arlas_auth.certificate_url             | none                                                      | Auth0           |
-| ARLAS_AUTH_PERMISSION_URL    | arlas_auth.permission_url              | http://arlas-idp-server/arlas_idp_server/auth/permissions | HTTP            |
+| ARLAS_AUTH_PERMISSION_URL    | arlas_auth.permission_url              | http://arlas-iam-server/arlas_iam_server/auth/permissions | HTTP            |
 | ARLAS_AUTH_KEYCLOAK_REALM    | arlas_auth.keycloak.realm              | arlas                                                     | Keycloak        |
 | ARLAS_AUTH_KEYCLOAK_URL      | arlas_auth.keycloak.auth-server-url    | http://keycloak:8080/auth                                 | Keycloak        |
 | ARLAS_AUTH_KEYCLOAK_RESOURCE | arlas_auth.keycloak.resource           | arlas                                                     | Keycloak        |
@@ -80,9 +80,9 @@ These roles are:
 - `role/arlas/user` (rules to view data)
 - `role/arlas/tagger` (rules to use the Tagger backend)
 - `role/arlas/builder` (rules to create/edit/delete ARLAS WUI dashboards)
-- `role/arlas/owner` (rules to manage collections in ARLAS server and organisations/users in ARLAS IDP server)
+- `role/arlas/owner` (rules to manage collections in ARLAS server and organisations/users in ARLAS IAM server)
 - `role/arlas/importer` (rule to import collections via the dedicated ARLAS server endpoint, mainly used by M2M processes)
-- `role/idp/admin` (rules to manage organisations and users in ARLAS IDP server)
+- `role/iam/admin` (rules to manage organisations and users in ARLAS IAM server)
 
 The associated rules configured for these roles can be found in the file `arlas-iam-filter/src/main/resources/roles.yaml`.
 
@@ -159,7 +159,7 @@ The following lines refer to the appropriate menu items from the console with a 
    - `group/public` (required if the need to share dashboard to anonymous users)
    - `role/arlas/builder` (rules to create/edit/delete ARLAS WUI dashboards)
    - `role/arlas/importer` (rule to import collections via the dedicated ARLAS server endpoint, mainly used by M2M processes)
-   - `role/arlas/owner` (rules to manage collections in ARLAS server and organisations/users in ARLAS IDP server)
+   - `role/arlas/owner` (rules to manage collections in ARLAS server and organisations/users in ARLAS IAM server)
    - `role/arlas/tagger` (rules to use the Tagger backend)
    - `role/arlas/user`  (rules to view data)
    - `group/config.json/XXXXX`: add as many groups as needed where `XXXXX` will be the name of groups available to share 
@@ -215,8 +215,8 @@ and copy the Secret value to `ARLAS_AUTH_KEYCLOAK_SECRET`
      - Save
 11. *(Users/\<user\>/Credentials)* Set password
 
-## IDP server
-The IDP server provides authentication and authorization features that can be deployed with the ARLAS stack without 
+## IAM server
+The IAM server provides authentication and authorization features that can be deployed with the ARLAS stack without 
 the need to depend on a third party provider.  
 
 ### Concepts

@@ -1,7 +1,7 @@
 {
-  "name": "arlas-idp-api",
+  "name": "arlas-iam-api",
   "version": "API_VERSION",
-  "description": "IDP Arlas",
+  "description": "IAM Arlas",
   "author": "Gisaia",
   "main": "./index.js",
   "typings": "./index.d.ts",

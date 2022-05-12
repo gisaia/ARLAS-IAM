@@ -1,5 +1,5 @@
 {
-  "name": "arlas-idp-api",
+  "name": "arlas-iam-api",
   "version": "API_VERSION",
   "license": "Apache 2.0",
   "scripts": {

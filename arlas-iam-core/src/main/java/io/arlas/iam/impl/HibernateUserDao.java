@@ -45,7 +45,6 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
 
     @Override
     public User deleteUser(User user) {
-        // TODO: delete user resources (organisation, collections...)
         currentSession().delete(user);
         return user;
     }

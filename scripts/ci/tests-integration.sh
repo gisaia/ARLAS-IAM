@@ -15,8 +15,8 @@ function clean_docker {
 function clean_exit {
   ARG=$?
   echo "===> Exit status = ${ARG}"
-  echo "===> arlas-idp-server logs"
-  docker logs arlas-idp-server
+  echo "===> arlas-iam-server logs"
+  docker logs arlas-iam-server
   clean_docker
   sudo rm -rf /tmp/iam
   exit $ARG
@@ -43,8 +43,8 @@ function test_rest_server() {
         -w /opt/maven \
         -v $PWD:/opt/maven \
         -v $HOME/.m2:/root/.m2 \
-        -e ARLAS_IAM_HOST="arlas-idp-server" \
-        -e ARLAS_IAM_PREFIX="arlas_idp_server" \
+        -e ARLAS_IAM_HOST="arlas-iam-server" \
+        -e ARLAS_IAM_PREFIX="arlas_iam_server" \
         -e ARLAS_IAM_APP_PATH=${ARLAS_IAM_APP_PATH} \
         -e ARLAS_IAM_DATADIR="/tmp/iam" \
         --network arlasiam_default \

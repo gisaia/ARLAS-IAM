@@ -32,16 +32,16 @@ services:
 #      - ${PGA_CONFIG}:/pgadmin4/servers.json
 #      - ${PGA_DATADIR}:/var/lib/pgadmin
 #
-  arlas-idp-server:
+  arlas-iam-server:
     build:
       context: ../..
-      dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-idp-package-only}
-    image: docker.cloudsmith.io/gisaia/private/arlas-idp-server:${ARLAS_IAM_SERVER_VERSION:-latest}
-    container_name: arlas-idp-server
+      dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-iam-package-only}
+    image: docker.cloudsmith.io/gisaia/private/arlas-iam-server:${ARLAS_IAM_SERVER_VERSION:-latest}
+    container_name: arlas-iam-server
     environment:
       - ARLAS_IAM_HOST="${ARLAS_IAM_HOST:-localhost}"
       - ARLAS_IAM_PORT="${ARLAS_IAM_PORT:-9997}"
-      - ARLAS_IAM_PREFIX="${ARLAS_IAM_PREFIX:-/arlas_idp_server}"
+      - ARLAS_IAM_PREFIX="${ARLAS_IAM_PREFIX:-/arlas_iam_server}"
       - ARLAS_IAM_APP_PATH="${ARLAS_IAM_APP_PATH:-/}"
       - ARLAS_ANONYMOUS_VALUE="${ARLAS_ANONYMOUS_VALUE:-anonymous}"
       - ARLAS_AUTH_PUBLIC_URIS=${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST}
@@ -58,6 +58,7 @@ services:
       - ARLAS_SMTP_PASSWORD="${ARLAS_SMTP_PASSWORD:-}"
       - ARLAS_SMTP_FROM="${ARLAS_SMTP_FROM:-}"
       - ARLAS_SMTP_VERIFY_LINK="${ARLAS_SMTP_VERIFY_LINK:-/users/%s/verify/%s}"
+      - ARLAS_CACHE_TIMEOUT="${ARLAS_CACHE_TIMEOUT:-5}"
     ports:
       - "9997:9997"
     command: ["/opt/app/start.sh"]

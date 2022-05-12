@@ -40,17 +40,23 @@ public class HTTPPolicyEnforcer extends AbstractPolicyEnforcer {
 
     @Override
     protected Object getObjectToken(String accessToken) throws Exception {
-        Invocation.Builder request = resource.request();
-        request.header(HttpHeaders.AUTHORIZATION, "bearer " + accessToken);
-        request.accept(MediaType.APPLICATION_JSON);
-        Response response = request.get();
+        LOGGER.debug("accessToken=" + decodeToken(accessToken));
+        String token = cacheManager.getPermission(accessToken);
+        if (token == null) {
+            Invocation.Builder request = resource.request();
+            request.header(HttpHeaders.AUTHORIZATION, "bearer " + accessToken);
+            request.accept(MediaType.APPLICATION_JSON);
+            Response response = request.get();
 
-        if (response.getStatusInfo().getFamily() == Response.Status.Family.SUCCESSFUL) {
-            String t = response.readEntity(String.class);
-            LOGGER.info("Got permission token=" + t);
-            return JWT.decode(t);
-        } else {
-            throw new ArlasException("Impossible to get permissions with given access token:" + accessToken);
+            if (response.getStatusInfo().getFamily() == Response.Status.Family.SUCCESSFUL) {
+                token = response.readEntity(String.class);
+                LOGGER.info("Got permission token=" + token);
+            } else {
+                throw new ArlasException("Impossible to get permissions with given access token:" + accessToken);
+            }
+            cacheManager.putPermission(accessToken, token);
         }
+        LOGGER.debug("RPT=" + decodeToken(token));
+        return JWT.decode(token);
     }
 }
