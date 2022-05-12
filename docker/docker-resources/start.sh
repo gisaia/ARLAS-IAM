@@ -6,7 +6,7 @@ fetchConfiguration(){
 }
 
 if [ -z "${ARLAS_IAM_CONFIGURATION_URL}" ]; then
-  echo "The default ARLAS IDP server container configuration file is used"
+  echo "The default ARLAS IAM server container configuration file is used"
 else
   fetchConfiguration;
 fi
@@ -18,4 +18,4 @@ else
   echo "ARLAS_XMX"=$ARLAS_XMX
 fi
 
-java -Xmx${ARLAS_XMX} -XX:+ExitOnOutOfMemoryError ${JVM_OPTION} -jar arlas-idp-server.jar server /opt/app/configuration.yaml
+java -Xmx${ARLAS_XMX} -XX:+ExitOnOutOfMemoryError ${JVM_OPTION} -jar arlas-iam-server.jar server /opt/app/configuration.yaml

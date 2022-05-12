@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y bash netcat-openbsd curl
 # application placed into /opt/app
 WORKDIR /opt/app
 ADD arlas-iam-core/src/main/resources/templates/*.ftlh /opt/app/
-ADD arlas-idp-server/target/arlas-idp-server*.jar /opt/app/arlas-idp-server.jar
+ADD arlas-iam-server/target/arlas-iam-server*.jar /opt/app/arlas-iam-server.jar
 ADD conf/configuration.yaml /opt/app/configuration.yaml
 ADD docker/docker-resources/start.sh /opt/app/
 EXPOSE 9997

@@ -47,7 +47,7 @@ public class AuthITUser {
         RestAssured.baseURI = "http://" + arlasHost;
         RestAssured.port = arlasPort;
         RestAssured.basePath = "";
-        String arlasPrefix = Optional.ofNullable(System.getenv("ARLAS_IAM_PREFIX")).orElse("/arlas_idp_server");
+        String arlasPrefix = Optional.ofNullable(System.getenv("ARLAS_IAM_PREFIX")).orElse("/arlas_iam_server");
         arlasAppPath = Optional.ofNullable(System.getenv("ARLAS_IAM_APP_PATH")).orElse("/");
         if (arlasAppPath.endsWith("/")) arlasAppPath = arlasAppPath.substring(0, arlasAppPath.length() - 1);
         arlasAppPath = arlasAppPath + arlasPrefix;

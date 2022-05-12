@@ -2,6 +2,7 @@ package io.arlas.iam.impl;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import io.arlas.commons.cache.BaseCacheManager;
 import io.arlas.iam.config.AuthConfiguration;
 import io.arlas.iam.core.AuthService;
 import io.arlas.iam.filter.impl.AbstractPolicyEnforcer;
@@ -23,17 +24,19 @@ public class ArlasPolicyEnforcer extends AbstractPolicyEnforcer {
     private final Logger LOGGER = LoggerFactory.getLogger(ArlasPolicyEnforcer.class);
     private final AuthService authService;
 
-    public ArlasPolicyEnforcer(AuthService authService, AuthConfiguration conf) {
+    public ArlasPolicyEnforcer(AuthService authService, AuthConfiguration conf, BaseCacheManager cacheManager) {
         this.authConf = conf;
         this.authService = authService;
+        this.cacheManager = cacheManager;
     }
 
     @Override
     @UnitOfWork
     protected Object getObjectToken(String token) throws Exception {
+        LOGGER.debug("accessToken=" + decodeToken(token));
         DecodedJWT accessToken = authService.verifyToken(token);
         String rpt = authService.createPermissionToken(accessToken.getSubject(), accessToken.getIssuer(), new Date());
-        LOGGER.debug("Permission token=" + rpt);
+        LOGGER.debug("RPT=" + decodeToken(rpt));
         return JWT.decode(rpt);
     }
 }

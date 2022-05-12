@@ -5,17 +5,17 @@
     <parent>
         <artifactId>arlas-iam-parent</artifactId>
         <groupId>io.arlas.iam</groupId>
-        <version>22.0.0-beta.2</version>
+        <version>22.0.0-beta.4</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>arlas-idp-server</artifactId>
+    <artifactId>arlas-iam-server</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>io.arlas.iam</groupId>
             <artifactId>arlas-iam-rest</artifactId>
-            <version>22.0.0-beta.2</version>
+            <version>22.0.0-beta.4</version>
         </dependency>
     </dependencies>
 
@@ -56,7 +56,7 @@
                                         implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>io/arlas/idp/server/ArlasIdpServer</mainClass>
+                                    <mainClass>io/arlas/iam/server/ArlasIamServer</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

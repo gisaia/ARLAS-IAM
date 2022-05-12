@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Priority;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.ext.Provider;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -34,11 +35,15 @@ public class KeycloakPolicyEnforcer extends AbstractPolicyEnforcer {
     }
 
     protected Object getObjectToken(String accessToken) throws Exception {
-        LOGGER.debug("accessToken (decode with https://jwt.io/)=" + accessToken);
-        String token = authzClient.authorization(accessToken)
-                .authorize(new AuthorizationRequest())
-                .getToken();
-        LOGGER.debug("RPT (decode with https://jwt.io/)=" + token);
+        LOGGER.debug("accessToken=" + decodeToken(accessToken));
+        String token = cacheManager.getPermission(accessToken);
+        if (token == null) {
+            token = authzClient.authorization(accessToken)
+                    .authorize(new AuthorizationRequest())
+                    .getToken();
+            cacheManager.putPermission(accessToken, token);
+        }
+        LOGGER.debug("RPT=" + decodeToken(token));
         return TokenVerifier.create(token, AccessToken.class).getToken();
     }
 
@@ -51,7 +56,7 @@ public class KeycloakPolicyEnforcer extends AbstractPolicyEnforcer {
     }
 
     protected List<String> getPermissionsClaim(Object token){
-        return ((AccessToken) token).getAuthorization().getPermissions().stream()
-                .map(Permission::getResourceName).toList();
+        return new ArrayList(((AccessToken) token).getAuthorization().getPermissions().stream()
+                .map(Permission::getResourceName).toList());
     }
 }

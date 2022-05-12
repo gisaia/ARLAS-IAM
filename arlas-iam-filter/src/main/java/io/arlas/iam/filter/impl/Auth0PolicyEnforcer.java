@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.rest.auth.PolicyEnforcer;
+import io.arlas.commons.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,7 @@ public class Auth0PolicyEnforcer extends AbstractPolicyEnforcer {
 
     @Override
     protected Object getObjectToken(String accessToken) {
-        LOGGER.debug("accessToken (decode with https://jwt.io/)=" + accessToken);
+        LOGGER.debug("accessToken=" + decodeToken(accessToken));
         return jwtVerifier.verify(accessToken);
     }
 
@@ -57,7 +58,7 @@ public class Auth0PolicyEnforcer extends AbstractPolicyEnforcer {
     }
 
     private InputStream getCertificateStream() throws Exception {
-        if (this.authConf.certificateUrl != null && !this.authConf.certificateUrl.isBlank()) {
+        if (!StringUtil.isNullOrEmpty(this.authConf.certificateUrl)) {
             return new URL(this.authConf.certificateUrl).openStream();
         } else {
             LOGGER.warn("Configuration 'arlas_auth.certificate_file' is deprecated. Consider using 'arlas_auth.certificate_url'.");

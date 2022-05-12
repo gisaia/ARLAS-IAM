@@ -9,6 +9,7 @@ module arlas.iam.core {
     requires transitive arlas.iam.filter;
 
     requires com.fasterxml.jackson.annotation;
+    requires dropwizard.db;
     requires dropwizard.hibernate;
     requires dropwizard.jackson;
     requires freemarker;

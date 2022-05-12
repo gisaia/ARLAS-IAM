@@ -6,7 +6,7 @@ server:
         archivedLogFilenamePattern: ${ARLAS_IAM_LOG_FILE_ARCHIVE:-arlas-iam-access-%d.log.gz}
   registerDefaultExceptionMappers: false
   type: simple
-  rootPath: ${ARLAS_IAM_PREFIX:-/arlas_idp_server}
+  rootPath: ${ARLAS_IAM_PREFIX:-/arlas_iam_server}
   applicationContextPath: ${ARLAS_IAM_APP_PATH:-/}
   adminContextPath: ${ARLAS_IAM_ADMIN_PATH:-/admin}
   connector:
@@ -36,7 +36,7 @@ swagger: # Configuration of SWAGGER for generating documentation and APIs
   resourcePackage: io.arlas.iam.rest.service # The java package to process for extracting the APIs
   # temporary patch for bug https://github.com/smoketurner/dropwizard-swagger/issues/206
   # to be removed when version of dropwizard.swagger.version is upgraded
-  customJavascript: ${ARLAS_IAM_CUSTOM_JS:-/arlas_idp_server/swagger-static/custom-request-interceptor.js}
+  customJavascript: ${ARLAS_IAM_CUSTOM_JS:-/arlas_iam_server/swagger-static/custom-request-interceptor.js}
 
 zipkin: # The ZIPKIN configuration, not active by default
   enabled: ${ARLAS_ZIPKIN_ENABLED:-false} # Do we want zipkin to collect the API calls? Not by default.
@@ -113,3 +113,7 @@ smtp:
   template_dir: ${ARLAS_SMTP_TEMPLATE_DIR:-/opt/app}
   # can be localized, i.e. "verifyEmail_fr.ftlh", "verifyEmail_en.ftlh"...
   template_file: ${ARLAS_SMTP_TEMPLATE_FILE:-verifyEmail.ftlh}
+
+# Configuration of the cache
+arlas_cache_factory_class: ${ARLAS_IAM_CACHE_FACTORY_CLASS:-io.arlas.commons.cache.BaseHazelcastCacheFactory}
+arlas-cache-timeout: ${ARLAS_CACHE_TIMEOUT:-60}

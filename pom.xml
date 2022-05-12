@@ -6,13 +6,13 @@
 
     <groupId>io.arlas.iam</groupId>
     <artifactId>arlas-iam-parent</artifactId>
-    <version>22.0.0-beta.2</version>
+    <version>22.0.0-beta.4</version>
     <modules>
         <module>arlas-iam-core</module>
         <module>arlas-iam-rest</module>
         <module>arlas-iam-tests</module>
         <module>arlas-iam-filter</module>
-        <module>arlas-idp-server</module>
+        <module>arlas-iam-server</module>
     </modules>
     <packaging>pom</packaging>
     <name>ARLAS IAM parent</name>
@@ -30,15 +30,14 @@
 
     <properties>
         <!-- PROJECT-->
-        <arlas-commons.version>22.0.0-beta.2</arlas-commons.version>
-
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <skipTests>true</skipTests>
         <maven.surefire.version>2.22.2</maven.surefire.version>
         <maven.failsafe.version>2.22.2</maven.failsafe.version>
-        <maven.compiler.version>3.8.1</maven.compiler.version>
+        <maven.compiler.version>3.10.1</maven.compiler.version>
         <maven.shade.version>3.2.4</maven.shade.version>
 
+        <arlas-commons.version>22.0.0-beta.4</arlas-commons.version>
         <postgresql.version>42.3.5</postgresql.version>
         <spring.security.version>5.6.3</spring.security.version>
         <jackson.databind.version>2.13.2.2</jackson.databind.version>
@@ -60,7 +59,7 @@
 
         <!-- DOCUMENTATION GENERATION-->
         <swagger2markup.version>1.3.4</swagger2markup.version>
-        <swagger2markup.plugin.version>1.3.3</swagger2markup.plugin.version>
+        <swagger2markup.plugin.version>1.3.7</swagger2markup.plugin.version>
         <swagger2markup.extension.version>1.3.3</swagger2markup.extension.version>
         <swagger.input>target/tmp/swagger.json</swagger.input>
         <swagger.output>target/generated-docs/</swagger.output>

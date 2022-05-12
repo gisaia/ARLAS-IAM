@@ -32,17 +32,17 @@ SCRIPT_PATH=`cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd`
 cd ${SCRIPT_PATH}/..
 
 # PACKAGE
-echo "===> compile IDP server"
+echo "===> compile IAM server"
 docker run --rm \
     -w /opt/maven \
 	-v $PWD:/opt/maven \
 	-v $HOME/.m2:/root/.m2 \
 	maven:3.8.5-openjdk-17 \
 	mvn clean install -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
-echo "arlas-idp-server:${ARLAS_IAM_SERVER_VERSION}"
+echo "arlas-iam-server:${ARLAS_IAM_SERVER_VERSION}"
 
-echo "===> start ARLAS IDP stack"
+echo "===> start ARLAS IAM stack"
 docker-compose -f ${DOCKER_COMPOSE} --project-name arlasiam up -d ${BUILD_OPTS}
 
-echo "===> wait for arlas-idp-server up and running"
-docker run --network arlasiam_default --rm busybox sh -c 'i=1; until nc -w 2 arlas-idp-server 9997; do if [ $i -lt 30 ]; then sleep 1; else break; fi; i=$(($i + 1)); done'
+echo "===> wait for arlas-iam-server up and running"
+docker run --network arlasiam_default --rm busybox sh -c 'i=1; until nc -w 2 arlas-iam-server 9997; do if [ $i -lt 30 ]; then sleep 1; else break; fi; i=$(($i + 1)); done'

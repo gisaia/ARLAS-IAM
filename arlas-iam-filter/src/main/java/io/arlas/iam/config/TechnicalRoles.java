@@ -13,7 +13,7 @@ import java.util.Set;
 
 public class TechnicalRoles {
     // permissions of these roles are defined in arlas-iam-filter/src/main/resources/roles.yaml
-    public static final String ROLE_IDP_ADMIN = "role/idp/admin";
+    public static final String ROLE_IAM_ADMIN = "role/iam/admin";
     public static final String ROLE_ARLAS_OWNER = "role/arlas/owner";
     public static final String ROLE_ARLAS_USER = "role/arlas/user";
     public static final String ROLE_ARLAS_BUILDER = "role/arlas/builder";

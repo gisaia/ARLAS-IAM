@@ -1,7 +1,7 @@
 
 arlas_auth:
   type: ${ARLAS_AUTH_TYPE:-noAuth}
-  permission_url: ${ARLAS_AUTH_PERMISSION_URL:-http://arlas-idp-server/arlas_idp_server/auth/permissions}
+  permission_url: ${ARLAS_AUTH_PERMISSION_URL:-http://arlas-iam-server/arlas_iam_server/auth/permissions}
   public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger.*:*}]
   # deprecated, use it only for Integration tests
   certificate_file: ${ARLAS_AUTH_CERT_FILE:-/opt/app/arlas.pem}

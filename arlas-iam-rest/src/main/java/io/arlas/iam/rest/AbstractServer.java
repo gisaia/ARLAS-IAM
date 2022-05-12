@@ -1,9 +1,12 @@
-package io.arlas.iam.server;
+package io.arlas.iam.rest;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.smoketurner.dropwizard.zipkin.ZipkinBundle;
 import com.smoketurner.dropwizard.zipkin.ZipkinFactory;
+import io.arlas.commons.cache.BaseCacheManager;
+import io.arlas.commons.cache.CacheFactory;
+import io.arlas.commons.config.ArlasConfiguration;
 import io.arlas.commons.config.ArlasCorsConfiguration;
 import io.arlas.commons.exceptions.ArlasExceptionMapper;
 import io.arlas.commons.exceptions.ConstraintViolationExceptionMapper;
@@ -96,9 +99,14 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
 
         this.authService = new HibernateAuthService(hibernate.getSessionFactory(), configuration);
 
+        CacheFactory cacheFactory = (CacheFactory) Class
+                .forName(configuration.arlasCacheFactoryClass)
+                .getConstructor(ArlasConfiguration.class)
+                .newInstance(configuration);
+
         ArlasPolicyEnforcer arlasPolicyEnforcer = new UnitOfWorkAwareProxyFactory(hibernate)
-                .create(ArlasPolicyEnforcer.class, new Class[]{ AuthService.class, AuthConfiguration.class },
-                        new Object[]{ this.authService, configuration.arlasAuthConfiguration });
+                .create(ArlasPolicyEnforcer.class, new Class[]{ AuthService.class, AuthConfiguration.class, BaseCacheManager.class},
+                        new Object[]{ this.authService, configuration.arlasAuthConfiguration, cacheFactory.getCacheManager() });
         environment.jersey().register(arlasPolicyEnforcer);
 
         //cors

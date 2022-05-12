@@ -160,7 +160,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     private Set<Role> importDefaultRoles(User admin) {
-        List<String> defaultAdminRoles = List.of(ROLE_IDP_ADMIN);
+        List<String> defaultAdminRoles = List.of(ROLE_IAM_ADMIN);
         return TechnicalRoles.getTechnicalRolesList().stream()
                 .map(s -> {
                     Role r = new Role(s, true);
@@ -224,7 +224,10 @@ public class HibernateAuthService implements AuthService {
                 if (this.verifyEmail) {
                     sendActivationEmail(user, verifyToken);
                 }
-                // TODO add group/public role
+                Role publicGroup = roleDao.getSystemRoles().stream()
+                        .filter(r -> GROUP_PUBLIC.equals(r.getName()))
+                        .findFirst().get();
+                roleDao.addRoleToUser(user, publicGroup);
                 return user;
             } else {
                 throw new AlreadyExistsException("User already exists.");
@@ -310,6 +313,7 @@ public class HibernateAuthService implements AuthService {
             throw new NotAllowedException("Admin cannot be removed from database.");
         }
         readUser(userId).ifPresent(userDao::deleteUser);
+        // TODO: delete user resources (organisation, collections...)
     }
 
     @Override

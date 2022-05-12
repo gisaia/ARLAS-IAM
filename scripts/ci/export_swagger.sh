@@ -51,8 +51,8 @@ start_stack
 
 echo "=> Get swagger documentation"
 mkdir -p ${PROJECT_ROOT_DIRECTORY}/tmp || echo "${PROJECT_ROOT_DIRECTORY}/tmp exists"
-i=1; until curl -XGET http://${DOCKER_IP}:9997/arlas_idp_server/swagger.json -o ${PROJECT_ROOT_DIRECTORY}/tmp/swagger.json; do if [ $i -lt 60 ]; then sleep 1; else break; fi; i=$(($i + 1)); done
-i=1; until curl -XGET http://${DOCKER_IP}:9997/arlas_idp_server/swagger.yaml -o ${PROJECT_ROOT_DIRECTORY}/tmp/swagger.yaml; do if [ $i -lt 60 ]; then sleep 1; else break; fi; i=$(($i + 1)); done
+i=1; until curl -XGET http://${DOCKER_IP}:9997/arlas_iam_server/swagger.json -o ${PROJECT_ROOT_DIRECTORY}/tmp/swagger.json; do if [ $i -lt 60 ]; then sleep 1; else break; fi; i=$(($i + 1)); done
+i=1; until curl -XGET http://${DOCKER_IP}:9997/arlas_iam_server/swagger.yaml -o ${PROJECT_ROOT_DIRECTORY}/tmp/swagger.yaml; do if [ $i -lt 60 ]; then sleep 1; else break; fi; i=$(($i + 1)); done
 
-echo "=> Stop arlas-idp-server stack"
+echo "=> Stop arlas-iam-server stack"
 docker-compose -f ${DOCKER_COMPOSE} --project-name arlasiam down -v

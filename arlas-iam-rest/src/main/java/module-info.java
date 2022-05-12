@@ -1,8 +1,8 @@
 module arlas.iam.rest {
+    exports io.arlas.iam.rest;
     exports io.arlas.iam.rest.service;
     exports io.arlas.iam.rest.model.input;
     exports io.arlas.iam.rest.model.output;
-    exports io.arlas.iam.server;
 
     requires transitive arlas.iam.core;
     requires transitive arlas.iam.filter;
