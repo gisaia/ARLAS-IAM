@@ -7,10 +7,7 @@ import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "role")
@@ -94,12 +91,13 @@ public class Role {
         this.isSystem = isSystem;
     }
 
-    public Organisation getOrganisation() {
-        return organisation;
+    public Optional<Organisation> getOrganisation() {
+        return Optional.ofNullable(organisation);
     }
 
     public Role setOrganisation(Organisation organisation) {
         this.organisation = organisation;
+        organisation.getRoles().add(this);
         return this;
     }
 
@@ -107,8 +105,9 @@ public class Role {
         return users;
     }
 
-    public void setUsers(Set<User> users) {
+    public Role setUsers(Set<User> users) {
         this.users = users;
+        return this;
     }
 
     public Set<Permission> getPermissions() {
@@ -119,17 +118,18 @@ public class Role {
         this.permissions = permissions;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Role role = (Role) o;
-        return getName().equals(role.getName());
+        return getName().equals(role.getName()) && Objects.equals(getOrganisation(), role.getOrganisation());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName());
+        return Objects.hash(getName(), getOrganisation());
     }
 
     @Override

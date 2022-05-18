@@ -13,8 +13,6 @@ import io.arlas.iam.model.LoginSession;
 import io.arlas.iam.model.User;
 import io.arlas.iam.rest.model.input.*;
 import io.arlas.iam.rest.model.output.*;
-import io.arlas.iam.rest.model.input.*;
-import io.arlas.iam.rest.model.output.*;
 import io.arlas.iam.util.ArlasAuthServerConfiguration;
 import io.arlas.iam.util.IdentityParam;
 import io.dropwizard.hibernate.UnitOfWork;
@@ -44,8 +42,8 @@ import java.util.stream.Collectors;
                 }
         )
 )
-public class UmsRestService {
-    private final Logger LOGGER = LoggerFactory.getLogger(UmsRestService.class);
+public class IAMRestService {
+    private final Logger LOGGER = LoggerFactory.getLogger(IAMRestService.class);
     public static final String UTF8JSON = MediaType.APPLICATION_JSON + ";charset=utf-8";
 
     protected final AuthService authService;
@@ -53,7 +51,7 @@ public class UmsRestService {
     protected final String groupsHeader;
     protected final String anonymousValue;
 
-    public UmsRestService(AuthService authService, ArlasAuthServerConfiguration configuration) {
+    public IAMRestService(AuthService authService, ArlasAuthServerConfiguration configuration) {
         this.authService = authService;
         this.userHeader = ((AuthConfiguration)configuration.arlasAuthConfiguration).headerUser;
         this.groupsHeader = ((AuthConfiguration)configuration.arlasAuthConfiguration).headerGroup;

@@ -29,8 +29,8 @@ public interface AuthService {
     Optional<User> activateUser(UUID userId);
     Optional<User> deactivateUser(UUID userId) throws NotAllowedException;
 
-    Organisation createOrganisation(User user, String name) throws AlreadyExistsException, NotOwnerException;
-    Organisation createOrganisation(User owner) throws AlreadyExistsException, NotOwnerException;
+    Organisation createOrganisation(User user, String name) throws AlreadyExistsException, NotOwnerException, NotFoundException;
+    Organisation createOrganisation(User owner) throws AlreadyExistsException, NotOwnerException, NotFoundException;
     void deleteOrganisation(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
     Set<Organisation> listOrganisations(User user);
 

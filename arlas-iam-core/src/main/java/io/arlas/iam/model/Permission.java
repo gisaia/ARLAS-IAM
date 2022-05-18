@@ -97,12 +97,12 @@ public class Permission {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Permission that = (Permission) o;
-        return getValue().equals(that.getValue());
+        return getValue().equals(that.getValue()) && Objects.equals(getOrganisation(), that.getOrganisation());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getValue());
+        return Objects.hash(getValue(), getOrganisation());
     }
 
     @Override

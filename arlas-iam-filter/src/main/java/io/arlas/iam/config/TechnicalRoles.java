@@ -20,7 +20,7 @@ public class TechnicalRoles {
     public static final String ROLE_ARLAS_TAGGER = "role/arlas/tagger";
     public static final String ROLE_ARLAS_IMPORTER = "role/arlas/importer";
     public static final String GROUP_PUBLIC = "group/public";
-
+    public static final String VAR_ORG = "org";
     private static final Logger LOGGER = LoggerFactory.getLogger(TechnicalRoles.class);
     private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
     private static Map<String, List<String>> technicalRolesPermissions;

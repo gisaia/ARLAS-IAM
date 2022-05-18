@@ -1,6 +1,8 @@
 package io.arlas.iam.filter.impl;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.commons.rest.auth.PolicyEnforcer;
@@ -17,6 +19,8 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
+import java.util.Collections;
+import java.util.Map;
 
 @Provider
 @Priority(Priorities.AUTHORIZATION)
@@ -36,6 +40,16 @@ public class HTTPPolicyEnforcer extends AbstractPolicyEnforcer {
         super.setAuthConf(conf);
         this.resource = client.target(authConf.permissionUrl);
         return this;
+    }
+
+    @Override
+    protected Map<String, Object> getRolesClaim(Object token) {
+        Claim jwtClaimRoles = ((DecodedJWT) token).getClaim(authConf.claimRoles);
+        if (!jwtClaimRoles.isNull()) {
+            return jwtClaimRoles.asMap();
+        } else {
+            return Collections.emptyMap();
+        }
     }
 
     @Override

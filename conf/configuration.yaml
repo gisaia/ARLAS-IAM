@@ -115,5 +115,5 @@ smtp:
   template_file: ${ARLAS_SMTP_TEMPLATE_FILE:-verifyEmail.ftlh}
 
 # Configuration of the cache
-arlas_cache_factory_class: ${ARLAS_IAM_CACHE_FACTORY_CLASS:-io.arlas.commons.cache.BaseHazelcastCacheFactory}
+arlas_cache_factory_class: ${ARLAS_IAM_CACHE_FACTORY_CLASS:-io.arlas.commons.cache.NoCacheFactory}
 arlas-cache-timeout: ${ARLAS_CACHE_TIMEOUT:-60}

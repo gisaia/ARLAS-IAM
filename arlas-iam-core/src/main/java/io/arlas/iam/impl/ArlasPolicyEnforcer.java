@@ -1,6 +1,7 @@
 package io.arlas.iam.impl;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.commons.cache.BaseCacheManager;
 import io.arlas.iam.config.AuthConfiguration;
@@ -13,7 +14,9 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Priority;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.ext.Provider;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 
 @Provider
 @Priority(Priorities.AUTHORIZATION)
@@ -38,5 +41,15 @@ public class ArlasPolicyEnforcer extends AbstractPolicyEnforcer {
         String rpt = authService.createPermissionToken(accessToken.getSubject(), accessToken.getIssuer(), new Date());
         LOGGER.debug("RPT=" + decodeToken(rpt));
         return JWT.decode(rpt);
+    }
+
+    @Override
+    protected Map<String, Object> getRolesClaim(Object token) {
+        Claim jwtClaimRoles = ((DecodedJWT) token).getClaim(authConf.claimRoles);
+        if (!jwtClaimRoles.isNull()) {
+            return jwtClaimRoles.asMap();
+        } else {
+            return Collections.emptyMap();
+        }
     }
 }

@@ -26,7 +26,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.arlas.iam.config.TechnicalRoles.*;
 
@@ -46,6 +45,8 @@ public class HibernateAuthService implements AuthService {
     private final InitConfiguration initConf;
     private User admin;
 
+    private final List<String> systemRoles = Arrays.asList(ROLE_IAM_ADMIN, GROUP_PUBLIC);
+
     // this regex will do a basic check (verification will be done by sending an email to the user) and extract domain
     private static final Pattern emailRegex = Pattern.compile("(?<=@)[^.]+(?=\\.)");
 
@@ -60,7 +61,7 @@ public class HibernateAuthService implements AuthService {
         this.mailer = new SMTPMailer(conf.smtp);
         this.tokenManager = new TokenManager(factory, (AuthConfiguration) conf.arlasAuthConfiguration);
         this.verifyEmail = conf.verifyEmail;
-        this.verifyTokenTtl = ((AuthConfiguration)conf.arlasAuthConfiguration).verifyTokenTTL;
+        this.verifyTokenTtl = ((AuthConfiguration) conf.arlasAuthConfiguration).verifyTokenTTL;
         this.initConf = ((AuthConfiguration) conf.arlasAuthConfiguration).initConfiguration;
     }
 
@@ -95,13 +96,21 @@ public class HibernateAuthService implements AuthService {
         return validateEmailDomain(user.getEmail()).orElseThrow(RuntimeException::new);
     }
 
+    private String getUserOrg(User user) {
+        // personal organisation of the user
+        return user.getId().toString();
+    }
+
     private Organisation getOrganisation(User owner, UUID orgId)
-            throws NotOwnerException {
+            throws NotOwnerException, NotFoundException {
+        if (isAdmin(owner)) {
+            return organisationDao.readOrganisation(orgId).orElseThrow(() -> new NotFoundException("Organisation not found."));
+        }
         OrganisationMember organisationMember = owner.getOrganisations().stream()
                 .filter(om -> om.getOrganisation().is(orgId))
                 .findFirst()
                 .orElseThrow(() -> new NotOwnerException("User does not belong to organisation."));
-        if (organisationMember.isOwner() || isAdmin(owner)) {
+        if (organisationMember.isOwner()) {
             return organisationMember.getOrganisation();
         } else {
             throw new NotOwnerException("User is not owner of the organisation");
@@ -159,34 +168,25 @@ public class HibernateAuthService implements AuthService {
         return isAdmin(user.getId());
     }
 
-    private Set<Role> importDefaultRoles(User admin) {
-        List<String> defaultAdminRoles = List.of(ROLE_IAM_ADMIN);
+    private Set<Role> importDefaultAdminRole(User admin) {
         return TechnicalRoles.getTechnicalRolesList().stream()
-                .map(s -> {
-                    Role r = new Role(s, true);
-                    if (defaultAdminRoles.contains(s)) {
-                        r.setUsers(Set.of(admin));
-                    }
-                    return roleDao.createRole(r);
-                })
-                .filter(r -> defaultAdminRoles.contains(r.getName()))
+                .filter(systemRoles::contains)
+                .map(s -> roleDao.createRole(new Role(s, true).setUsers(Set.of(admin))))
                 .collect(Collectors.toSet());
     }
 
-    private Set<String> listRoles(UUID userId) throws NotFoundException {
-        return userDao.readUser(userId).orElseThrow(NotFoundException::new).getRoles().stream()
-                .map(Role::getName)
-                .sorted()
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    private List<Role> listAvailableRoles(Organisation organisation) {
-        List<Role> systemRoles = roleDao.getSystemRoles();
-        LOGGER.debug("System roles=" + systemRoles);
-        LOGGER.debug("Organisation roles=" + organisation.getRoles());
-        return Stream.concat(organisation.getRoles().stream(), systemRoles.stream())
-                .sorted(Comparator.comparing(Role::getName))
-                .toList();
+    private Map<String, List<String>> listRoles(UUID userId) throws NotFoundException {
+        Map<String, List<String>> orgRoles = new HashMap();
+        // we return a map of {"" -> [ roles...], "orgName1_" -> [ roles...], ...}
+        // (the empty key is for cross org roles such as "group/public")
+        readUser(userId).orElseThrow(NotFoundException::new).getRoles().stream()
+                .forEach(r -> {
+                    String orgName = r.getOrganisation().map(o -> o.getName()+"_").orElseGet(String::new);
+                    List<String> roles = Optional.ofNullable(orgRoles.get(orgName)).orElseGet(ArrayList::new);
+                    roles.add(r.getName());
+                    orgRoles.put(orgName, roles);
+                });
+        return orgRoles;
     }
 
     // ------- public ------------
@@ -201,7 +201,7 @@ public class HibernateAuthService implements AuthService {
             admin.setTimezone(initConf.timezone);
             admin.setVerified(true);
             admin = userDao.createUser(admin);
-            admin.setRoles(importDefaultRoles(admin));
+            admin.setRoles(importDefaultAdminRole(admin));
             this.admin = userDao.updateUser(admin);
         } else {
             LOGGER.info("***** Database is not empty. Init is skipped.");
@@ -213,7 +213,7 @@ public class HibernateAuthService implements AuthService {
             throws InvalidEmailException, AlreadyExistsException, SendEmailException {
         if (validateEmailDomain(email).isPresent()) {
             if (userDao.readUser(email).isEmpty()) {
-                User user = new User(email);
+                var user = new User(email);
                 // in testing mode, we set the password to a known value
                 String verifyToken = this.verifyEmail ? KeyGenerators.string().generateKey() : "secret";
                 user.setPassword(encode(verifyToken));
@@ -223,8 +223,13 @@ public class HibernateAuthService implements AuthService {
                 user = userDao.createUser(user);
                 if (this.verifyEmail) {
                     sendActivationEmail(user, verifyToken);
+                } else {
+                    try {
+                        verifyUser(user.getId(), verifyToken, user.getPassword());
+                    } catch (AlreadyVerifiedException | NonMatchingPasswordException | ExpiredTokenException | NotFoundException ignored) {
+                    }
                 }
-                Role publicGroup = roleDao.getSystemRoles().stream()
+                var publicGroup = roleDao.getSystemRoles().stream()
                         .filter(r -> GROUP_PUBLIC.equals(r.getName()))
                         .findFirst().get();
                 roleDao.addRoleToUser(user, publicGroup);
@@ -255,7 +260,7 @@ public class HibernateAuthService implements AuthService {
     @Override
     public LoginSession login(String email, String password, String issuer)
             throws ArlasException {
-        User user = userDao.readUser(email).orElseThrow(() -> new NotFoundException("No matching user/password found."));
+        var user = userDao.readUser(email).orElseThrow(() -> new NotFoundException("No matching user/password found."));
         if (user.isActive() && user.isVerified() && matches(password, user.getPassword())) {
             LoginSession ls = tokenManager.getLoginSession(user, issuer, new Date());
             tokenDao.createOrUpdate(user.getId(), ls.refreshToken);
@@ -327,28 +332,6 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public User verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException, ExpiredTokenException, SendEmailException, NotFoundException {
-        User u = readUser(userId).orElseThrow(() -> new NotFoundException("User not found."));
-        if (u.isVerified()) {
-            throw new AlreadyVerifiedException("User already verified.");
-        }
-        if (u.getCreationDate().toEpochSecond(ZoneOffset.UTC) + this.verifyTokenTtl/1000 <
-                LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)) {
-            generateNewVerificationToken(u);
-            throw new ExpiredTokenException("Verification token expired.");
-        }
-        if (matches(verifyToken, u.getPassword())) {
-            u.setPassword(encode(password));
-            u.setVerified(true);
-            // TODO create personal organisation: what name? avoid email for GPRD
-            userDao.updateUser(u);
-        } else {
-            throw new NonMatchingPasswordException("Verification token does not match");
-        }
-        return u;
-    }
-
-    @Override
     public Optional<User> deactivateUser(UUID userId) throws NotAllowedException {
         if (isAdmin(userId)) {
             throw new NotAllowedException("Admin cannot be deactivated.");
@@ -362,9 +345,30 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Set<OrganisationMember> listOrganisationUsers(User user, UUID orgId) throws NotOwnerException {
-        return organisationDao.listUsers(getOrganisation(user, orgId));
-
+    public User verifyUser(UUID userId, String verifyToken, String password)
+            throws AlreadyVerifiedException, NonMatchingPasswordException, ExpiredTokenException, SendEmailException, NotFoundException {
+        var u = readUser(userId).orElseThrow(() -> new NotFoundException("User not found."));
+        if (u.isVerified()) {
+            throw new AlreadyVerifiedException("User already verified.");
+        }
+        if (u.getCreationDate().toEpochSecond(ZoneOffset.UTC) + this.verifyTokenTtl / 1000 <
+                LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)) {
+            generateNewVerificationToken(u);
+            throw new ExpiredTokenException("Verification token expired.");
+        }
+        if (matches(verifyToken, u.getPassword())) {
+            u.setPassword(encode(password));
+            u.setVerified(true);
+            userDao.updateUser(u);
+            try {
+                createOrganisation(u, getUserOrg(u));
+            } catch (AlreadyExistsException | NotOwnerException ignored) {
+                // cannot happen
+            }
+        } else {
+            throw new NonMatchingPasswordException("Verification token does not match");
+        }
+        return u;
     }
 
     @Override
@@ -372,29 +376,33 @@ public class HibernateAuthService implements AuthService {
             throws AlreadyExistsException, NotOwnerException {
         return createOrganisation(owner, getUserDomain(owner));
     }
+
     @Override
-    public Organisation createOrganisation(User user, String domain)
+    public Organisation createOrganisation(final User user, String name)
             throws AlreadyExistsException, NotOwnerException {
         boolean isAdmin = isAdmin(user);
-        if (!isAdmin && !getUserDomain(user).equals(domain)) {
+        if (!isAdmin && !(getUserDomain(user).equals(name) || getUserOrg(user).equals(name))) {
             throw new NotOwnerException("Regular users can only create organisations from their email domain. "
-                    + "(user domain '" + getUserDomain(user) + "' != requested domain '" + domain + "')");
+                    + "(user domain '" + getUserDomain(user) + "' != requested domain '" + name + "')");
         }
-        Optional<Organisation> org = organisationDao.readOrganisation(domain);
+        Optional<Organisation> org = organisationDao.readOrganisation(name);
         if (org.isEmpty()) {
-            Organisation organisation = organisationDao.createOrganisation(new Organisation(domain));
-            organisationMemberDao.addUserToOrganisation(user, organisation, true);
-            if (!isAdmin) {
-                organisationMemberDao.addUserToOrganisation(getAdmin(), organisation, true);
-            }
+            Organisation organisation = organisationDao.createOrganisation(new Organisation(name));
             // create default permissions
-            Permission allDataPermission = createPermission(organisation,
-                    ArlasClaims.getHeaderColumnFilterDefault(domain),
+            var allDataPermission = createPermission(organisation,
+                    ArlasClaims.getHeaderColumnFilterDefault(name),
                     "View all organisation's collections' data.");
             // create default roles
-            Role defaultGroup = createRole(organisation, TechnicalRoles.getDefaultGroup(domain),
+            var defaultGroup = createRole(organisation, TechnicalRoles.getDefaultGroup(name),
                     "Default organisation group for dashboard sharing.");
             roleDao.addPermissionToRole(allDataPermission, defaultGroup);
+            TechnicalRoles.getTechnicalRolesList().stream()
+                    .filter(s -> !systemRoles.contains(s))
+                    .forEach(s -> roleDao.createRole(new Role(s, false).setOrganisation(organisation)));
+            addUserToOrganisation(user, organisation, true);
+            if (!isAdmin) {
+                addUserToOrganisation(getAdmin(), organisation, true);
+            }
             return organisation;
         } else {
             if (org.get().getMembers().stream().anyMatch(om -> om.getUser().is(user.getId()) && om.isOwner())) {
@@ -407,9 +415,15 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public void deleteOrganisation(User owner, UUID orgId)
-            throws NotOwnerException {
+            throws NotOwnerException, NotFoundException {
         organisationDao.deleteOrganisation(getOrganisation(owner, orgId));
         // TODO : delete associated resources
+    }
+
+    @Override
+    public Set<OrganisationMember> listOrganisationUsers(User user, UUID orgId) throws NotOwnerException, NotFoundException {
+        return organisationDao.listUsers(getOrganisation(user, orgId));
+
     }
 
     @Override
@@ -425,14 +439,15 @@ public class HibernateAuthService implements AuthService {
         if (org.getMembers().stream().anyMatch(om -> om.getUser().is(user.getId()))) {
             throw new AlreadyExistsException("User is already in organisation.");
         }
+        return addUserToOrganisation(user, org, isOwner);
+    }
+
+    private Organisation addUserToOrganisation(User user, Organisation org, Boolean isOwner) {
         organisationMemberDao.addUserToOrganisation(user, org, isOwner);
-        List<String> userDefaultRoles = List.of(
-                TechnicalRoles.getDefaultGroup(org.getName()),
-                ROLE_ARLAS_USER,
-                GROUP_PUBLIC);
+        List<String> userDefaultRoles = List.of(TechnicalRoles.getDefaultGroup(org.getName()), ROLE_ARLAS_USER);
         List<String> ownerDefaultRoles = List.of(ROLE_ARLAS_OWNER, ROLE_ARLAS_BUILDER, ROLE_ARLAS_TAGGER);
         // add default roles
-        listAvailableRoles(org).stream()
+        org.getRoles().stream()
                 .filter(r -> userDefaultRoles.contains(r.getName())
                         || (isOwner && ownerDefaultRoles.contains(r.getName())))
                 .forEach(r -> roleDao.addRoleToUser(user, r));
@@ -452,7 +467,7 @@ public class HibernateAuthService implements AuthService {
 
     private Role createRole(Organisation organisation, String name, String description)
             throws AlreadyExistsException {
-        if (listAvailableRoles(organisation).stream().anyMatch(r -> r.getName().equals(name))) {
+        if (organisation.getRoles().stream().anyMatch(r -> r.getName().equals(name))) {
             throw new AlreadyExistsException("Role already exists.");
         } else {
             Role role = roleDao.createRole(new Role(name, description).setOrganisation(organisation));
@@ -463,21 +478,21 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public Role createRole(User owner, String name, String description, UUID orgId)
-            throws AlreadyExistsException, NotOwnerException {
+            throws AlreadyExistsException, NotOwnerException, NotFoundException {
         return createRole(getOrganisation(owner, orgId), name, description);
     }
 
     @Override
-    public List<Role> listRoles(User owner, UUID orgId) throws NotOwnerException {
-        return listAvailableRoles(getOrganisation(owner, orgId));
+    public List<Role> listRoles(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
+        return getOrganisation(owner, orgId).getRoles().stream().toList();
     }
 
     @Override
     public List<Role> listRoles(User owner, UUID orgId, UUID userId) throws NotFoundException, NotOwnerException {
-        Organisation org = getOrganisation(owner, orgId);
-        User user = getUser(org, userId);
+        var org = getOrganisation(owner, orgId);
+        var user = getUser(org, userId);
         return user.getRoles().stream()
-                .filter(r -> org.is(r.getOrganisation()) || r.isSystem())
+                .filter(r -> org.is(r.getOrganisation().orElse(null)) || r.isSystem())
                 .sorted(Comparator.comparing(Role::getName))
                 .toList();
     }
@@ -485,12 +500,12 @@ public class HibernateAuthService implements AuthService {
     @Override
     public User addRoleToUser(User owner, UUID orgId, UUID userId, UUID roleId)
             throws NotFoundException, NotOwnerException, AlreadyExistsException {
-        Organisation org = getOrganisation(owner, orgId);
-        User user = getUser(org, userId);
+        var org = getOrganisation(owner, orgId);
+        var user = getUser(org, userId);
         if (getRole(user, roleId).isPresent()) {
             throw new AlreadyExistsException("Role is already assigned to user.");
         }
-        Role role = roleDao.readRole(roleId).orElseThrow(() -> new NotFoundException("Role not found."));
+        var role = roleDao.readRole(roleId).orElseThrow(() -> new NotFoundException("Role not found."));
         if (role.isSystem() || org.getRoles().stream().anyMatch(r -> r.is(roleId))) {
             roleDao.addRoleToUser(user, role);
             return user;
@@ -505,15 +520,15 @@ public class HibernateAuthService implements AuthService {
         if (isAdmin(userId)) {
             throw new NotAllowedException("Cannot remove roles from admin user.");
         }
-        User user = getUser(getOrganisation(owner, orgId), userId);
-        Role role = getRole(user, roleId).orElseThrow(() -> new NotFoundException("Role was not assigned to user."));
+        var user = getUser(getOrganisation(owner, orgId), userId);
+        var role = getRole(user, roleId).orElseThrow(() -> new NotFoundException("Role was not assigned to user."));
         roleDao.removeRoleFromUser(user, role);
         return user;
     }
 
     @Override
     public Set<String> listPermissions(UUID userId) throws NotFoundException {
-        User user = userDao.readUser(userId).orElseThrow(() -> new NotFoundException("User not found."));
+        var user = readUser(userId).orElseThrow(() -> new NotFoundException("User not found."));
         Set<Permission> permissions = new HashSet<>();
         user.getRoles().forEach(r -> permissions.addAll(r.getPermissions()));
         return permissions.stream().map(Permission::getValue).collect(Collectors.toSet());
@@ -521,37 +536,38 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException {
-        Organisation org = getOrganisation(owner, orgId);
-        User user = getUser(org, userId);
+        var org = getOrganisation(owner, orgId);
+        var user = getUser(org, userId);
         Set<Permission> permissions = new HashSet<>();
         user.getRoles().stream()
-                .filter(r -> org.is(r.getOrganisation()))
+                .filter(r -> org.is(r.getOrganisation().orElse(null)))
                 .forEach(r -> permissions.addAll(r.getPermissions()));
         return permissions;
     }
 
     private Permission createPermission(Organisation org, String value, String description) {
-        Permission permission = permissionDao.createPermission(new Permission(value, description, org));
+        var permission = permissionDao.createPermission(new Permission(value, description, org));
         org.getPermissions().add(permission);
         return permission;
     }
 
     @Override
-    public Permission createPermission(User owner, UUID orgId, String value, String description) throws NotOwnerException {
+    public Permission createPermission(User owner, UUID orgId, String value, String description) throws NotOwnerException, NotFoundException {
         return createPermission(getOrganisation(owner, orgId), value, description);
     }
+
     @Override
     public Role addPermissionToRole(User owner, UUID orgId, UUID roleId, UUID permissionId) throws NotFoundException, NotOwnerException {
-        Organisation org = getOrganisation(owner, orgId);
-        Role role = getRole(org, roleId);
-        Permission permission = getPermission(org, permissionId);
+        var org = getOrganisation(owner, orgId);
+        var role = getRole(org, roleId);
+        var permission = getPermission(org, permissionId);
         return roleDao.addPermissionToRole(permission, role);
     }
 
     @Override
     public Role removePermissionFromRole(User owner, UUID orgId, UUID roleId, UUID permissionId) throws NotFoundException, NotOwnerException {
-        Role role = getRole(getOrganisation(owner, orgId), roleId);
-        Permission permission = getPermission(role, permissionId);
+        var role = getRole(getOrganisation(owner, orgId), roleId);
+        var permission = getPermission(role, permissionId);
         return roleDao.removePermissionFromRole(permission, role);
     }
 
