@@ -14,9 +14,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Priority;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.ext.Provider;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Provider
 @Priority(Priorities.AUTHORIZATION)
@@ -34,6 +32,7 @@ public class KeycloakPolicyEnforcer extends AbstractPolicyEnforcer {
         return this;
     }
 
+    @Override
     protected Object getObjectToken(String accessToken) throws Exception {
         LOGGER.debug("accessToken=" + decodeToken(accessToken));
         String token = cacheManager.getPermission(accessToken);
@@ -47,16 +46,20 @@ public class KeycloakPolicyEnforcer extends AbstractPolicyEnforcer {
         return TokenVerifier.create(token, AccessToken.class).getToken();
     }
 
+    @Override
     protected String getSubject(Object token) {
         return ((AccessToken)token).getSubject();
     }
 
-    protected Collection<String> getRolesClaim(Object token) {
-        return ((AccessToken)token).getResourceAccess(authConf.keycloakConfiguration.getResource()).getRoles();
+    @Override
+    protected Map<String, Object> getRolesClaim(Object token) {
+        return Collections.singletonMap("",
+                ((AccessToken)token).getResourceAccess(authConf.keycloakConfiguration.getResource()).getRoles().stream().toList());
     }
 
-    protected List<String> getPermissionsClaim(Object token){
-        return new ArrayList(((AccessToken) token).getAuthorization().getPermissions().stream()
+    @Override
+    protected Set<String> getPermissionsClaim(Object token){
+        return new HashSet(((AccessToken) token).getAuthorization().getPermissions().stream()
                 .map(Permission::getResourceName).toList());
     }
 }

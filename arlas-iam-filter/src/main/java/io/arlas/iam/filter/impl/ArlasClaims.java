@@ -11,7 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ArlasClaims {
-    private final Logger LOGGER = LoggerFactory.getLogger(ArlasClaims.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(ArlasClaims.class);
     private final List<RuleClaim> rules;
     private final Map<String, List<String>> headers;
     private final Map<String, String> variables;
@@ -83,7 +83,7 @@ public class ArlasClaims {
         });
     }
 
-    private String replaceVar(String original, String var, String val) {
+    public static String replaceVar(String original, String var, String val) {
         String result = original.replaceAll("\\$\\{" + var + "}", val);
         LOGGER.debug("Injecting variable '" + var + "' in  '" + original +"' results in '" + result + "'");
         return result;

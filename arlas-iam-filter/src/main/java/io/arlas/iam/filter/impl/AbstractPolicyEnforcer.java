@@ -22,6 +22,10 @@ import javax.ws.rs.ext.Provider;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.arlas.iam.config.TechnicalRoles.VAR_ORG;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.UNAUTHORIZED;
+
 @Provider
 @Priority(Priorities.AUTHORIZATION)
 public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
@@ -53,34 +57,36 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
         return ((DecodedJWT) token).getSubject();
     }
 
-    protected Collection<String> getRolesClaim(Object token) {
+    protected Map<String, Object> getRolesClaim(Object token) {
         Claim jwtClaimRoles = ((DecodedJWT) token).getClaim(authConf.claimRoles);
         if (!jwtClaimRoles.isNull()) {
-            return jwtClaimRoles.asList(String.class);
+            return Collections.singletonMap("", jwtClaimRoles.asList(String.class));
         } else {
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
-
     }
 
-    protected List<String> getPermissionsClaim(Object token) {
+    protected Set<String> getPermissionsClaim(Object token) {
         Claim jwtClaimPermissions = ((DecodedJWT) token).getClaim(authConf.claimPermissions);
         if (!jwtClaimPermissions.isNull()) {
-            return jwtClaimPermissions.asList(String.class);
+            return jwtClaimPermissions.asList(String.class).stream().collect(Collectors.toSet());
         } else {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
     }
 
-    private void addTechnicalRolesToPermissions(List<String> permissions, Collection<String> roles) {
+    private void addTechnicalRolesToPermissions(Set<String> permissions, Map<String, Object> roles) {
         if (injectPermissions) {
-            LOGGER.debug("Adding permissions of roles " + roles.toString() + " from map technical roles "
+            LOGGER.debug("Adding permissions of org/roles " + roles.toString() + " from map technical roles "
                     + TechnicalRoles.getTechnicalRolesPermissions().toString() + " in existing permissions "
                     + permissions);
-            TechnicalRoles.getTechnicalRolesPermissions().entrySet().stream()
-                    .filter(e -> roles.contains(e.getKey()))
-                    .filter(e -> e.getValue().size() > 0)
-                    .forEach(e -> permissions.addAll(e.getValue()));
+            roles.entrySet().stream().forEach(orgRoles -> {
+                TechnicalRoles.getTechnicalRolesPermissions().entrySet().stream()
+                        .filter(rolesPerm -> ((List<String>) orgRoles.getValue()).contains(rolesPerm.getKey()))
+                        .filter(rolesPerm -> rolesPerm.getValue().size() > 0)
+                        .forEach(rolesPerm -> permissions.addAll(rolesPerm.getValue().stream()
+                                .map(rp -> ArlasClaims.replaceVar(rp, VAR_ORG, orgRoles.getKey())).toList()));
+            });
         }
     }
 
@@ -91,7 +97,7 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
         String header = ctx.getHeaderString(HttpHeaders.AUTHORIZATION);
         if (header == null || !header.toLowerCase().startsWith("bearer ")) {
             if (!isPublic && !"OPTIONS".equals(ctx.getMethod())) {
-                ctx.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
+                ctx.abortWith(Response.status(UNAUTHORIZED).build());
             }
             return;
         }
@@ -100,7 +106,7 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
         try {
             Boolean ok = cacheManager.getDecision(getDecisionCacheKey(ctx, accessToken));
             if (ok != null && !ok) {
-                ctx.abortWith(Response.status(Response.Status.FORBIDDEN).build());
+                ctx.abortWith(Response.status(FORBIDDEN).build());
             }
             Object token = getObjectToken(accessToken);
             ctx.getHeaders().remove(authConf.headerUser); // remove it in case it's been set manually
@@ -112,9 +118,11 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
             }
 
             ctx.getHeaders().remove(authConf.headerGroup); // remove it in case it's been set manually
-            Collection<String> roles = getRolesClaim(token);
+            Map<String, Object> roles = getRolesClaim(token);
             if (!roles.isEmpty()) {
-                Set<String> groups = roles.stream()
+                Set<String> groups = roles.values().stream()
+                        .map(v -> (List<String>) v)
+                        .flatMap(Collection::stream)
                         .filter(r -> r.toLowerCase().startsWith("group"))
                         .collect(Collectors.toSet());
                 ctx.setProperty("groups", groups.stream().toList());
@@ -122,13 +130,13 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
                 LOGGER.debug("Add Header [" + authConf.headerGroup + ": " + groups + "]");
             }
 
-            List<String> permissions = getPermissionsClaim(token);
+            Set<String> permissions = getPermissionsClaim(token);
             addTechnicalRolesToPermissions(permissions, roles);
             LOGGER.debug("Permissions: " + permissions.toString());
             if (!permissions.isEmpty()) {
-                ArlasClaims arlasClaims = new ArlasClaims(permissions);
+                ArlasClaims arlasClaims = new ArlasClaims(permissions.stream().toList());
                 ctx.setProperty("claims", arlasClaims.getRules());
-                if (ok || arlasClaims.isAllowed(ctx.getMethod(), ctx.getUriInfo().getPath())) {
+                if ((ok != null && ok) || arlasClaims.isAllowed(ctx.getMethod(), ctx.getUriInfo().getPath())) {
                     arlasClaims.injectHeaders(ctx.getHeaders(), transaction);
                     cacheManager.putDecision(getDecisionCacheKey(ctx, accessToken), Boolean.TRUE);
                     return;
@@ -141,12 +149,12 @@ public abstract class AbstractPolicyEnforcer implements PolicyEnforcer {
         } catch (Exception e) {
             LOGGER.warn("JWT verification failed.", e);
             if (!isPublic) {
-                ctx.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
+                ctx.abortWith(Response.status(UNAUTHORIZED).build());
             }
             return;
         }
         cacheManager.putDecision(getDecisionCacheKey(ctx, accessToken), Boolean.FALSE);
-        ctx.abortWith(Response.status(Response.Status.FORBIDDEN).build());
+        ctx.abortWith(Response.status(FORBIDDEN).build());
     }
 
     private String getDecisionCacheKey(ContainerRequestContext ctx, String accessToken) {

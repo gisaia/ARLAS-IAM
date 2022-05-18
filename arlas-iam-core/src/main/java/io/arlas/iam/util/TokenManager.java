@@ -17,6 +17,8 @@ import org.hibernate.SessionFactory;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class TokenManager {
@@ -60,7 +62,7 @@ public class TokenManager {
                 createRefreshToken(), (iat.getTime() + this.refreshTokenTTL)/1000);
     }
 
-    public String createPermissionToken(String subject, String issuer, Date iat, Set<String> permissions, Set<String> roles) throws ArlasException {
+    public String createPermissionToken(String subject, String issuer, Date iat, Set<String> permissions, Map<String, List<String>> roles) throws ArlasException {
         try {
             storeSecret();
             Date exp = new Date(iat.getTime() + this.accessTokenTTL);
@@ -70,7 +72,7 @@ public class TokenManager {
                     .withIssuedAt(iat)
                     .withExpiresAt(exp)
                     .withClaim(this.authConf.claimPermissions, permissions.stream().toList())
-                    .withClaim(this.authConf.claimRoles, roles.stream().toList())
+                    .withClaim(this.authConf.claimRoles, roles)
                     .sign(this.algorithm);
         } catch (JWTCreationException exception){
             throw new ArlasException("Invalid Signing configuration / Couldn't convert Claims.");
