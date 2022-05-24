@@ -5,10 +5,9 @@ import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.commons.exceptions.NotAllowedException;
 import io.arlas.commons.exceptions.NotFoundException;
 import io.arlas.commons.rest.response.Error;
-import io.arlas.iam.exceptions.*;
-import io.arlas.iam.config.AuthConfiguration;
-import io.arlas.iam.config.TechnicalRoles;
+import io.arlas.filter.config.TechnicalRoles;
 import io.arlas.iam.core.AuthService;
+import io.arlas.iam.exceptions.*;
 import io.arlas.iam.model.LoginSession;
 import io.arlas.iam.model.User;
 import io.arlas.iam.rest.model.input.*;
@@ -53,8 +52,8 @@ public class IAMRestService {
 
     public IAMRestService(AuthService authService, ArlasAuthServerConfiguration configuration) {
         this.authService = authService;
-        this.userHeader = ((AuthConfiguration)configuration.arlasAuthConfiguration).headerUser;
-        this.groupsHeader = ((AuthConfiguration)configuration.arlasAuthConfiguration).headerGroup;
+        this.userHeader = configuration.arlasAuthConfiguration.headerUser;
+        this.groupsHeader = configuration.arlasAuthConfiguration.headerGroup;
         this.anonymousValue = configuration.anonymousValue;
     }
 

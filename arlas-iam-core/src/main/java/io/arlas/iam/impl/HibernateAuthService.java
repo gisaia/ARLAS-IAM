@@ -4,12 +4,11 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.commons.exceptions.NotAllowedException;
 import io.arlas.commons.exceptions.NotFoundException;
-import io.arlas.iam.config.AuthConfiguration;
-import io.arlas.iam.config.InitConfiguration;
-import io.arlas.iam.config.TechnicalRoles;
+import io.arlas.filter.config.InitConfiguration;
+import io.arlas.filter.config.TechnicalRoles;
+import io.arlas.filter.core.ArlasClaims;
 import io.arlas.iam.core.*;
 import io.arlas.iam.exceptions.*;
-import io.arlas.iam.filter.impl.ArlasClaims;
 import io.arlas.iam.model.*;
 import io.arlas.iam.util.ArlasAuthServerConfiguration;
 import io.arlas.iam.util.SMTPMailer;
@@ -27,7 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static io.arlas.iam.config.TechnicalRoles.*;
+import static io.arlas.filter.config.TechnicalRoles.*;
 
 public class HibernateAuthService implements AuthService {
     private final Logger LOGGER = LoggerFactory.getLogger(HibernateAuthService.class);
@@ -59,10 +58,10 @@ public class HibernateAuthService implements AuthService {
         this.tokenDao = new HibernateRefreshTokenDao(factory);
         this.encoder = new BCryptPasswordEncoder();
         this.mailer = new SMTPMailer(conf.smtp);
-        this.tokenManager = new TokenManager(factory, (AuthConfiguration) conf.arlasAuthConfiguration);
+        this.tokenManager = new TokenManager(factory, conf.arlasAuthConfiguration);
         this.verifyEmail = conf.verifyEmail;
-        this.verifyTokenTtl = ((AuthConfiguration) conf.arlasAuthConfiguration).verifyTokenTTL;
-        this.initConf = ((AuthConfiguration) conf.arlasAuthConfiguration).initConfiguration;
+        this.verifyTokenTtl = conf.arlasAuthConfiguration.verifyTokenTTL;
+        this.initConf = conf.arlasAuthConfiguration.initConfiguration;
     }
 
     // ------- private ------------

@@ -220,7 +220,7 @@ The IAM server provides authentication and authorization features that can be de
 the need to depend on a third party provider.  
 
 ### Concepts
-TO BE CONTINUED
+TO BE CONTINUED  
 **Organisation**: a group of users who need to access Arlas. Usually of the same customer but not necessarily (users of Gisaïa or other customer can be invited in an organisation).  
 **Role**:  
 **Permission**:  
