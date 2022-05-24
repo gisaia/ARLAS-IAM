@@ -6,7 +6,6 @@ module arlas.iam.core {
     exports io.arlas.iam.util;
 
     requires transitive arlas.commons;
-    requires transitive arlas.iam.filter;
 
     requires com.fasterxml.jackson.annotation;
     requires dropwizard.db;
@@ -21,4 +20,5 @@ module arlas.iam.core {
     requires org.hibernate.orm.core;
     requires org.slf4j;
     requires spring.security.crypto;
+    requires com.auth0.jwt;
 }

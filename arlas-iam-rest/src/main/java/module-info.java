@@ -5,7 +5,6 @@ module arlas.iam.rest {
     exports io.arlas.iam.rest.model.output;
 
     requires transitive arlas.iam.core;
-    requires transitive arlas.iam.filter;
 
     requires com.codahale.metrics.annotation;
     requires com.fasterxml.jackson.annotation;

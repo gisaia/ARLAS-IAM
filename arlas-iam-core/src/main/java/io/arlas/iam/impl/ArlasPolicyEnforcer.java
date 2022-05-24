@@ -4,9 +4,9 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.commons.cache.BaseCacheManager;
-import io.arlas.iam.config.AuthConfiguration;
+import io.arlas.commons.config.ArlasAuthConfiguration;
+import io.arlas.filter.impl.AbstractPolicyEnforcer;
 import io.arlas.iam.core.AuthService;
-import io.arlas.iam.filter.impl.AbstractPolicyEnforcer;
 import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +27,7 @@ public class ArlasPolicyEnforcer extends AbstractPolicyEnforcer {
     private final Logger LOGGER = LoggerFactory.getLogger(ArlasPolicyEnforcer.class);
     private final AuthService authService;
 
-    public ArlasPolicyEnforcer(AuthService authService, AuthConfiguration conf, BaseCacheManager cacheManager) {
+    public ArlasPolicyEnforcer(AuthService authService, ArlasAuthConfiguration conf, BaseCacheManager cacheManager) {
         this.authConf = conf;
         this.authService = authService;
         this.cacheManager = cacheManager;

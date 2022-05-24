@@ -6,6 +6,7 @@ import com.smoketurner.dropwizard.zipkin.ZipkinBundle;
 import com.smoketurner.dropwizard.zipkin.ZipkinFactory;
 import io.arlas.commons.cache.BaseCacheManager;
 import io.arlas.commons.cache.CacheFactory;
+import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.config.ArlasConfiguration;
 import io.arlas.commons.config.ArlasCorsConfiguration;
 import io.arlas.commons.exceptions.ArlasExceptionMapper;
@@ -14,7 +15,6 @@ import io.arlas.commons.exceptions.IllegalArgumentExceptionMapper;
 import io.arlas.commons.rest.utils.InsensitiveCaseFilter;
 import io.arlas.commons.rest.utils.PrettyPrintFilter;
 import io.arlas.iam.model.*;
-import io.arlas.iam.config.AuthConfiguration;
 import io.arlas.iam.core.AuthService;
 import io.arlas.iam.impl.ArlasPolicyEnforcer;
 import io.arlas.iam.impl.HibernateAuthService;
@@ -105,7 +105,7 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
                 .newInstance(configuration);
 
         ArlasPolicyEnforcer arlasPolicyEnforcer = new UnitOfWorkAwareProxyFactory(hibernate)
-                .create(ArlasPolicyEnforcer.class, new Class[]{ AuthService.class, AuthConfiguration.class, BaseCacheManager.class},
+                .create(ArlasPolicyEnforcer.class, new Class[]{ AuthService.class, ArlasAuthConfiguration.class, BaseCacheManager.class},
                         new Object[]{ this.authService, configuration.arlasAuthConfiguration, cacheFactory.getCacheManager() });
         environment.jersey().register(arlasPolicyEnforcer);
 
