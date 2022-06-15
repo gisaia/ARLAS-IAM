@@ -69,7 +69,7 @@ public class IAMRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Session created.", response = LoginSession.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Session created.", response = LoginData.class),
             @ApiResponse(code = 404, message = "Login failed", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
@@ -82,7 +82,7 @@ public class IAMRestService {
             @NotNull @Valid LoginDef loginDef
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.login(loginDef.email, loginDef.password, uriInfo.getBaseUri().getHost()))
+                .entity(new LoginData(authService.login(loginDef.email, loginDef.password, uriInfo.getBaseUri().getHost())))
                 .type("application/json")
                 .build();
     }
@@ -124,7 +124,8 @@ public class IAMRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Session refreshed.", response = LoginSession.class),
-            @ApiResponse(code = 404, message = "Login failed", response = Error.class),
+            @ApiResponse(code = 401, message = "Invalid token.", response = Error.class),
+            @ApiResponse(code = 404, message = "Login failed.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -198,7 +199,7 @@ public class IAMRestService {
 
             @ApiParam(name = "password", required = true)
             @NotNull @Valid String password
-    ) throws NonMatchingPasswordException, AlreadyVerifiedException, ExpiredTokenException, SendEmailException, NotFoundException {
+    ) throws NonMatchingPasswordException, AlreadyVerifiedException, InvalidTokenException, SendEmailException, NotFoundException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.verifyUser(UUID.fromString(id), token, password)))
                 .type("application/json")
@@ -215,7 +216,7 @@ public class IAMRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = User.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = UserData.class),
             @ApiResponse(code = 404, message = "User not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
@@ -229,7 +230,7 @@ public class IAMRestService {
     ) throws NotFoundException {
 
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(getUser(headers, id))
+                .entity(new UserData(getUser(headers, id)))
                 .type("application/json")
                 .build();
     }
@@ -696,6 +697,34 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.listPermissions(getUser(headers), UUID.fromString(oid), UUID.fromString(uid)).stream().map(PermissionData::new).toList())
+                .type("application/json")
+                .build();
+    }
+
+    @Timed
+    @Path("organisations/{oid}/permissions")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "List permissions of an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = PermissionData.class, responseContainer = "List"),
+            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork(readOnly = true)
+    public Response getPermissionsOfOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid
+    ) throws NotFoundException, NotOwnerException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.listPermissions(getUser(headers), UUID.fromString(oid)).stream().map(PermissionData::new).toList())
                 .type("application/json")
                 .build();
     }

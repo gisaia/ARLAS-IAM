@@ -11,8 +11,14 @@ public class OrgData {
     public List<MemberData> members;
 
     public OrgData(Organisation o) {
+        this(o, true);
+    }
+
+    public OrgData(Organisation o, boolean withMembers) {
         this.id = o.getId();
         this.name = o.getName();
-        this.members = o.getMembers().stream().map(MemberData::new).toList();
+        if (withMembers) {
+            this.members = o.getMembers().stream().map(MemberData::new).toList();
+        }
     }
 }
