@@ -20,7 +20,7 @@ public interface AuthService {
     String createPermissionToken(String subject, String issuer, Date iat) throws ArlasException;
 
     User createUser(String email, String locale, String timezone) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
-    User verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException, ExpiredTokenException, SendEmailException, NotFoundException;
+    User verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException, InvalidTokenException, SendEmailException, NotFoundException;
 
     Optional<User> readUser(UUID userId);
     User updateUser(User user, String oldPassword, String newPassword) throws NonMatchingPasswordException;
@@ -46,6 +46,7 @@ public interface AuthService {
 
     Permission createPermission(User owner, UUID orgId, String permission, String description) throws NotOwnerException, NotFoundException;
     Set<String> listPermissions(UUID userId) throws NotFoundException;
+    Set<Permission> listPermissions(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
     Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException;
 
     Role addPermissionToRole(User owner, UUID orgId, UUID roleId, UUID permissionId) throws NotFoundException, NotOwnerException;

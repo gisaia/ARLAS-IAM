@@ -125,13 +125,13 @@ public class AuthITUser {
 
         getUser(userId1).then().statusCode(200)
                 .body("organisations", hasSize(1))
-                .body("organisations[0].organisation.name", equalTo(ORG));
+                .body("organisations[0].name", equalTo(ORG));
     }
 
     @Test
     public void test11ListUsers() {
         listUsers(userId1).then().statusCode(200)
-                .body("", hasSize(2))
+                .body("", hasSize(1))
                 .body("[0].member.email", is(oneOf(ADMIN, USER1)));
     }
 
@@ -163,14 +163,13 @@ public class AuthITUser {
         addUserToOrganisation(userId1, USER2).then().statusCode(201);
         getUser(userId2, userId2).then().statusCode(200)
                 .body("organisations", hasSize(1))
-                .body("organisations[0].organisation.name", equalTo(ORG))
-                .body("organisations[0].organisation.members", hasSize(3));
+                .body("organisations[0].name", equalTo(ORG));
     }
 
     @Test
     public void test15ListUsers() {
         listUsers(userId1).then().statusCode(200)
-                .body("", hasSize(3));
+                .body("", hasSize(2));
     }
 
     @Test

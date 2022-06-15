@@ -8,6 +8,7 @@ import com.auth0.jwt.interfaces.JWTVerifier;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.iam.core.TokenSecretDao;
+import io.arlas.iam.exceptions.InvalidTokenException;
 import io.arlas.iam.impl.HibernateTokenSecretDao;
 import io.arlas.iam.model.LoginSession;
 import io.arlas.iam.model.TokenSecret;
@@ -78,7 +79,7 @@ public class TokenManager {
         }
     }
 
-    private String createAccessToken(User subject, String issuer, Date iat) throws ArlasException {
+    private String createAccessToken(User subject, String issuer, Date iat) throws InvalidTokenException {
         try {
             storeSecret();
             Date exp = new Date(iat.getTime() + this.accessTokenTTL);
@@ -91,7 +92,7 @@ public class TokenManager {
                     .withClaim("http://arlas.io/timezone", subject.getTimezone())
                     .sign(this.algorithm);
         } catch (JWTCreationException exception){
-            throw new ArlasException("Invalid Signing configuration / Couldn't convert Claims.");
+            throw new InvalidTokenException("Invalid Signing configuration / Couldn't convert Claims.");
         }
     }
 

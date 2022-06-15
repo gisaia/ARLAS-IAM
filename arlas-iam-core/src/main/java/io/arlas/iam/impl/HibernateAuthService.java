@@ -225,7 +225,7 @@ public class HibernateAuthService implements AuthService {
                 } else {
                     try {
                         verifyUser(user.getId(), verifyToken, user.getPassword());
-                    } catch (AlreadyVerifiedException | NonMatchingPasswordException | ExpiredTokenException | NotFoundException ignored) {
+                    } catch (AlreadyVerifiedException | NonMatchingPasswordException | InvalidTokenException | NotFoundException ignored) {
                     }
                 }
                 var publicGroup = roleDao.getSystemRoles().stream()
@@ -282,13 +282,13 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public LoginSession refresh(User user, String refreshToken, String issuer) throws ArlasException {
-        RefreshToken token = tokenDao.read(refreshToken).orElseThrow(() -> new ArlasException("Invalid refresh token."));
+        RefreshToken token = tokenDao.read(refreshToken).orElseThrow(() -> new InvalidTokenException("Invalid refresh token."));
         if (user.is(token.getUserId()) && token.getExpiryDate() >= System.currentTimeMillis() / 1000) {
             LoginSession ls = tokenManager.getLoginSession(user, issuer, new Date());
             tokenDao.createOrUpdate(token.getUserId(), ls.refreshToken);
             return ls;
         } else {
-            throw new ArlasException("Expired refresh token.");
+            throw new InvalidTokenException("Expired refresh token.");
         }
     }
 
@@ -345,7 +345,7 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public User verifyUser(UUID userId, String verifyToken, String password)
-            throws AlreadyVerifiedException, NonMatchingPasswordException, ExpiredTokenException, SendEmailException, NotFoundException {
+            throws AlreadyVerifiedException, NonMatchingPasswordException, InvalidTokenException, SendEmailException, NotFoundException {
         var u = readUser(userId).orElseThrow(() -> new NotFoundException("User not found."));
         if (u.isVerified()) {
             throw new AlreadyVerifiedException("User already verified.");
@@ -353,7 +353,7 @@ public class HibernateAuthService implements AuthService {
         if (u.getCreationDate().toEpochSecond(ZoneOffset.UTC) + this.verifyTokenTtl / 1000 <
                 LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)) {
             generateNewVerificationToken(u);
-            throw new ExpiredTokenException("Verification token expired.");
+            throw new InvalidTokenException("Verification token expired.");
         }
         if (matches(verifyToken, u.getPassword())) {
             u.setPassword(encode(password));
@@ -421,7 +421,10 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public Set<OrganisationMember> listOrganisationUsers(User user, UUID orgId) throws NotOwnerException, NotFoundException {
-        return organisationDao.listUsers(getOrganisation(user, orgId));
+        return organisationDao.listUsers(getOrganisation(user, orgId))
+                .stream()
+                .filter(om -> !isAdmin(om.getUser()))
+                .collect(Collectors.toSet());
 
     }
 
@@ -531,6 +534,11 @@ public class HibernateAuthService implements AuthService {
         Set<Permission> permissions = new HashSet<>();
         user.getRoles().forEach(r -> permissions.addAll(r.getPermissions()));
         return permissions.stream().map(Permission::getValue).collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<Permission> listPermissions(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
+        return getOrganisation(owner, orgId).getPermissions();
     }
 
     @Override
