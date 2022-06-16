@@ -12,7 +12,7 @@ echo "=> ARLAS_VERSION:${ARLAS_VERSION}"
 ${SCRIPT_DIRECTORY}/build_maven.sh ${RELEASE_VERSION}
 
 echo "=> Build arlas-iam-server:${RELEASE_VERSION} docker image"
-docker build -t docker.cloudsmith.io/gisaia/private/arlas-iam-server:${RELEASE_VERSION} -f ${PROJECT_ROOT_DIRECTORY}/docker/docker-files/Dockerfile-iam .
+docker build -t docker.cloudsmith.io/gisaia/private/arlas-iam-server:${RELEASE_VERSION} -f ${PROJECT_ROOT_DIRECTORY}/docker/docker-files/Dockerfile .
 
 echo "=> Docker login cloudsmith"
 echo "${DOCKER_CLOUDSMITH_PASSWORD}" | docker login docker.cloudsmith.io -u ${DOCKER_CLOUDSMITH_USERNAME} --password-stdin

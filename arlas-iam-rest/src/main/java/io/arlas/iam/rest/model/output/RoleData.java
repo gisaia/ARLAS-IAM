@@ -1,9 +1,7 @@
 package io.arlas.iam.rest.model.output;
 
-import io.arlas.iam.model.Organisation;
 import io.arlas.iam.model.Role;
 
-import java.util.Optional;
 import java.util.UUID;
 
 public class RoleData {

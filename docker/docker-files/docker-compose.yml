@@ -35,7 +35,7 @@ services:
   arlas-iam-server:
     build:
       context: ../..
-      dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-iam-package-only}
+      dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-package-only}
     image: docker.cloudsmith.io/gisaia/private/arlas-iam-server:${ARLAS_IAM_SERVER_VERSION:-latest}
     container_name: arlas-iam-server
     environment:
@@ -63,4 +63,3 @@ services:
       - ARLAS_IAM_LOGGING_CONSOLE_LEVEL="${ARLAS_IAM_LOGGING_CONSOLE_LEVEL:-DEBUG}"
     ports:
       - "9997:9997"
-    command: ["/opt/app/start.sh"]
