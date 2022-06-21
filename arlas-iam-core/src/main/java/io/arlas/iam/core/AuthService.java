@@ -31,11 +31,11 @@ public interface AuthService {
 
     Organisation createOrganisation(User user, String name) throws AlreadyExistsException, NotOwnerException, NotFoundException;
     Organisation createOrganisation(User owner) throws AlreadyExistsException, NotOwnerException, NotFoundException;
-    void deleteOrganisation(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
+    void deleteOrganisation(User owner, UUID orgId) throws NotOwnerException, NotFoundException, ForbiddenActionException;
     Set<Organisation> listOrganisations(User user);
 
     Set<OrganisationMember> listOrganisationUsers(User user, UUID orgId) throws NotOwnerException, NotFoundException;
-    Organisation addUserToOrganisation(User owner, String email, UUID orgId, Boolean isOwner) throws NotOwnerException, NotFoundException, AlreadyExistsException;
+    Organisation addUserToOrganisation(User owner, String email, UUID orgId, Boolean isOwner) throws NotOwnerException, NotFoundException, AlreadyExistsException, ForbiddenActionException;
     Organisation removeUserFromOrganisation(User owner, UUID userId, UUID orgId) throws NotOwnerException, NotFoundException, NotAllowedException;
 
     Role createRole(User owner, String name, String description, UUID orgId) throws AlreadyExistsException, NotFoundException, NotOwnerException;

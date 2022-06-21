@@ -8,7 +8,7 @@ import io.arlas.commons.rest.response.Error;
 import io.arlas.filter.config.TechnicalRoles;
 import io.arlas.iam.core.AuthService;
 import io.arlas.iam.exceptions.*;
-import io.arlas.iam.model.LoginSession;
+import io.arlas.iam.model.OrganisationMember;
 import io.arlas.iam.model.User;
 import io.arlas.iam.rest.model.input.*;
 import io.arlas.iam.rest.model.output.*;
@@ -123,7 +123,7 @@ public class IAMRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Session refreshed.", response = LoginSession.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Session refreshed.", response = LoginData.class),
             @ApiResponse(code = 401, message = "Invalid token.", response = Error.class),
             @ApiResponse(code = 404, message = "Login failed.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
@@ -137,7 +137,7 @@ public class IAMRestService {
             @PathParam(value = "refreshToken") String refreshToken
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.refresh(getUser(headers), refreshToken, uriInfo.getBaseUri().getHost()))
+                .entity(new LoginData(authService.refresh(getUser(headers), refreshToken, uriInfo.getBaseUri().getHost())))
                 .type("application/json")
                 .build();
     }
@@ -378,7 +378,7 @@ public class IAMRestService {
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid
-    ) throws NotFoundException, NotOwnerException {
+    ) throws NotFoundException, NotOwnerException, ForbiddenActionException {
         authService.deleteOrganisation(getUser(headers), UUID.fromString(oid));
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity("organisation deleted")
@@ -406,7 +406,7 @@ public class IAMRestService {
             @Context HttpHeaders headers
     ) throws NotFoundException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.listOrganisations(getUser(headers)).stream().map(OrgData::new).toList())
+                .entity(authService.listOrganisations(getUser(headers)).stream().map(o -> new OrgData(o, false)).toList())
                 .type("application/json")
                 .build();
     }
@@ -440,6 +440,45 @@ public class IAMRestService {
     }
 
     @Timed
+    @Path("organisations/{oid}/users/{uid}")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Get a user of an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = MemberData.class),
+            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork(readOnly = true)
+    public Response getUsers(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "uid", required = true)
+            @PathParam(value = "uid") String uid
+    ) throws NotFoundException, NotOwnerException {
+        Optional<OrganisationMember> u = authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid))
+                .stream()
+                .filter(om -> om.getUser().is(UUID.fromString(uid)))
+                .findFirst();
+        if (u.isPresent()) {
+            return Response.ok(uriInfo.getRequestUriBuilder().build())
+                    .entity(new MemberData(u.get()))
+                    .type("application/json")
+                    .build();
+        } else {
+            throw new NotFoundException("User not found in organisation.");
+        }
+    }
+
+    @Timed
     @Path("organisations/{oid}/users")
     @POST
     @Produces(UTF8JSON)
@@ -464,7 +503,7 @@ public class IAMRestService {
 
             @ApiParam(name = "user", required = true)
             @NotNull @Valid OrgUserDef user
-    ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgData(authService.addUserToOrganisation(getUser(headers), user.email, UUID.fromString(oid), user.isOwner)))
                 .type("application/json")
@@ -627,7 +666,7 @@ public class IAMRestService {
             @PathParam(value = "rid") String rid
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(new UserData(authService.addRoleToUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), UUID.fromString(rid))))
+                .entity(new UserData(authService.addRoleToUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), UUID.fromString(rid)), false))
                 .type("application/json")
                 .build();
     }
@@ -662,7 +701,7 @@ public class IAMRestService {
             @PathParam(value = "rid") String rid
     ) throws NotFoundException, NotOwnerException, NotAllowedException {
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
-                .entity(new UserData(authService.removeRoleFromUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), UUID.fromString(rid))))
+                .entity(new UserData(authService.removeRoleFromUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), UUID.fromString(rid)), false))
                 .type("application/json")
                 .build();
     }

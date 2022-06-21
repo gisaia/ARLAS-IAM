@@ -7,7 +7,7 @@ public class MemberData {
     public boolean isOwner;
 
     public MemberData(OrganisationMember om) {
-        this.member = new UserData(om.getUser());
+        this.member = new UserData(om.getUser(), om.getOrganisation(), false);
         this.isOwner = om.isOwner();
     }
 }

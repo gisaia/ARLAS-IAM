@@ -44,7 +44,7 @@ public class HibernateAuthService implements AuthService {
     private final InitConfiguration initConf;
     private User admin;
 
-    private final List<String> systemRoles = Arrays.asList(ROLE_IAM_ADMIN, GROUP_PUBLIC);
+    private final List<String> systemRoles = Arrays.asList(ROLE_IAM_ADMIN);
 
     // this regex will do a basic check (verification will be done by sending an email to the user) and extract domain
     private static final Pattern emailRegex = Pattern.compile("(?<=@)[^.]+(?=\\.)");
@@ -177,7 +177,7 @@ public class HibernateAuthService implements AuthService {
     private Map<String, List<String>> listRoles(UUID userId) throws NotFoundException {
         Map<String, List<String>> orgRoles = new HashMap();
         // we return a map of {"" -> [ roles...], "orgName1_" -> [ roles...], ...}
-        // (the empty key is for cross org roles such as "group/public")
+        // (the empty key is for cross org roles such as "role/iam/admin")
         readUser(userId).orElseThrow(NotFoundException::new).getRoles().stream()
                 .forEach(r -> {
                     String orgName = r.getOrganisation().map(o -> o.getName()+"_").orElseGet(String::new);
@@ -185,6 +185,10 @@ public class HibernateAuthService implements AuthService {
                     roles.add(r.getName());
                     orgRoles.put(orgName, roles);
                 });
+        // manually add "group/public" which is given to everybody
+        List<String> publicRole = Optional.ofNullable(orgRoles.get("")).orElseGet(ArrayList::new);
+        publicRole.add(GROUP_PUBLIC);
+        orgRoles.put("", publicRole);
         return orgRoles;
     }
 
@@ -228,10 +232,6 @@ public class HibernateAuthService implements AuthService {
                     } catch (AlreadyVerifiedException | NonMatchingPasswordException | InvalidTokenException | NotFoundException ignored) {
                     }
                 }
-                var publicGroup = roleDao.getSystemRoles().stream()
-                        .filter(r -> GROUP_PUBLIC.equals(r.getName()))
-                        .findFirst().get();
-                roleDao.addRoleToUser(user, publicGroup);
                 return user;
             } else {
                 throw new AlreadyExistsException("User already exists.");
@@ -396,12 +396,9 @@ public class HibernateAuthService implements AuthService {
                     "Default organisation group for dashboard sharing.");
             roleDao.addPermissionToRole(allDataPermission, defaultGroup);
             TechnicalRoles.getTechnicalRolesList().stream()
-                    .filter(s -> !systemRoles.contains(s))
+                    .filter(s -> !systemRoles.contains(s) && !GROUP_PUBLIC.equals(s))
                     .forEach(s -> roleDao.createRole(new Role(s, false).setOrganisation(organisation)));
             addUserToOrganisation(user, organisation, true);
-            if (!isAdmin) {
-                addUserToOrganisation(getAdmin(), organisation, true);
-            }
             return organisation;
         } else {
             if (org.get().getMembers().stream().anyMatch(om -> om.getUser().is(user.getId()) && om.isOwner())) {
@@ -414,17 +411,18 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public void deleteOrganisation(User owner, UUID orgId)
-            throws NotOwnerException, NotFoundException {
-        organisationDao.deleteOrganisation(getOrganisation(owner, orgId));
+            throws NotOwnerException, NotFoundException, ForbiddenActionException {
+        var org = getOrganisation(owner, orgId);
+        if (org.getName().equals(owner.getId().toString())) {
+            throw new ForbiddenActionException("Cannot delete own organisation.");
+        }
+        organisationDao.deleteOrganisation(org);
         // TODO : delete associated resources
     }
 
     @Override
     public Set<OrganisationMember> listOrganisationUsers(User user, UUID orgId) throws NotOwnerException, NotFoundException {
-        return organisationDao.listUsers(getOrganisation(user, orgId))
-                .stream()
-                .filter(om -> !isAdmin(om.getUser()))
-                .collect(Collectors.toSet());
+        return organisationDao.listUsers(getOrganisation(user, orgId));
 
     }
 
@@ -435,8 +433,11 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public Organisation addUserToOrganisation(User owner, String email, UUID orgId, Boolean isOwner)
-            throws NotOwnerException, NotFoundException, AlreadyExistsException {
+            throws NotOwnerException, NotFoundException, AlreadyExistsException, ForbiddenActionException {
         var org = getOrganisation(owner, orgId);
+        if (org.getName().equals(owner.getId().toString())) {
+            throw new ForbiddenActionException("Cannot invite users in own organisation.");
+        }
         var user = userDao.readUser(email).orElseThrow(() -> new NotFoundException("User not found."));
         if (org.getMembers().stream().anyMatch(om -> om.getUser().is(user.getId()))) {
             throw new AlreadyExistsException("User is already in organisation.");
@@ -458,10 +459,7 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public Organisation removeUserFromOrganisation(User owner, UUID userId, UUID orgId)
-            throws NotOwnerException, NotFoundException, NotAllowedException {
-        if (isAdmin(userId)) {
-            throw new NotAllowedException("Admin cannot be removed from organisations.");
-        }
+            throws NotOwnerException, NotFoundException {
         Organisation org = getOrganisation(owner, orgId);
         User user = getUser(org, userId);
         return organisationMemberDao.removeUserFromOrganisation(user, org);

@@ -19,6 +19,6 @@ public class InvalidTokenException extends ArlasException {
 
     public InvalidTokenException(String message, Throwable cause) {
         super(message, cause);
-        status = Response.Status.PRECONDITION_FAILED;
+        status = Response.Status.UNAUTHORIZED;
     }
 }

@@ -1,5 +1,6 @@
 package io.arlas.iam.rest.model.output;
 
+import io.arlas.iam.model.Organisation;
 import io.arlas.iam.model.User;
 
 import java.time.ZoneOffset;
@@ -22,6 +23,14 @@ public class UserData {
     public List<RoleData> roles = new ArrayList<>();
 
     public UserData(User user) {
+        this(user, true);
+    }
+
+    public UserData(User user, boolean showOrg) {
+        this(user, null, showOrg);
+    }
+
+    public UserData(User user, Organisation org, boolean showOrg) {
         this.id = user.getId();
         this.email = user.getEmail();
         this.firstName = user.getFirstName();
@@ -32,7 +41,11 @@ public class UserData {
         this.updateDate = user.getUpdateDate().toEpochSecond(ZoneOffset.UTC);
         this.isVerified = user.isVerified();
         this.isActive = user.isActive();
-        user.getOrganisations().forEach(o -> organisations.add(new OrgData(o.getOrganisation(), false)));
-        user.getRoles().forEach(r -> roles.add(new RoleData(r)));
+        if (showOrg) {
+            user.getOrganisations().forEach(o -> organisations.add(new OrgData(o.getOrganisation(), false)));
+        }
+        user.getRoles().stream()
+                .filter(r -> org == null || (r.getOrganisation().isPresent() && r.getOrganisation().get().is(org)))
+                .forEach(r -> roles.add(new RoleData(r)));
     }
 }
