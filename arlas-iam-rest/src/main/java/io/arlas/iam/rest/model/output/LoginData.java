@@ -11,6 +11,6 @@ public class LoginData {
     public LoginData(LoginSession loginSession) {
         this.accessToken = loginSession.accessToken;
         this.refreshToken = loginSession.refreshToken;
-        this.user = new UserData(loginSession.user);
+        this.user = new UserData(loginSession.user, true);
     }
 }

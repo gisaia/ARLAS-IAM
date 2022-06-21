@@ -6,7 +6,7 @@
 
     <groupId>io.arlas.iam</groupId>
     <artifactId>arlas-iam-parent</artifactId>
-    <version>22.0.0-beta.5</version>
+    <version>22.0.0-beta.7</version>
     <modules>
         <module>arlas-iam-core</module>
         <module>arlas-iam-rest</module>
@@ -38,7 +38,7 @@
 
         <arlas-commons.version>22.0.1</arlas-commons.version>
         <postgresql.version>42.4.0</postgresql.version>
-        <spring.security.version>5.7.1</spring.security.version>
+        <spring.security.version>5.7.2</spring.security.version>
         <jackson.databind.version>2.13.3</jackson.databind.version>
         <jakartamail.version>2.0.1</jakartamail.version>
         <jwt.version>3.19.2</jwt.version>

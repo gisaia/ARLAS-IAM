@@ -117,10 +117,9 @@ public class AuthITUser {
 
         orgId = createOrganisation(userId1).then().statusCode(201)
                 .body("name", equalTo(ORG))
-                .body("members", hasSize(2)) // admin + owner
+                .body("members", hasSize(1)) // admin + owner
                 .body("members[0].isOwner", equalTo(true))
-                .body("members[0].member.email", is(oneOf(ADMIN, USER1)))
-                .body("members[1].member.email", is(oneOf(ADMIN, USER1)))
+                .body("members[0].member.email", is(USER1))
                 .extract().jsonPath().get("id");
 
         getUser(userId1).then().statusCode(200)
@@ -132,18 +131,14 @@ public class AuthITUser {
     public void test11ListUsers() {
         listUsers(userId1).then().statusCode(200)
                 .body("", hasSize(1))
-                .body("[0].member.email", is(oneOf(ADMIN, USER1)));
+                .body("[0].member.email", is(USER1));
     }
 
     @Test
     public void test11ListOrganisations() {
         listOrganisations(userId1).then().statusCode(200)
                 .body("", hasSize(1))
-                .body("[0].name", equalTo(ORG))
-                .body("[0].members", hasSize(2)) // admin + owner
-                .body("[0].members[0].isOwner", equalTo(true))
-                .body("[0].members[0].member.email", is(oneOf(ADMIN, USER1)))
-                .body("[0].members[1].member.email", is(oneOf(ADMIN, USER1)));
+                .body("[0].name", equalTo(ORG));
     }
 
     @Test
@@ -237,10 +232,10 @@ public class AuthITUser {
     @Test
     public void test93DeleteUserFromRole() {
         getUser(userId2, userId2).then().statusCode(200)
-                .body("roles", hasSize(5)); // 3 automatic roles + 2 created
+                .body("roles", hasSize(4)); // 2 automatic roles + 2 created
         deleteUserFromRole(userId1, userId2, fooRoleId2).then().statusCode(202);
         getUser(userId2, userId2).then().statusCode(200)
-                .body("roles", hasSize(4));
+                .body("roles", hasSize(3));
     }
 
     @Test
