@@ -515,6 +515,30 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
+    public User updateRolesOfUser(User owner, UUID orgId, UUID userId, Set<String> newRoles)
+            throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException {
+        var org = getOrganisation(owner, orgId);
+        var user = getUser(org, userId);
+        List<String> currentRoles = user.getRoles().stream()
+                .filter(r -> org.is(r.getOrganisation().orElse(null)))
+                .map(r -> r.getId().toString()).collect(Collectors.toList());
+
+        List<String> addedRoles = new ArrayList<>(newRoles);
+        addedRoles.removeAll(currentRoles);
+        List<String> deletedRoles = new ArrayList<>(currentRoles);
+        deletedRoles.removeAll(newRoles);
+
+        for (String r : addedRoles) {
+            addRoleToUser(owner, orgId, userId, UUID.fromString(r));
+        }
+        for (String r : deletedRoles) {
+            removeRoleFromUser(owner, orgId, userId, UUID.fromString(r));
+        }
+
+        return getUser(org, userId);
+    }
+
+    @Override
     public User removeRoleFromUser(User owner, UUID orgId, UUID userId, UUID roleId)
             throws NotOwnerException, NotFoundException, NotAllowedException {
         if (isAdmin(userId)) {
