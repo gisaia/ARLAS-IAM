@@ -1,8 +1,8 @@
 package io.arlas.iam.rest.model.input;
 
-public class UpdateDef {
+public class UpdateUserDef {
     public String oldPassword;
     public String newPassword;
 
-    public UpdateDef(){}
+    public UpdateUserDef(){}
 }

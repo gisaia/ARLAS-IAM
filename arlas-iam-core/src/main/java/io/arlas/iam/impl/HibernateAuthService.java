@@ -521,7 +521,8 @@ public class HibernateAuthService implements AuthService {
         var user = getUser(org, userId);
         List<String> currentRoles = user.getRoles().stream()
                 .filter(r -> org.is(r.getOrganisation().orElse(null)))
-                .map(r -> r.getId().toString()).collect(Collectors.toList());
+                .map(r -> r.getId().toString())
+                .toList();
 
         List<String> addedRoles = new ArrayList<>(newRoles);
         addedRoles.removeAll(currentRoles);
@@ -598,6 +599,36 @@ public class HibernateAuthService implements AuthService {
         var role = getRole(getOrganisation(owner, orgId), roleId);
         var permission = getPermission(role, permissionId);
         return roleDao.removePermissionFromRole(permission, role);
+    }
+
+    @Override
+    public Set<Permission> listPermissionsOfRole(User owner, UUID orgId, UUID roleId) throws NotOwnerException, NotFoundException {
+        var org = getOrganisation(owner, orgId);
+        var role = getRole(org, roleId);
+        return role.getPermissions();
+    }
+
+    @Override
+    public Role updatePermissionsOfRole(User owner, UUID orgId, UUID roleId, Set<String> pids) throws NotOwnerException, NotFoundException {
+        var org = getOrganisation(owner, orgId);
+        var role = getRole(org, roleId);
+        List<String> currentPermissions = role.getPermissions().stream()
+                .map(p -> p.getId().toString())
+                .toList();
+
+        List<String> addedPermissions = new ArrayList<>(pids);
+        addedPermissions.removeAll(currentPermissions);
+        List<String> deletedPermissions = new ArrayList<>(currentPermissions);
+        deletedPermissions.removeAll(pids);
+
+        for (String p : addedPermissions) {
+            addPermissionToRole(owner, orgId, roleId, UUID.fromString(p));
+        }
+        for (String p : deletedPermissions) {
+            removePermissionFromRole(owner, orgId, roleId, UUID.fromString(p));
+        }
+
+        return getRole(org, roleId);
     }
 
 }

@@ -291,7 +291,7 @@ public class IAMRestService {
             @PathParam(value = "id") String id,
 
             @ApiParam(name = "updateDef", required = true)
-            @NotNull @Valid UpdateDef updateDef
+            @NotNull @Valid UpdateUserDef updateDef
 
     ) throws NotFoundException, NonMatchingPasswordException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
@@ -662,12 +662,12 @@ public class IAMRestService {
             @ApiParam(name = "uid", required = true)
             @PathParam(value = "uid") String uid,
 
-            @ApiParam(name = "updateRolesDef", required = true)
-            @NotNull @Valid UpdateRolesDef updateRolesDef
+            @ApiParam(name = "ridList", required = true)
+            @NotNull @Valid UpdateListDef ridList
 
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(new UserData(authService.updateRolesOfUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), updateRolesDef.rids), false))
+                .entity(new UserData(authService.updateRolesOfUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), ridList.ids), false))
                 .type("application/json")
                 .build();
     }
@@ -771,7 +771,9 @@ public class IAMRestService {
             @PathParam(value = "uid") String uid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.listPermissions(getUser(headers), UUID.fromString(oid), UUID.fromString(uid)).stream().map(PermissionData::new).toList())
+                .entity(authService.listPermissions(getUser(headers), UUID.fromString(oid), UUID.fromString(uid))
+                        .stream()
+                        .map(PermissionData::new).toList())
                 .type("application/json")
                 .build();
     }
@@ -834,6 +836,72 @@ public class IAMRestService {
                 .build();
     }
 
+    @Timed
+    @Path("organisations/{oid}/roles/{rid}/permissions")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "List permissions of a role",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = PermissionData.class, responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response listPermissionOfRole(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "rid", required = true)
+            @PathParam(value = "rid") String rid
+    ) throws NotFoundException, NotOwnerException {
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.listPermissionsOfRole(getUser(headers), UUID.fromString(oid), UUID.fromString(rid))
+                        .stream()
+                        .map(PermissionData::new)
+                        .toList())
+                .type("application/json")
+                .build();
+    }
+
+    @Timed
+    @Path("organisations/{oid}/roles/{rid}/permissions")
+    @PUT
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Update permissions of a role",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = RoleData.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response updatePermissionOfRole(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "rid", required = true)
+            @PathParam(value = "rid") String rid,
+
+            @ApiParam(name = "pidList", required = true)
+            @NotNull @Valid UpdateListDef pidList
+
+    ) throws NotFoundException, NotOwnerException {
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(new RoleData(authService.updatePermissionsOfRole(getUser(headers), UUID.fromString(oid), UUID.fromString(rid), pidList.ids)))
+                .type("application/json")
+                .build();
+    }
 
     @Timed
     @Path("organisations/{oid}/roles/{rid}/permissions/{pid}")
@@ -952,7 +1020,7 @@ public class IAMRestService {
         List<String> groups = Arrays.stream(
                         Optional.ofNullable(headers.getHeaderString(this.groupsHeader)).orElse(TechnicalRoles.GROUP_PUBLIC).split(","))
                 .map(String::trim)
-                .collect(Collectors.toList());
+                .toList();
 
         LOGGER.debug("User='" + userId + "' / Groups='" + groups + "'");
         return new IdentityParam(userId, groups);
