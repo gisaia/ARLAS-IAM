@@ -36,6 +36,7 @@ public interface AuthService {
 
     Set<OrganisationMember> listOrganisationUsers(User user, UUID orgId) throws NotOwnerException, NotFoundException;
     Organisation addUserToOrganisation(User owner, String email, UUID orgId, Boolean isOwner) throws NotOwnerException, NotFoundException, AlreadyExistsException, ForbiddenActionException;
+    User updateUserInOrganisation(User owner, UUID userId, UUID orgId, Boolean isOwner) throws NotOwnerException, NotFoundException;
     Organisation removeUserFromOrganisation(User owner, UUID userId, UUID orgId) throws NotOwnerException, NotFoundException, NotAllowedException;
 
     Role createRole(User owner, String name, String description, UUID orgId) throws AlreadyExistsException, NotFoundException, NotOwnerException;
@@ -46,7 +47,7 @@ public interface AuthService {
             throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException;
     User removeRoleFromUser(User owner, UUID orgId, UUID userId, UUID roleId) throws NotOwnerException, NotFoundException, NotAllowedException;
 
-    Permission createPermission(User owner, UUID orgId, String permission, String description) throws NotOwnerException, NotFoundException;
+    Permission createPermission(User owner, UUID orgId, String permission, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException;
     Set<String> listPermissions(UUID userId) throws NotFoundException;
     Set<Permission> listPermissions(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
     Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException;
@@ -56,4 +57,5 @@ public interface AuthService {
 
     Set<Permission> listPermissionsOfRole(User owner, UUID orgId, UUID roleId) throws NotOwnerException, NotFoundException;
     Role updatePermissionsOfRole(User owner, UUID orgId, UUID roleId, Set<String> pids) throws NotOwnerException, NotFoundException;
+
 }

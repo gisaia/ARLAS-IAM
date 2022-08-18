@@ -24,7 +24,6 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Path("/")
 @Api(value = "/")
@@ -83,7 +82,7 @@ public class IAMRestService {
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new LoginData(authService.login(loginDef.email, loginDef.password, uriInfo.getBaseUri().getHost())))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -138,7 +137,7 @@ public class IAMRestService {
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new LoginData(authService.refresh(getUser(headers), refreshToken, uriInfo.getBaseUri().getHost())))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -166,7 +165,7 @@ public class IAMRestService {
     ) throws AlreadyExistsException, InvalidEmailException, SendEmailException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.createUser(userDef.email, userDef.locale, userDef.timezone)))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -202,7 +201,7 @@ public class IAMRestService {
     ) throws NonMatchingPasswordException, AlreadyVerifiedException, InvalidTokenException, SendEmailException, NotFoundException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.verifyUser(UUID.fromString(id), token, password)))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -221,7 +220,7 @@ public class IAMRestService {
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork(readOnly = true)
-    public Response getUser(
+    public Response readUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
@@ -231,7 +230,7 @@ public class IAMRestService {
 
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(getUser(headers, id)))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -296,7 +295,7 @@ public class IAMRestService {
     ) throws NotFoundException, NonMatchingPasswordException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.updateUser(getUser(headers, id), updateDef.oldPassword, updateDef.newPassword)))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -323,7 +322,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgData(authService.createOrganisation(getUser(headers))))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -352,7 +351,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgData(authService.createOrganisation(getUser(headers), name)))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -405,9 +404,10 @@ public class IAMRestService {
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers
     ) throws NotFoundException {
+        User user = getUser(headers);
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.listOrganisations(getUser(headers)).stream().map(o -> new OrgData(o, false)).toList())
-                .type("application/json")
+                .entity(authService.listOrganisations(user).stream().map(o -> new UserOrgData(o, user)).toList())
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -435,7 +435,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid)).stream().map(MemberData::new).toList())
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -454,7 +454,7 @@ public class IAMRestService {
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork(readOnly = true)
-    public Response getUsers(
+    public Response getUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
@@ -471,7 +471,7 @@ public class IAMRestService {
         if (u.isPresent()) {
             return Response.ok(uriInfo.getRequestUriBuilder().build())
                     .entity(new MemberData(u.get()))
-                    .type("application/json")
+                    .type(MediaType.APPLICATION_JSON_TYPE)
                     .build();
         } else {
             throw new NotFoundException("User not found in organisation.");
@@ -506,7 +506,42 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgData(authService.addUserToOrganisation(getUser(headers), user.email, UUID.fromString(oid), user.isOwner)))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
+    @Path("organisations/{oid}/users/{uid}")
+    @PUT
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Update ownership of an organisation by a user.",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = UserData.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response updateUserInOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "uid", required = true)
+            @PathParam(value = "uid") String uid,
+
+            @ApiParam(name = "user", required = true)
+            @NotNull @Valid UpdateOrgUserDef user
+    ) throws NotFoundException, NotOwnerException {
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(new UserData(authService.updateUserInOrganisation(getUser(headers), UUID.fromString(uid), UUID.fromString(oid), user.isOwner)))
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -538,7 +573,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException, NotAllowedException {
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgData(authService.removeUserFromOrganisation(getUser(headers), UUID.fromString(uid), UUID.fromString(oid))))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -572,7 +607,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new RoleData(authService.createRole(getUser(headers), roleDef.name, roleDef.description, UUID.fromString(oid))))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -600,7 +635,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.listRoles(getUser(headers), UUID.fromString(oid)).stream().map(RoleData::new).toList())
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -632,7 +667,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.listRoles(getUser(headers), UUID.fromString(oid), UUID.fromString(uid)).stream().map(RoleData::new).toList())
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -668,7 +703,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.updateRolesOfUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), ridList.ids), false))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -703,7 +738,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.addRoleToUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), UUID.fromString(rid)), false))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -738,7 +773,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException, NotAllowedException {
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.removeRoleFromUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), UUID.fromString(rid)), false))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -774,7 +809,7 @@ public class IAMRestService {
                 .entity(authService.listPermissions(getUser(headers), UUID.fromString(oid), UUID.fromString(uid))
                         .stream()
                         .map(PermissionData::new).toList())
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -802,7 +837,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.listPermissions(getUser(headers), UUID.fromString(oid)).stream().map(PermissionData::new).toList())
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -817,6 +852,7 @@ public class IAMRestService {
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = PermissionData.class),
+            @ApiResponse(code = 400, message = "Permission already exists.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -829,10 +865,10 @@ public class IAMRestService {
 
             @ApiParam(name = "permission", required = true)
             @NotNull @Valid PermissionDef permission
-    ) throws NotFoundException, NotOwnerException {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new PermissionData(authService.createPermission(getUser(headers), UUID.fromString(oid), permission.value, permission.description)))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -865,7 +901,7 @@ public class IAMRestService {
                         .stream()
                         .map(PermissionData::new)
                         .toList())
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -899,7 +935,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new RoleData(authService.updatePermissionsOfRole(getUser(headers), UUID.fromString(oid), UUID.fromString(rid), pidList.ids)))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -932,7 +968,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new RoleData(authService.addPermissionToRole(getUser(headers), UUID.fromString(oid), UUID.fromString(rid), UUID.fromString(pid))))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -966,7 +1002,7 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException {
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new RoleData(authService.removePermissionFromRole(getUser(headers), UUID.fromString(oid), UUID.fromString(rid), UUID.fromString(pid))))
-                .type("application/json")
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 

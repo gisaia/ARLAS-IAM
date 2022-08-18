@@ -1,4 +1,4 @@
-name: Release ARLAS-enterprise
+name: Release ARLAS-iam
 
 on:
   push:

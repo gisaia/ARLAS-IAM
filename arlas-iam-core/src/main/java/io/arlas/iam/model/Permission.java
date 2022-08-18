@@ -23,8 +23,7 @@ public class Permission {
     private UUID id;
 
     @NotNull
-    @NaturalId
-    @Column(unique = true)
+    @Column
     private String value;
 
     @Column

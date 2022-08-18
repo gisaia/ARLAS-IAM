@@ -15,6 +15,11 @@ public class HibernateOrganisationMemberDao extends AbstractDAO<OrganisationMemb
     }
 
     @Override
+    public OrganisationMember updateUserInOrganisation(OrganisationMember user) {
+        return persist(user);
+    }
+
+    @Override
     public Organisation addUserToOrganisation(User user, Organisation organisation, boolean isOwner) {
         organisation.addMember(persist(new OrganisationMember(user, organisation, isOwner)));
         return organisation;

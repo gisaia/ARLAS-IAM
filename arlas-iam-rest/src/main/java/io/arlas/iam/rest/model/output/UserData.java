@@ -19,7 +19,7 @@ public class UserData {
     public long updateDate;
     public boolean isVerified;
     public boolean isActive;
-    public List<OrgData> organisations = new ArrayList<>();
+    public List<UserOrgData> organisations = new ArrayList<>();
     public List<RoleData> roles = new ArrayList<>();
 
     public UserData(User user) {
@@ -42,7 +42,7 @@ public class UserData {
         this.isVerified = user.isVerified();
         this.isActive = user.isActive();
         if (showOrg) {
-            user.getOrganisations().forEach(o -> organisations.add(new OrgData(o.getOrganisation(), false)));
+            user.getOrganisations().forEach(o -> organisations.add(new UserOrgData(o.getOrganisation(), user)));
         }
         user.getRoles().stream()
                 .filter(r -> org == null || (r.getOrganisation().isPresent() && r.getOrganisation().get().is(org)))
