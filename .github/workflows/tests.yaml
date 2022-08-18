@@ -1,4 +1,4 @@
-name: Test ARLAS-auth
+name: Test ARLAS-iam
 
 on: push
 

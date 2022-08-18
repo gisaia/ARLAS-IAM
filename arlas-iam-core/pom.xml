@@ -5,7 +5,7 @@
     <parent>
         <artifactId>arlas-iam-parent</artifactId>
         <groupId>io.arlas.iam</groupId>
-        <version>22.0.0-beta.7</version>
+        <version>23.0.0-beta.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -66,12 +66,6 @@
                     <groupId>com.sun.activation</groupId>
                 </exclusion>
             </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>co.elastic.apm</groupId>
-            <artifactId>apm-agent-api</artifactId>
-            <version>${elastic-apm.version}</version>
         </dependency>
 
         <dependency>

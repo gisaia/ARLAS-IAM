@@ -9,10 +9,4 @@ import java.util.UUID;
 public interface PermissionDao {
 
     Permission createPermission(Permission permission);
-
-    Set<Permission> savePermissions(Set<Permission> permissions);
-
-    Optional<Permission> readPermission(UUID permissionId);
-
-    Optional<Permission> readPermission(String value);
 }
