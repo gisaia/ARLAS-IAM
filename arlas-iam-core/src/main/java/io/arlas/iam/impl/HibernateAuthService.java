@@ -449,24 +449,28 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public User updateUserInOrganisation(User owner, UUID userId, UUID orgId, Boolean isOwner) throws NotOwnerException, NotFoundException {
-        OrganisationMember user = listOrganisationUsers(owner, orgId).stream()
+    public User updateUserInOrganisation(User owner, UUID userId, UUID orgId, Boolean isOwner) throws NotOwnerException, NotFoundException, ForbiddenActionException {
+        OrganisationMember member = listOrganisationUsers(owner, orgId).stream()
                 .filter(om -> om.getUser().is(userId))
                 .findFirst()
                 .orElseThrow(NotFoundException::new);
-        if (user.isOwner() != isOwner) {
+        if (owner.getId().equals(userId)) {
+            throw new ForbiddenActionException("Cannot remove oneself's ownership");
+        }
+
+        if (member.isOwner() != isOwner) {
             if (isOwner) {
-                user.getOrganisation().getRoles().stream()
+                member.getOrganisation().getRoles().stream()
                         .filter(r -> ownerDefaultRoles.contains(r.getName()))
-                        .forEach(r -> roleDao.addRoleToUser(user.getUser(), r));
+                        .forEach(r -> roleDao.addRoleToUser(member.getUser(), r));
             } else {
-                user.getOrganisation().getRoles().stream()
+                member.getOrganisation().getRoles().stream()
                         .filter(r -> ownerDefaultRoles.contains(r.getName()))
-                        .forEach(r -> roleDao.removeRoleFromUser(user.getUser(), r));
+                        .forEach(r -> roleDao.removeRoleFromUser(member.getUser(), r));
             }
         }
-        user.setOwner(isOwner);
-        return organisationMemberDao.updateUserInOrganisation(user).getUser();
+        member.setOwner(isOwner);
+        return organisationMemberDao.updateUserInOrganisation(member).getUser();
     }
 
     private Organisation addUserToOrganisation(User user, Organisation org, Boolean isOwner) {
