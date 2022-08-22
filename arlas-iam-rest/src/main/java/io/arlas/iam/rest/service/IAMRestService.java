@@ -538,7 +538,7 @@ public class IAMRestService {
 
             @ApiParam(name = "user", required = true)
             @NotNull @Valid UpdateOrgUserDef user
-    ) throws NotFoundException, NotOwnerException {
+    ) throws NotFoundException, NotOwnerException, ForbiddenActionException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.updateUserInOrganisation(getUser(headers), UUID.fromString(uid), UUID.fromString(oid), user.isOwner)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
