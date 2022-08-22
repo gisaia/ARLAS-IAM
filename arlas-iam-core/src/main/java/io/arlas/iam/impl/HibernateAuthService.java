@@ -347,6 +347,11 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
+    public boolean checkOrganisation(User owner) {
+        return organisationDao.readOrganisation(getUserDomain(owner)).isPresent();
+    }
+
+    @Override
     public User verifyUser(UUID userId, String verifyToken, String password)
             throws AlreadyVerifiedException, NonMatchingPasswordException, InvalidTokenException, SendEmailException, NotFoundException {
         var u = readUser(userId).orElseThrow(() -> new NotFoundException("User not found."));
