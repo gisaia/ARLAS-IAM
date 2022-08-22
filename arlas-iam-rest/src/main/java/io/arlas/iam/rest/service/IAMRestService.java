@@ -108,7 +108,7 @@ public class IAMRestService {
         authService.logout(getUser(headers).getId());
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity("Session deleted.")
-                .type("text/plain")
+                .type(MediaType.TEXT_PLAIN_TYPE)
                 .build();
     }
 
@@ -260,7 +260,7 @@ public class IAMRestService {
         authService.deleteUser(UUID.fromString(id));
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity("User deleted.")
-                .type("text/plain")
+                .type(MediaType.TEXT_PLAIN_TYPE)
                 .build();
 
     }
@@ -381,7 +381,32 @@ public class IAMRestService {
         authService.deleteOrganisation(getUser(headers), UUID.fromString(oid));
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity("organisation deleted")
-                .type("text/plain")
+                .type(MediaType.TEXT_PLAIN_TYPE)
+                .build();
+    }
+
+    @Timed
+    @Path("organisations/check")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Check if user's organisation exists",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = OrgExists.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response checkOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers
+    ) throws NotFoundException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(new OrgExists(authService.checkOrganisation(getUser(headers))))
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -1028,7 +1053,7 @@ public class IAMRestService {
 
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.createPermissionToken(getIdentityParam(headers).userId, uriInfo.getBaseUri().getHost(), new Date()))
-                .type("text/plain")
+                .type(MediaType.TEXT_PLAIN_TYPE)
                 .build();
     }
 

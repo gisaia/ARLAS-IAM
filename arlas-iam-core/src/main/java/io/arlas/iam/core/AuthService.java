@@ -29,6 +29,7 @@ public interface AuthService {
     Optional<User> activateUser(UUID userId);
     Optional<User> deactivateUser(UUID userId) throws NotAllowedException;
 
+    boolean checkOrganisation(User owner);
     Organisation createOrganisation(User user, String name) throws AlreadyExistsException, NotOwnerException, NotFoundException;
     Organisation createOrganisation(User owner) throws AlreadyExistsException, NotOwnerException, NotFoundException;
     void deleteOrganisation(User owner, UUID orgId) throws NotOwnerException, NotFoundException, ForbiddenActionException;
@@ -57,5 +58,4 @@ public interface AuthService {
 
     Set<Permission> listPermissionsOfRole(User owner, UUID orgId, UUID roleId) throws NotOwnerException, NotFoundException;
     Role updatePermissionsOfRole(User owner, UUID orgId, UUID roleId, Set<String> pids) throws NotOwnerException, NotFoundException;
-
 }
