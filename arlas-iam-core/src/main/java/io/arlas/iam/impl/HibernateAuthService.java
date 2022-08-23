@@ -402,10 +402,12 @@ public class HibernateAuthService implements AuthService {
             // create default roles
             var defaultGroup = createRole(organisation, TechnicalRoles.getDefaultGroup(name),
                     "Default organisation group for dashboard sharing.");
+            defaultGroup.setTechnical(true);
+            roleDao.createOrUpdateRole(defaultGroup);
             roleDao.addPermissionToRole(allDataPermission, defaultGroup);
             TechnicalRoles.getTechnicalRolesList().stream()
                     .filter(s -> !systemRoles.contains(s) && !GROUP_PUBLIC.equals(s))
-                    .forEach(s -> roleDao.createOrUpdateRole(new Role(s, false).setOrganisation(organisation)));
+                    .forEach(s -> roleDao.createOrUpdateRole(new Role(s, "", true).setOrganisation(organisation)));
             addUserToOrganisation(user, organisation, true);
             return organisation;
         } else {
@@ -521,9 +523,8 @@ public class HibernateAuthService implements AuthService {
         Set<Role> orgRoles = org.getRoles();
         Role role = orgRoles.stream().filter(r -> r.getId().equals(roleId)).findFirst().orElseThrow(NotFoundException::new);
 
-        if (TechnicalRoles.getTechnicalRolesList().stream().filter(r -> r.equals(role.getName())).findFirst().isPresent()
-                || TechnicalRoles.getDefaultGroup(org.getName()).equals(role.getName())) {
-            throw new ForbiddenActionException("Cannot modify system roles.");
+        if (role.isTechnical()) {
+            throw new ForbiddenActionException("Cannot modify technical roles.");
         }
         if (orgRoles.stream().filter(r -> r.getName().equals(name) && !r.getId().equals(roleId)).findFirst().isPresent()) {
             throw new AlreadyExistsException("A role with same name already exists in organisation.");
