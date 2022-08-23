@@ -17,7 +17,8 @@ public class AuthITUser {
     private static final String ADMIN = "auth.arlas.cloud@gisaia.com";
     private static final String USER1 = "u1@foo.com";
     private static final String USER2 = "u2@foo.com";
-    private static final String ORG = "foo";
+    private static final String ORG = "foo.com";
+    private static final String ORG_DISPLAY = "foo";
     private static final String ROLE1 = "fooRole1";
     private static final String ROLE1_DESC = "fooRole1 desc";
     private static final String ROLE2 = "fooRole2";
@@ -72,7 +73,7 @@ public class AuthITUser {
 
     @Test
     public void test03CreateUserInvalidEmail() {
-         createUser("u1@foo").then().statusCode(400);
+         createUser("u1foo").then().statusCode(400);
     }
 
     @Test
@@ -117,6 +118,7 @@ public class AuthITUser {
 
         orgId = createOrganisation(userId1).then().statusCode(201)
                 .body("name", equalTo(ORG))
+                .body("displayName", equalTo(ORG_DISPLAY))
                 .body("members", hasSize(1)) // admin + owner
                 .body("members[0].isOwner", equalTo(true))
                 .body("members[0].member.email", is(USER1))

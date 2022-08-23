@@ -465,6 +465,34 @@ public class IAMRestService {
     }
 
     @Timed
+    @Path("organisations/{oid}/emails")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "List users of same domain than the organisation but not invited yet.",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class, responseContainer = "List"),
+            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork(readOnly = true)
+    public Response getEmails(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid
+    ) throws NotFoundException, NotOwnerException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.listUserEmailsFromOwnDomain(getUser(headers), UUID.fromString(oid)))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
     @Path("organisations/{oid}/users/{uid}")
     @GET
     @Produces(UTF8JSON)

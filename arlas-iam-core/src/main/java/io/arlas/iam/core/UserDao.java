@@ -12,6 +12,8 @@ public interface UserDao {
 
     List<User> listUsers();
 
+    List<User> listUsers(String domain);
+
     User createUser(User user);
 
     Optional<User> readUser(UUID userId);

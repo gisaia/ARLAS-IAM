@@ -26,6 +26,9 @@ public class Organisation {
     @Column
     private String name;
 
+    @Column(name="display_name")
+    private String displayName;
+
     @OneToMany(mappedBy = "pk.org", cascade = CascadeType.REMOVE)
     private Set<OrganisationMember> members = new HashSet<>();
 
@@ -38,7 +41,7 @@ public class Organisation {
     private Organisation() {}
 
     public Organisation(String name) {
-        this.name = name;
+        this.setName(name);
     }
 
     public UUID getId() {
@@ -63,6 +66,11 @@ public class Organisation {
 
     public void setName(String name) {
         this.name = name;
+        this.displayName = name.indexOf(".") != -1 ? name.substring(0, name.indexOf(".")) : name;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     public Set<OrganisationMember> getMembers() {
