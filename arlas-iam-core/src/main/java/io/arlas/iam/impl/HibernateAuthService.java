@@ -173,7 +173,7 @@ public class HibernateAuthService implements AuthService {
     private Set<Role> importDefaultAdminRole(User admin) {
         return TechnicalRoles.getTechnicalRolesList().stream()
                 .filter(systemRoles::contains)
-                .map(s -> roleDao.createRole(new Role(s, true).setUsers(Set.of(admin))))
+                .map(s -> roleDao.createOrUpdateRole(new Role(s, true).setUsers(Set.of(admin))))
                 .collect(Collectors.toSet());
     }
 
@@ -405,7 +405,7 @@ public class HibernateAuthService implements AuthService {
             roleDao.addPermissionToRole(allDataPermission, defaultGroup);
             TechnicalRoles.getTechnicalRolesList().stream()
                     .filter(s -> !systemRoles.contains(s) && !GROUP_PUBLIC.equals(s))
-                    .forEach(s -> roleDao.createRole(new Role(s, false).setOrganisation(organisation)));
+                    .forEach(s -> roleDao.createOrUpdateRole(new Role(s, false).setOrganisation(organisation)));
             addUserToOrganisation(user, organisation, true);
             return organisation;
         } else {
@@ -503,7 +503,7 @@ public class HibernateAuthService implements AuthService {
         if (organisation.getRoles().stream().anyMatch(r -> r.getName().equals(name))) {
             throw new AlreadyExistsException("Role already exists.");
         } else {
-            Role role = roleDao.createRole(new Role(name, description).setOrganisation(organisation));
+            Role role = roleDao.createOrUpdateRole(new Role(name, description).setOrganisation(organisation));
             organisation.addRole(role);
             return role;
         }
@@ -513,6 +513,22 @@ public class HibernateAuthService implements AuthService {
     public Role createRole(User owner, String name, String description, UUID orgId)
             throws AlreadyExistsException, NotOwnerException, NotFoundException {
         return createRole(getOrganisation(owner, orgId), name, description);
+    }
+
+    @Override
+    public Role updateRole(User owner, String name, String description, UUID orgId, UUID roleId) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException {
+        Organisation org = getOrganisation(owner, orgId);
+        Set<Role> orgRoles = org.getRoles();
+        Role role = orgRoles.stream().filter(r -> r.getId().equals(roleId)).findFirst().orElseThrow(NotFoundException::new);
+
+        if (TechnicalRoles.getTechnicalRolesList().stream().filter(r -> r.equals(role.getName())).findFirst().isPresent()
+                || TechnicalRoles.getDefaultGroup(org.getName()).equals(role.getName())) {
+            throw new ForbiddenActionException("Cannot modify system roles.");
+        }
+        if (orgRoles.stream().filter(r -> r.getName().equals(name)).findFirst().isPresent()) {
+            throw new AlreadyExistsException("A role with same name already exists in organisation.");
+        }
+        return roleDao.createOrUpdateRole(role.setName(name).setDescription(description));
     }
 
     @Override

@@ -71,16 +71,18 @@ public class Role {
         return name;
     }
 
-    public void setName(String name) {
+    public Role setName(String name) {
         this.name = name;
+        return this;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public Role setDescription(String description) {
         this.description = description;
+        return this;
     }
 
     public boolean isSystem() {
