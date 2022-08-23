@@ -63,16 +63,18 @@ public class Permission {
         return value;
     }
 
-    public void setValue(String value) {
+    public Permission setValue(String value) {
         this.value = value;
+        return this;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public Permission setDescription(String description) {
         this.description = description;
+        return this;
     }
 
     public Set<Role> getRoles() {

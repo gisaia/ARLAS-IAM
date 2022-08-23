@@ -525,7 +525,7 @@ public class HibernateAuthService implements AuthService {
                 || TechnicalRoles.getDefaultGroup(org.getName()).equals(role.getName())) {
             throw new ForbiddenActionException("Cannot modify system roles.");
         }
-        if (orgRoles.stream().filter(r -> r.getName().equals(name)).findFirst().isPresent()) {
+        if (orgRoles.stream().filter(r -> r.getName().equals(name) && !r.getId().equals(roleId)).findFirst().isPresent()) {
             throw new AlreadyExistsException("A role with same name already exists in organisation.");
         }
         return roleDao.createOrUpdateRole(role.setName(name).setDescription(description));
@@ -625,7 +625,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     private Permission createPermission(Organisation org, String value, String description) {
-        var permission = permissionDao.createPermission(new Permission(value, description, org));
+        var permission = permissionDao.createOrUpdatePermission(new Permission(value, description, org));
         org.getPermissions().add(permission);
         return permission;
     }
@@ -636,6 +636,19 @@ public class HibernateAuthService implements AuthService {
             throw new AlreadyExistsException("Permission already exists in organisation.");
         }
         return createPermission(getOrganisation(owner, orgId), value, description);
+    }
+
+    @Override
+    public Permission updatePermission(User owner, UUID orgId, UUID permissionId, String value, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException {
+        Set<Permission> permissions = listPermissions(owner, orgId);
+        if (permissions.stream().filter(p -> p.getValue().equals(value) && !p.getId().equals(permissionId)).findFirst().isPresent()) {
+            throw new AlreadyExistsException("Permission already exists in organisation.");
+        }
+        Permission permission = permissions.stream()
+                .filter(p -> p.is(permissionId))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Permission not found in organisation."));
+        return permissionDao.createOrUpdatePermission(permission.setValue(value).setDescription(description));
     }
 
     @Override
