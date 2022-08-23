@@ -49,7 +49,8 @@ public interface AuthService {
             throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException;
     User removeRoleFromUser(User owner, UUID orgId, UUID userId, UUID roleId) throws NotOwnerException, NotFoundException, NotAllowedException;
 
-    Permission createPermission(User owner, UUID orgId, String permission, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException;
+    Permission createPermission(User owner, UUID orgId, String value, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException;
+    Permission updatePermission(User owner, UUID orgId, UUID permissionId, String value, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException;
     Set<String> listPermissions(UUID userId) throws NotFoundException;
     Set<Permission> listPermissions(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
     Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException;

@@ -13,7 +13,7 @@ public class HibernatePermissionDao extends AbstractDAO<Permission> implements P
     }
 
     @Override
-    public Permission createPermission(Permission permission) {
+    public Permission createOrUpdatePermission(Permission permission) {
         return persist(permission);
     }
 }

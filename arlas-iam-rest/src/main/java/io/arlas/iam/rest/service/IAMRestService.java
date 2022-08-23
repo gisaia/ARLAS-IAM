@@ -933,6 +933,41 @@ public class IAMRestService {
     }
 
     @Timed
+    @Path("organisations/{oid}/permissions/{pid}")
+    @PUT
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Update a permission",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = PermissionData.class),
+            @ApiResponse(code = 400, message = "Permission already exists.", response = Error.class),
+            @ApiResponse(code = 404, message = "Organisation or permission not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response updatePermission(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "pid", required = true)
+            @PathParam(value = "pid") String pid,
+
+            @ApiParam(name = "permission", required = true)
+            @NotNull @Valid PermissionDef permission
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(new PermissionData(authService.updatePermission(getUser(headers), UUID.fromString(oid), UUID.fromString(pid), permission.value, permission.description)))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
     @Path("organisations/{oid}/roles/{rid}/permissions")
     @GET
     @Produces(UTF8JSON)
