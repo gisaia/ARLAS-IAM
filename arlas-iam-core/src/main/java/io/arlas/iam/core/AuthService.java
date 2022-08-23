@@ -41,6 +41,7 @@ public interface AuthService {
     Organisation removeUserFromOrganisation(User owner, UUID userId, UUID orgId) throws NotOwnerException, NotFoundException, NotAllowedException;
 
     Role createRole(User owner, String name, String description, UUID orgId) throws AlreadyExistsException, NotFoundException, NotOwnerException;
+    Role updateRole(User owner, String name, String description, UUID orgId, UUID roleId) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException;
     List<Role> listRoles(User owner, UUID orgId) throws NotFoundException, NotOwnerException;
     List<Role> listRoles(User owner, UUID orgId, UUID userId) throws NotFoundException, NotOwnerException;
     User addRoleToUser(User owner, UUID orgId, UUID userId, UUID roleId) throws NotFoundException, NotOwnerException, AlreadyExistsException;

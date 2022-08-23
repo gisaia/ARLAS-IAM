@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface RoleDao {
 
-    Role createRole(Role role);
+    Role createOrUpdateRole(Role role);
 
     Optional<Role> readRole(UUID roleId);
 

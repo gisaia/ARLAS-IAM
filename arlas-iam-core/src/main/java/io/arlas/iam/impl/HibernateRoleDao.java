@@ -17,7 +17,7 @@ public class HibernateRoleDao extends AbstractDAO<Role> implements RoleDao {
     }
 
     @Override
-    public Role createRole(Role role) {
+    public Role createOrUpdateRole(Role role) {
         return persist(role);
     }
 

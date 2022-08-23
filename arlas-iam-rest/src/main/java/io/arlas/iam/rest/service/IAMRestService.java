@@ -637,6 +637,41 @@ public class IAMRestService {
     }
 
     @Timed
+    @Path("organisations/{oid}/roles/{rid}")
+    @PUT
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Update a role in an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = RoleData.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "Organisation or role not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response updateRoleInOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "rid", required = true)
+            @PathParam(value = "rid") String rid,
+
+            @ApiParam(name = "roleDef", required = true)
+            @NotNull @Valid RoleDef roleDef
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(new RoleData(authService.updateRole(getUser(headers), roleDef.name, roleDef.description, UUID.fromString(oid), UUID.fromString(rid))))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
     @Path("organisations/{oid}/roles")
     @GET
     @Produces(UTF8JSON)
