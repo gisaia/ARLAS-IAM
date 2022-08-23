@@ -24,6 +24,14 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
     }
 
     @Override
+    public List<User> listUsers(String domain) {
+        return currentSession()
+                .createQuery("SELECT u FROM User u WHERE u.email like :email", User.class)
+                .setParameter("email", "%" + (domain.startsWith("@") ? domain : "@" + domain))
+                .getResultList();
+    }
+
+    @Override
     public User createUser(User user) {
         return persist(user);
     }

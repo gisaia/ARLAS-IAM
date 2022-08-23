@@ -22,8 +22,6 @@ import org.springframework.security.crypto.keygen.KeyGenerators;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.arlas.filter.config.TechnicalRoles.*;
@@ -48,9 +46,6 @@ public class HibernateAuthService implements AuthService {
 
     private final List<String> ownerDefaultRoles = List.of(ROLE_ARLAS_OWNER, ROLE_ARLAS_BUILDER, ROLE_ARLAS_TAGGER);
 
-
-    // this regex will do a basic check (verification will be done by sending an email to the user) and extract domain
-    private static final Pattern emailRegex = Pattern.compile("(?<=@)[^.]+(?=\\.)");
 
     public HibernateAuthService(SessionFactory factory, ArlasAuthServerConfiguration conf) {
         this.organisationDao = new HibernateOrganisationDao(factory);
@@ -78,8 +73,8 @@ public class HibernateAuthService implements AuthService {
     }
 
     private Optional<String> validateEmailDomain(String email) {
-        Matcher regexMatcher = emailRegex.matcher(email);
-        return regexMatcher.find() ? Optional.of(regexMatcher.group()) : Optional.empty();
+        int idx = email.indexOf("@");
+        return idx != -1 ? Optional.of(email.substring(idx + 1)) : Optional.empty();
     }
 
     private void sendActivationEmail(User user, String token) throws SendEmailException {
@@ -98,7 +93,7 @@ public class HibernateAuthService implements AuthService {
         return validateEmailDomain(user.getEmail()).orElseThrow(RuntimeException::new);
     }
 
-    private String getUserOrg(User user) {
+    private String getUserOrgName(User user) {
         // personal organisation of the user
         return user.getId().toString();
     }
@@ -368,7 +363,7 @@ public class HibernateAuthService implements AuthService {
             u.setVerified(true);
             userDao.updateUser(u);
             try {
-                createOrganisation(u, getUserOrg(u));
+                createOrganisation(u, getUserOrgName(u));
             } catch (AlreadyExistsException | NotOwnerException ignored) {
                 // cannot happen
             }
@@ -388,7 +383,7 @@ public class HibernateAuthService implements AuthService {
     public Organisation createOrganisation(final User user, String name)
             throws AlreadyExistsException, NotOwnerException {
         boolean isAdmin = isAdmin(user);
-        if (!isAdmin && !(getUserDomain(user).equals(name) || getUserOrg(user).equals(name))) {
+        if (!isAdmin && !(getUserDomain(user).equals(name) || getUserOrgName(user).equals(name))) {
             throw new NotOwnerException("Regular users can only create organisations from their email domain. "
                     + "(user domain '" + getUserDomain(user) + "' != requested domain '" + name + "')");
         }
@@ -434,6 +429,15 @@ public class HibernateAuthService implements AuthService {
     public Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
         return organisationDao.listUsers(getOrganisation(owner, orgId));
 
+    }
+
+    @Override
+    public List<String> listUserEmailsFromOwnDomain(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
+        var org = getOrganisation(owner, orgId);
+
+        List<User> result = userDao.listUsers(org.getName());
+        result.removeAll(org.getMembers().stream().map(m -> m.getUser()).toList());
+        return result.stream().map(u -> u.getEmail()).toList();
     }
 
     @Override

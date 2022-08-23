@@ -8,6 +8,7 @@ import java.util.UUID;
 public class OrgData {
     public UUID id;
     public String name;
+    public String displayName;
     public List<MemberData> members;
 
     public OrgData(Organisation o) {
@@ -17,6 +18,7 @@ public class OrgData {
     public OrgData(Organisation o, boolean withMembers) {
         this.id = o.getId();
         this.name = o.getName();
+        this.displayName = o.getDisplayName();
         if (withMembers) {
             this.members = o.getMembers().stream().map(MemberData::new).toList();
         }
