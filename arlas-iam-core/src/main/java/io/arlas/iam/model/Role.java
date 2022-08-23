@@ -30,6 +30,10 @@ public class Role {
     @Column(name="is_system")
     private boolean isSystem = false; // system roles are shared among all organisations
 
+    @Type(type = "org.hibernate.type.NumericBooleanType")
+    @Column(name="is_technical")
+    private boolean isTechnical = false; // technical roles
+
     @ManyToOne
     @JoinColumn(name = "id_organisation")
     private Organisation organisation;
@@ -48,6 +52,11 @@ public class Role {
     public Role(String name, String description) {
         this.name = name;
         this.description = description;
+    }
+
+    public Role(String name, String description, boolean isTechnical) {
+        this(name, description);
+        this.isTechnical = isTechnical;
     }
 
     public Role(String name, boolean isSystem) {
@@ -91,6 +100,14 @@ public class Role {
 
     public void setSystem(boolean isSystem) {
         this.isSystem = isSystem;
+    }
+
+    public boolean isTechnical() {
+        return isTechnical;
+    }
+
+    public void setTechnical(boolean technical) {
+        isTechnical = technical;
     }
 
     public Optional<Organisation> getOrganisation() {

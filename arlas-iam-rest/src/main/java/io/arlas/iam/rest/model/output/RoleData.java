@@ -10,10 +10,13 @@ public class RoleData {
     public String description;
     public OrgData organisation;
 
+    public boolean isTechnical;
+
     public RoleData(Role r) {
         this.id = r.getId();
         this.name = r.getName();
         this.description = r.getDescription();
+        this.isTechnical = r.isTechnical();
         if (r.getOrganisation().isPresent()) {
             this.organisation = new OrgData(r.getOrganisation().get(), false);
         }
