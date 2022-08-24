@@ -5,10 +5,11 @@ import io.arlas.iam.model.User;
 
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-public class UserData {
+public class UserData implements Comparable {
     public UUID id;
     public String email;
     public String firstName;
@@ -43,9 +44,16 @@ public class UserData {
         this.isActive = user.isActive();
         if (showOrg) {
             user.getOrganisations().forEach(o -> organisations.add(new UserOrgData(o.getOrganisation(), user)));
+            Collections.sort(organisations);
         }
         user.getRoles().stream()
                 .filter(r -> org == null || (r.getOrganisation().isPresent() && r.getOrganisation().get().is(org)))
                 .forEach(r -> roles.add(new RoleData(r)));
     }
+
+    @Override
+    public int compareTo(Object o) {
+        return email.compareTo(((UserData) o).email);
+    }
+
 }

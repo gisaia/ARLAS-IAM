@@ -431,7 +431,7 @@ public class IAMRestService {
     ) throws NotFoundException {
         User user = getUser(headers);
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.listOrganisations(user).stream().map(o -> new UserOrgData(o, user)).toList())
+                .entity(authService.listOrganisations(user).stream().map(o -> new UserOrgData(o, user)).sorted().toList())
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
@@ -459,7 +459,7 @@ public class IAMRestService {
             @PathParam(value = "oid") String oid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid)).stream().map(MemberData::new).toList())
+                .entity(authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid)).stream().map(MemberData::new).sorted().toList())
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
@@ -722,7 +722,7 @@ public class IAMRestService {
             @PathParam(value = "oid") String oid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.listRoles(getUser(headers), UUID.fromString(oid)).stream().map(RoleData::new).toList())
+                .entity(authService.listRoles(getUser(headers), UUID.fromString(oid)).stream().map(RoleData::new).sorted().toList())
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
@@ -754,7 +754,7 @@ public class IAMRestService {
             @PathParam(value = "uid") String uid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.listRoles(getUser(headers), UUID.fromString(oid), UUID.fromString(uid)).stream().map(RoleData::new).toList())
+                .entity(authService.listRoles(getUser(headers), UUID.fromString(oid), UUID.fromString(uid)).stream().map(RoleData::new).sorted().toList())
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
@@ -769,7 +769,7 @@ public class IAMRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = RoleData.class, responseContainer = "List"),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = UserData.class),
             @ApiResponse(code = 400, message = "Bad request", response = Error.class),
             @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
@@ -896,7 +896,7 @@ public class IAMRestService {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.listPermissions(getUser(headers), UUID.fromString(oid), UUID.fromString(uid))
                         .stream()
-                        .map(PermissionData::new).toList())
+                        .map(PermissionData::new).sorted().toList())
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
@@ -924,7 +924,7 @@ public class IAMRestService {
             @PathParam(value = "oid") String oid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.listPermissions(getUser(headers), UUID.fromString(oid)).stream().map(PermissionData::new).toList())
+                .entity(authService.listPermissions(getUser(headers), UUID.fromString(oid)).stream().map(PermissionData::new).sorted().toList())
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }

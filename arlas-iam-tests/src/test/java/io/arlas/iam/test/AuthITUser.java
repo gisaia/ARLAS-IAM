@@ -27,6 +27,7 @@ public class AuthITUser {
     private static final String PERMISSION1_DESC = "p1_desc";
     private static final String PERMISSION2 = "p2";
     private static final String PERMISSION2_DESC = "p2_desc";
+    private static final String PERMISSION_GROUP = "h:column-filter:foo.com_*:*";
 
     protected static String arlasAppPath;
     protected static final String userHeader;
@@ -228,7 +229,7 @@ public class AuthITUser {
     public void test38ListPermissions() {
         listPermissions(userId1, userId2).then().statusCode(200)
                 .body("", hasSize(2))
-                .body("[0].value", is(oneOf(PERMISSION1, PERMISSION2)));
+                .body("[0].value", is(oneOf(PERMISSION1, PERMISSION2, PERMISSION_GROUP)));
     }
 
     @Test
