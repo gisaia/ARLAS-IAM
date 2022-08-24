@@ -6,7 +6,7 @@ import io.arlas.iam.model.User;
 import java.util.List;
 import java.util.UUID;
 
-public class UserOrgData {
+public class UserOrgData implements Comparable {
     public UUID id;
     public String name;
     public String displayName;
@@ -21,5 +21,10 @@ public class UserOrgData {
                 .map(m -> m.isOwner())
                 .findFirst()
                 .orElse(false);
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        return name.compareTo(((UserOrgData) o).name);
     }
 }

@@ -5,7 +5,7 @@ import io.arlas.iam.model.Permission;
 import java.util.List;
 import java.util.UUID;
 
-public class PermissionData {
+public class PermissionData implements Comparable {
     public UUID id;
     public String value;
     public String description;
@@ -17,4 +17,10 @@ public class PermissionData {
         this.description = p.getDescription();
         this.roles = p.getRoles().stream().map(RoleData::new).toList();
     }
+
+    @Override
+    public int compareTo(Object o) {
+        return value.compareTo(((PermissionData) o).value);
+    }
+
 }

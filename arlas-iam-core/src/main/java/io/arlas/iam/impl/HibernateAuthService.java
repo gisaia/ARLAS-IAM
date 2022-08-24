@@ -437,7 +437,7 @@ public class HibernateAuthService implements AuthService {
 
         List<User> result = userDao.listUsers(org.getName());
         result.removeAll(org.getMembers().stream().map(m -> m.getUser()).toList());
-        return result.stream().map(u -> u.getEmail()).toList();
+        return result.stream().map(u -> u.getEmail()).sorted().toList();
     }
 
     @Override

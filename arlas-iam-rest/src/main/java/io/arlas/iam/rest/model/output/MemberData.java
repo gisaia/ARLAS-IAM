@@ -2,12 +2,17 @@ package io.arlas.iam.rest.model.output;
 
 import io.arlas.iam.model.OrganisationMember;
 
-public class MemberData {
+public class MemberData implements Comparable {
     public UserData member;
     public boolean isOwner;
 
     public MemberData(OrganisationMember om) {
         this.member = new UserData(om.getUser(), om.getOrganisation(), false);
         this.isOwner = om.isOwner();
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        return member.compareTo(((MemberData) o).member);
     }
 }

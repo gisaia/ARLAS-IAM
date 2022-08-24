@@ -5,7 +5,7 @@ import io.arlas.iam.model.Organisation;
 import java.util.List;
 import java.util.UUID;
 
-public class OrgData {
+public class OrgData implements Comparable {
     public UUID id;
     public String name;
     public String displayName;
@@ -23,4 +23,10 @@ public class OrgData {
             this.members = o.getMembers().stream().map(MemberData::new).toList();
         }
     }
+
+    @Override
+    public int compareTo(Object o) {
+        return name.compareTo(((OrgData) o).name);
+    }
+
 }
