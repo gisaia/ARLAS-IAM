@@ -7,14 +7,19 @@ import java.util.UUID;
 public class RoleData implements Comparable {
     public UUID id;
     public String name;
+
+    public String fullName;
     public String description;
     public OrgData organisation;
 
+    public boolean isGroup;
     public boolean isTechnical;
 
     public RoleData(Role r) {
         this.id = r.getId();
-        this.name = r.getName();
+        this.isGroup = r.isGroup();
+        this.name = isGroup ? r.getName().substring(r.getName().lastIndexOf("/")+1) : r.getName();
+        this.fullName = r.getName();
         this.description = r.getDescription();
         this.isTechnical = r.isTechnical();
         if (r.getOrganisation().isPresent()) {

@@ -865,6 +865,135 @@ public class IAMRestService {
                 .build();
     }
 
+    //----------------- groups -------------------
+
+    @Timed
+    @Path("organisations/{oid}/groups")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Add a group to an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = RoleData.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response addGroupToOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "roleDef", required = true)
+            @NotNull @Valid RoleDef roleDef
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(new RoleData(authService.createGroup(getUser(headers), roleDef.name, roleDef.description, UUID.fromString(oid))))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
+    @Path("organisations/{oid}/groups/{rid}")
+    @PUT
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Update a group in an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = RoleData.class),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "Organisation or role not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response updateGroupInOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "rid", required = true)
+            @PathParam(value = "rid") String rid,
+
+            @ApiParam(name = "roleDef", required = true)
+            @NotNull @Valid RoleDef roleDef
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(new RoleData(authService.updateGroup(getUser(headers), roleDef.name, roleDef.description, UUID.fromString(oid), UUID.fromString(rid))))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
+    @Path("organisations/{oid}/groups")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "List groups of an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = RoleData.class, responseContainer = "List"),
+            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork(readOnly = true)
+    public Response getGroupsOfOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid
+    ) throws NotFoundException, NotOwnerException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.listGroups(getUser(headers), UUID.fromString(oid)).stream().map(RoleData::new).sorted().toList())
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
+    @Path("organisations/{oid}/users/{uid}/groups")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "List groups of a user within an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = RoleData.class, responseContainer = "List"),
+            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
+            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork(readOnly = true)
+    public Response getGroups(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "uid", required = true)
+            @PathParam(value = "uid") String uid
+    ) throws NotFoundException, NotOwnerException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.listGroups(getUser(headers), UUID.fromString(oid), UUID.fromString(uid)).stream().map(RoleData::new).sorted().toList())
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
     //----------------- permissions -----------------
 
     @Timed

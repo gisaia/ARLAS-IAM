@@ -552,6 +552,29 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
+    public Role createGroup(User owner, String name, String description, UUID orgId)
+            throws AlreadyExistsException, NotOwnerException, NotFoundException {
+        var org = getOrganisation(owner, orgId);
+        return createRole(org, TechnicalRoles.getNewDashboardGroupRole(org.getName(), name), description);
+    }
+
+    @Override
+    public Role updateGroup(User owner, String name, String description, UUID orgId, UUID roleId) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException {
+        var org = getOrganisation(owner, orgId);
+        return updateRole(owner, TechnicalRoles.getNewDashboardGroupRole(org.getName(), name), description, orgId, roleId);
+    }
+
+    @Override
+    public List<Role> listGroups(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
+        return listRoles(owner, orgId).stream().filter(r -> r.isGroup()).toList();
+    }
+
+    @Override
+    public List<Role> listGroups(User owner, UUID orgId, UUID userId) throws NotFoundException, NotOwnerException {
+        return listRoles(owner, orgId, userId).stream().filter(r -> r.isGroup()).toList();
+    }
+
+    @Override
     public User addRoleToUser(User owner, UUID orgId, UUID userId, UUID roleId)
             throws NotFoundException, NotOwnerException, AlreadyExistsException {
         var org = getOrganisation(owner, orgId);

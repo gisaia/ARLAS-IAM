@@ -46,6 +46,12 @@ public interface AuthService {
     Role updateRole(User owner, String name, String description, UUID orgId, UUID roleId) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException;
     List<Role> listRoles(User owner, UUID orgId) throws NotFoundException, NotOwnerException;
     List<Role> listRoles(User owner, UUID orgId, UUID userId) throws NotFoundException, NotOwnerException;
+
+    Role createGroup(User owner, String name, String description, UUID orgId) throws AlreadyExistsException, NotFoundException, NotOwnerException;
+    Role updateGroup(User owner, String name, String description, UUID orgId, UUID roleId) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException;
+    List<Role> listGroups(User owner, UUID orgId) throws NotFoundException, NotOwnerException;
+    List<Role> listGroups(User owner, UUID orgId, UUID userId) throws NotFoundException, NotOwnerException;
+
     User addRoleToUser(User owner, UUID orgId, UUID userId, UUID roleId) throws NotFoundException, NotOwnerException, AlreadyExistsException;
     User updateRolesOfUser(User owner, UUID orgId, UUID userId, Set<String> rids)
             throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException;

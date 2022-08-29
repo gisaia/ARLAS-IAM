@@ -2,6 +2,7 @@ package io.arlas.iam.model;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import io.arlas.filter.config.TechnicalRoles;
 import io.dropwizard.jackson.JsonSnakeCase;
 import org.hibernate.annotations.Type;
 
@@ -14,6 +15,8 @@ import java.util.*;
 @JsonSnakeCase
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Role {
+    private static final String GROUP_PREFIX = TechnicalRoles.getDefaultGroup("");
+
     @Id
     @GeneratedValue
     @Column
@@ -93,6 +96,8 @@ public class Role {
         this.description = description;
         return this;
     }
+
+    public boolean isGroup() { return name.startsWith(GROUP_PREFIX); }
 
     public boolean isSystem() {
         return isSystem;
