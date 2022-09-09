@@ -39,7 +39,7 @@
         <arlas-commons.version>23.0.0</arlas-commons.version>
         <postgresql.version>42.5.0</postgresql.version>
         <spring.security.version>5.7.3</spring.security.version>
-        <jackson.databind.version>2.13.3</jackson.databind.version>
+        <jackson.databind.version>2.13.4</jackson.databind.version>
         <jakartamail.version>2.0.1</jakartamail.version>
         <activation.version>2.0.1</activation.version>
 

@@ -48,7 +48,7 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
 
     @Override
     public User updateUser(User user) {
-        return persist(user);
+        return persist(user.updateLastUpdate());
     }
 
     @Override
@@ -59,12 +59,12 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
 
     @Override
     public User activateUser(UUID userId) {
-        return persist(get(userId).setActive(true));
+        return persist(get(userId).setActive(true).updateLastUpdate());
     }
 
     @Override
     public User deactivateUser(UUID userId) {
-        return persist(get(userId).setActive(false));
+        return persist(get(userId).setActive(false).updateLastUpdate());
     }
 
     @Override
