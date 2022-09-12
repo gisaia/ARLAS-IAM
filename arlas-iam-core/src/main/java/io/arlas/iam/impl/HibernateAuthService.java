@@ -218,8 +218,8 @@ public class HibernateAuthService implements AuthService {
                 // in testing mode, we set the password to a known value
                 String verifyToken = this.verifyEmail ? KeyGenerators.string().generateKey() : "secret";
                 user.setPassword(encode(verifyToken));
-                user.setLocale(locale);
-                user.setTimezone(timezone);
+                user.setLocale(locale != null ? locale : Locale.ENGLISH.toString());
+                user.setTimezone(timezone != null ? timezone : "Europe/Paris");
                 user.setVerified(!this.verifyEmail);
                 user = userDao.createUser(user);
                 if (this.verifyEmail) {
@@ -447,13 +447,17 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public Organisation addUserToOrganisation(User owner, String email, UUID orgId, Boolean isOwner)
-            throws NotOwnerException, NotFoundException, AlreadyExistsException, ForbiddenActionException {
+            throws NotOwnerException, NotFoundException, AlreadyExistsException, ForbiddenActionException, SendEmailException, InvalidEmailException {
         var org = getOrganisation(owner, orgId);
         if (org.getName().equals(owner.getId().toString())) {
             throw new ForbiddenActionException("Cannot invite users in own organisation.");
         }
-        var user = userDao.readUser(email).orElseThrow(() -> new NotFoundException("User not found."));
-        if (org.getMembers().stream().anyMatch(om -> om.getUser().is(user.getId()))) {
+        var user = userDao.readUser(email).orElse(null);
+        if (user == null) {
+            user = createUser(email, null, null);
+        }
+        final var uid = user.getId();
+        if (org.getMembers().stream().anyMatch(om -> om.getUser().is(uid))) {
             throw new AlreadyExistsException("User is already in organisation.");
         }
         return addUserToOrganisation(user, org, isOwner);

@@ -537,13 +537,13 @@ public class IAMRestService {
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Add a user to an organisation. User must have an account already.",
+            value = "Add a user to an organisation. User account will be created if needed.",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = OrgData.class),
             @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
+            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -556,7 +556,7 @@ public class IAMRestService {
 
             @ApiParam(name = "user", required = true)
             @NotNull @Valid OrgUserDef user
-    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException, SendEmailException, InvalidEmailException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgData(authService.addUserToOrganisation(getUser(headers), user.email, UUID.fromString(oid), user.isOwner)))
                 .type(MediaType.APPLICATION_JSON_TYPE)

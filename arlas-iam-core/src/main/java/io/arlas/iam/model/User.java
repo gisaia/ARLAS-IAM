@@ -179,6 +179,11 @@ public class User {
         this.roles = roles;
     }
 
+    public User updateLastUpdate() {
+        this.updateDate = LocalDateTime.now(ZoneOffset.UTC);
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
