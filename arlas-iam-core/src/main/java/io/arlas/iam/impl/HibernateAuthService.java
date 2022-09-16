@@ -42,7 +42,7 @@ public class HibernateAuthService implements AuthService {
     private final InitConfiguration initConf;
     private User admin;
 
-    private final List<String> systemRoles = Arrays.asList(ROLE_IAM_ADMIN);
+    private final List<String> systemRoles = Arrays.asList(ROLE_IAM_ADMIN, ROLE_ARLAS_IMPORTER);
 
     private final List<String> ownerDefaultRoles = List.of(ROLE_ARLAS_OWNER, ROLE_ARLAS_BUILDER, ROLE_ARLAS_TAGGER);
 
