@@ -28,6 +28,7 @@ import static io.arlas.filter.config.TechnicalRoles.*;
 
 public class HibernateAuthService implements AuthService {
     private final Logger LOGGER = LoggerFactory.getLogger(HibernateAuthService.class);
+    private final ForbiddenOrganisationDao forbiddenOrganisationDao;
     private final OrganisationDao organisationDao;
     private final OrganisationMemberDao organisationMemberDao;
     private final PermissionDao permissionDao;
@@ -48,6 +49,7 @@ public class HibernateAuthService implements AuthService {
 
 
     public HibernateAuthService(SessionFactory factory, ArlasAuthServerConfiguration conf) {
+        this.forbiddenOrganisationDao = new HibernateForbiddenOrganisationDao(factory);
         this.organisationDao = new HibernateOrganisationDao(factory);
         this.organisationMemberDao = new HibernateOrganisationMemberDao(factory);
         this.permissionDao = new HibernatePermissionDao(factory);
@@ -173,10 +175,10 @@ public class HibernateAuthService implements AuthService {
     }
 
     private Map<String, List<String>> listRoles(UUID userId) throws NotFoundException {
-        Map<String, List<String>> orgRoles = new HashMap();
+        Map<String, List<String>> orgRoles = new HashMap<>();
         // we return a map of {"" -> [ roles...], "orgName1_" -> [ roles...], ...}
         // (the empty key is for cross org roles such as "role/iam/admin")
-        readUser(userId).orElseThrow(NotFoundException::new).getRoles().stream()
+        readUser(userId).orElseThrow(NotFoundException::new).getRoles()
                 .forEach(r -> {
                     String orgName = r.getOrganisation().map(o -> o.getName()+"_").orElseGet(String::new);
                     List<String> roles = Optional.ofNullable(orgRoles.get(orgName)).orElseGet(ArrayList::new);
@@ -364,7 +366,7 @@ public class HibernateAuthService implements AuthService {
             userDao.updateUser(u);
             try {
                 createOrganisation(u, getUserOrgName(u));
-            } catch (AlreadyExistsException | NotOwnerException ignored) {
+            } catch (AlreadyExistsException | NotOwnerException | ForbiddenOrganisationNameException ignored) {
                 // cannot happen
             }
         } else {
@@ -375,18 +377,23 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public Organisation createOrganisation(User owner)
-            throws AlreadyExistsException, NotOwnerException {
+            throws AlreadyExistsException, NotOwnerException, ForbiddenOrganisationNameException {
         return createOrganisation(owner, getUserDomain(owner));
     }
 
     @Override
     public Organisation createOrganisation(final User user, String name)
-            throws AlreadyExistsException, NotOwnerException {
+            throws AlreadyExistsException, NotOwnerException, ForbiddenOrganisationNameException {
         boolean isAdmin = isAdmin(user);
         if (!isAdmin && !(getUserDomain(user).equals(name) || getUserOrgName(user).equals(name))) {
             throw new NotOwnerException("Regular users can only create organisations from their email domain. "
                     + "(user domain '" + getUserDomain(user) + "' != requested domain '" + name + "')");
         }
+
+        if (forbiddenOrganisationDao.getName(name).isPresent()) {
+            throw new ForbiddenOrganisationNameException("This organisation name cannot be used.");
+        }
+
         Optional<Organisation> org = organisationDao.readOrganisation(name);
         if (org.isEmpty()) {
             Organisation organisation = organisationDao.createOrganisation(new Organisation(name));
@@ -436,8 +443,8 @@ public class HibernateAuthService implements AuthService {
         var org = getOrganisation(owner, orgId);
 
         List<User> result = userDao.listUsers(org.getName());
-        result.removeAll(org.getMembers().stream().map(m -> m.getUser()).toList());
-        return result.stream().map(u -> u.getEmail()).sorted().toList();
+        result.removeAll(org.getMembers().stream().map(OrganisationMember::getUser).toList());
+        return result.stream().map(User::getEmail).sorted().toList();
     }
 
     @Override
@@ -470,7 +477,7 @@ public class HibernateAuthService implements AuthService {
                 .findFirst()
                 .orElseThrow(NotFoundException::new);
         if (owner.getId().equals(userId)) {
-            throw new ForbiddenActionException("Cannot remove oneself's ownership");
+            throw new ForbiddenActionException("Cannot remove oneself ownership");
         }
 
         if (member.isOwner() != isOwner) {
@@ -534,7 +541,7 @@ public class HibernateAuthService implements AuthService {
         if (role.isTechnical()) {
             throw new ForbiddenActionException("Cannot modify technical roles.");
         }
-        if (orgRoles.stream().filter(r -> r.getName().equals(name) && !r.getId().equals(roleId)).findFirst().isPresent()) {
+        if (orgRoles.stream().anyMatch(r -> r.getName().equals(name) && !r.getId().equals(roleId))) {
             throw new AlreadyExistsException("A role with same name already exists in organisation.");
         }
         return roleDao.createOrUpdateRole(role.setName(name).setDescription(description));
@@ -570,12 +577,12 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public List<Role> listGroups(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
-        return listRoles(owner, orgId).stream().filter(r -> r.isGroup()).toList();
+        return listRoles(owner, orgId).stream().filter(Role::isGroup).toList();
     }
 
     @Override
     public List<Role> listGroups(User owner, UUID orgId, UUID userId) throws NotFoundException, NotOwnerException {
-        return listRoles(owner, orgId, userId).stream().filter(r -> r.isGroup()).toList();
+        return listRoles(owner, orgId, userId).stream().filter(Role::isGroup).toList();
     }
 
     @Override
@@ -664,7 +671,7 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public Permission createPermission(User owner, UUID orgId, String value, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException {
-        if (listPermissions(owner, orgId).stream().filter(p -> p.getValue().equals(value)).findFirst().isPresent()) {
+        if (listPermissions(owner, orgId).stream().anyMatch(p -> p.getValue().equals(value))) {
             throw new AlreadyExistsException("Permission already exists in organisation.");
         }
         return createPermission(getOrganisation(owner, orgId), value, description);
@@ -673,7 +680,7 @@ public class HibernateAuthService implements AuthService {
     @Override
     public Permission updatePermission(User owner, UUID orgId, UUID permissionId, String value, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException {
         Set<Permission> permissions = listPermissions(owner, orgId);
-        if (permissions.stream().filter(p -> p.getValue().equals(value) && !p.getId().equals(permissionId)).findFirst().isPresent()) {
+        if (permissions.stream().anyMatch(p -> p.getValue().equals(value) && !p.getId().equals(permissionId))) {
             throw new AlreadyExistsException("Permission already exists in organisation.");
         }
         Permission permission = permissions.stream()
@@ -726,6 +733,30 @@ public class HibernateAuthService implements AuthService {
         }
 
         return getRole(org, roleId);
+    }
+
+    @Override
+    public ForbiddenOrganisation addForbiddenOrganisation(User user, ForbiddenOrganisation name) throws NotAllowedException {
+        if (!isAdmin(user)) {
+            throw new NotAllowedException("Only super admin can do this action.");
+        }
+        return forbiddenOrganisationDao.addName(name);
+    }
+
+    @Override
+    public List<ForbiddenOrganisation> listForbiddenOrganisation(User user) throws NotAllowedException {
+        if (!isAdmin(user)) {
+            throw new NotAllowedException("Only super admin can do this action.");
+        }
+        return forbiddenOrganisationDao.listNames();
+    }
+
+    @Override
+    public void removeForbiddenOrganisation(User user, String name) throws NotAllowedException, NotFoundException {
+        if (!isAdmin(user)) {
+            throw new NotAllowedException("Only super admin can do this action.");
+        }
+        forbiddenOrganisationDao.removeName(forbiddenOrganisationDao.getName(name).orElseThrow(NotFoundException::new));
     }
 
 }

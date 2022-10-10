@@ -30,8 +30,8 @@ public interface AuthService {
     Optional<User> deactivateUser(UUID userId) throws NotAllowedException;
 
     boolean checkOrganisation(User owner);
-    Organisation createOrganisation(User user, String name) throws AlreadyExistsException, NotOwnerException, NotFoundException;
-    Organisation createOrganisation(User owner) throws AlreadyExistsException, NotOwnerException, NotFoundException;
+    Organisation createOrganisation(User user, String name) throws AlreadyExistsException, NotOwnerException, NotFoundException, ForbiddenOrganisationNameException;
+    Organisation createOrganisation(User owner) throws AlreadyExistsException, NotOwnerException, NotFoundException, ForbiddenOrganisationNameException;
     void deleteOrganisation(User owner, UUID orgId) throws NotOwnerException, NotFoundException, ForbiddenActionException;
     Set<Organisation> listOrganisations(User user);
 
@@ -68,4 +68,8 @@ public interface AuthService {
 
     Set<Permission> listPermissionsOfRole(User owner, UUID orgId, UUID roleId) throws NotOwnerException, NotFoundException;
     Role updatePermissionsOfRole(User owner, UUID orgId, UUID roleId, Set<String> pids) throws NotOwnerException, NotFoundException;
+
+    ForbiddenOrganisation addForbiddenOrganisation(User user, ForbiddenOrganisation name) throws AlreadyExistsException, NotAllowedException;
+    List<ForbiddenOrganisation> listForbiddenOrganisation(User user) throws NotAllowedException;
+    void removeForbiddenOrganisation(User user, String name) throws NotAllowedException, NotFoundException;
 }

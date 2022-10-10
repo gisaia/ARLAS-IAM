@@ -8,6 +8,7 @@ import io.arlas.commons.rest.response.Error;
 import io.arlas.filter.config.TechnicalRoles;
 import io.arlas.iam.core.AuthService;
 import io.arlas.iam.exceptions.*;
+import io.arlas.iam.model.ForbiddenOrganisation;
 import io.arlas.iam.model.OrganisationMember;
 import io.arlas.iam.model.User;
 import io.arlas.iam.rest.model.input.*;
@@ -319,7 +320,7 @@ public class IAMRestService {
     public Response createOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers
-    ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenOrganisationNameException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgData(authService.createOrganisation(getUser(headers))))
                 .type(MediaType.APPLICATION_JSON_TYPE)
@@ -348,7 +349,7 @@ public class IAMRestService {
 
             @ApiParam(name = "name", required = true)
             @PathParam(value = "name") String name
-    ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenOrganisationNameException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgData(authService.createOrganisation(getUser(headers), name)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
@@ -626,6 +627,91 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException, NotAllowedException {
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgData(authService.removeUserFromOrganisation(getUser(headers), UUID.fromString(uid), UUID.fromString(oid))))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    // ------------- forbidden organisations --------------
+
+    @Timed
+    @Path("organisations/forbidden")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Add a name to the forbidden organisations list.",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation.", response = ForbiddenOrganisation.class),
+            @ApiResponse(code = 400, message = "Not allowed.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response addForbiddenOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "forbiddenOrganisation", required = true)
+            @NotNull @Valid ForbiddenOrganisation forbiddenOrganisation
+    ) throws AlreadyExistsException, NotFoundException, NotAllowedException {
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.addForbiddenOrganisation(getUser(headers), forbiddenOrganisation))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
+    @Path("organisations/forbidden/{name}")
+    @DELETE
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Remove a name from the forbidden organisations list.",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation.", response = String.class),
+            @ApiResponse(code = 400, message = "Not allowed.", response = Error.class),
+            @ApiResponse(code = 404, message = "Name not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response removeNameFromForbiddenOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "name", required = true)
+            @PathParam(value = "name") String name
+    ) throws NotFoundException, NotAllowedException {
+        authService.removeForbiddenOrganisation(getUser(headers), name);
+        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+                .entity("ok")
+                .type(MediaType.TEXT_PLAIN)
+                .build();
+    }
+
+    @Timed
+    @Path("organisations/forbidden")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "List forbidden organisations.",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = ForbiddenOrganisation.class, responseContainer = "List"),
+            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork(readOnly = true)
+    public Response listForbiddenOrganisations(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers
+    ) throws NotFoundException, NotAllowedException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.listForbiddenOrganisation(getUser(headers)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }

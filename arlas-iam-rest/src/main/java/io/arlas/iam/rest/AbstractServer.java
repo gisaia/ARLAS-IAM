@@ -47,6 +47,7 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
 
     protected final HibernateBundle<ArlasAuthServerConfiguration> hibernate =
             new HibernateBundle<>(
+                    ForbiddenOrganisation.class,
                     Organisation.class,
                     OrganisationMember.class,
                     Permission.class,
