@@ -151,7 +151,7 @@
         {
           "id": "5b7a12a9-cf23-4aef-9267-c63de9db1050",
           "name": "role/arlas/user",
-          "description": "r:explore/.*:GET,POST\nr:collections/.*:GET\nr:explore/_list:GET\nr:explore/ogc/opensearch/.*:GET\nr:ogc/.*:GET\nr:stac/.*:GET,POST\nr:persist/resource/.*:GET\nr:persist/groups/.*:GET\nr:persist/resources/.*:GET\nr:authorize/resources:GET",
+          "description": "r:explore/.*:GET,POST\nr:collections/.*:GET\nr:explore/_list:GET\nr:explore/ogc/opensearch/.*:GET\nr:ogc/.*:GET\nr:stac/.*:GET,POST\nstac:GET\nopenapi.json:GET\nr:persist/resource/.*:GET\nr:persist/groups/.*:GET\nr:persist/resources/.*:GET\nr:authorize/resources:GET",
           "composite": false,
           "clientRole": true,
           "containerId": "4930850e-29b6-43c2-b5e7-a99373397c0b",
