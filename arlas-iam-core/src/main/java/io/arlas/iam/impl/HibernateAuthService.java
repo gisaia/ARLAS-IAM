@@ -604,7 +604,7 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public User updateRolesOfUser(User owner, UUID orgId, UUID userId, Set<String> newRoles)
-            throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException {
+            throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException, ForbiddenActionException {
         var org = getOrganisation(owner, orgId);
         var user = getUser(org, userId);
         List<String> currentRoles = user.getRoles().stream()
@@ -629,12 +629,16 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public User removeRoleFromUser(User owner, UUID orgId, UUID userId, UUID roleId)
-            throws NotOwnerException, NotFoundException, NotAllowedException {
+            throws NotOwnerException, NotFoundException, NotAllowedException, ForbiddenActionException {
         if (isAdmin(userId)) {
             throw new NotAllowedException("Cannot remove roles from admin user.");
         }
-        var user = getUser(getOrganisation(owner, orgId), userId);
+        var org = getOrganisation(owner, orgId);
+        var user = getUser(org, userId);
         var role = getRole(user, roleId).orElseThrow(() -> new NotFoundException("Role was not assigned to user."));
+        if (owner.is(userId) && role.getName().equals(TechnicalRoles.getDefaultGroup(org.getName()))) {
+            throw new ForbiddenActionException("Owner cannot remove themselves from the default group of their organisation.");
+        }
         roleDao.removeRoleFromUser(user, role);
         return user;
     }

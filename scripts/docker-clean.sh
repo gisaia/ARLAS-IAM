@@ -12,4 +12,4 @@ function clean_exit {
 trap clean_exit EXIT
 
 echo "===> stop arlas IAM stack"
-docker-compose -f ${DOCKER_COMPOSE} --project-name arlasiam down -v
+docker-compose -f ${DOCKER_COMPOSE} --project-name arlasiam down -v --remove-orphans

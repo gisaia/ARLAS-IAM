@@ -874,7 +874,7 @@ public class IAMRestService {
             @ApiParam(name = "ridList", required = true)
             @NotNull @Valid UpdateListDef ridList
 
-    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException, ForbiddenActionException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.updateRolesOfUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), ridList.ids), false))
                 .type(MediaType.APPLICATION_JSON_TYPE)
@@ -944,7 +944,7 @@ public class IAMRestService {
 
             @ApiParam(name = "rid", required = true)
             @PathParam(value = "rid") String rid
-    ) throws NotFoundException, NotOwnerException, NotAllowedException {
+    ) throws NotFoundException, NotOwnerException, NotAllowedException, ForbiddenActionException {
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.removeRoleFromUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), UUID.fromString(rid)), false))
                 .type(MediaType.APPLICATION_JSON_TYPE)
