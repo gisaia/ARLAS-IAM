@@ -403,7 +403,7 @@ public class HibernateAuthService implements AuthService {
             // create default permissions
             var allDataPermission = createPermission(organisation,
                     ArlasClaims.getHeaderColumnFilterDefault(name),
-                    "View all organisation's collections' data.");
+                    "View all collections' data (" + name + "_*).");
             // create default roles
             var defaultGroup = createRole(organisation, TechnicalRoles.getDefaultGroup(name),
                     "Default organisation group for dashboard sharing.");
@@ -694,6 +694,22 @@ public class HibernateAuthService implements AuthService {
         return createPermission(getOrganisation(owner, orgId), value, description);
     }
 
+    private void checkServerCollections(User owner, UUID orgId, List<String> collections, String token) throws ArlasException {
+        List<String> serverCollections = getOrganisationCollections(owner, orgId, token);
+        List<String> targetCollections = new ArrayList<>(collections);
+        targetCollections.removeAll(serverCollections);
+        if (targetCollections.size() > 0) {
+            throw new ForbiddenActionException("Collections not available on server: " + targetCollections);
+        }
+    }
+
+    @Override
+    public Permission createColumnFilter(User owner, UUID orgId, List<String> collections, String token) throws ArlasException {
+        checkServerCollections(owner, orgId, collections, token);
+        String value = ArlasClaims.getHeaderColumnFilter(collections);
+        return createPermission(owner, orgId, value, String.join(" ", collections));
+    }
+
     @Override
     public Permission updatePermission(User owner, UUID orgId, UUID permissionId, String value, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException {
         Set<Permission> permissions = listPermissions(owner, orgId);
@@ -705,6 +721,13 @@ public class HibernateAuthService implements AuthService {
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Permission not found in organisation."));
         return permissionDao.createOrUpdatePermission(permission.setValue(value).setDescription(description));
+    }
+
+    @Override
+    public Permission updateColumnFilter(User owner, UUID orgId, UUID permissionId, List<String> collections, String token) throws ArlasException {
+        checkServerCollections(owner, orgId, collections, token);
+        String value = ArlasClaims.getHeaderColumnFilter(collections);
+        return updatePermission(owner, orgId, permissionId, value, String.join(" ", collections));
     }
 
     @Override

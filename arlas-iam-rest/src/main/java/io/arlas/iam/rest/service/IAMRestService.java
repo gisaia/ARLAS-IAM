@@ -1205,6 +1205,38 @@ public class IAMRestService {
     }
 
     @Timed
+    @Path("organisations/{oid}/permissions/columnfilter")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Add column filter permission for the given collections.",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = PermissionData.class),
+            @ApiResponse(code = 400, message = "Permission already exists.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response addColumnFilterPermission(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "collections", required = true)
+            @NotNull @Valid List<String> collections
+    ) throws ArlasException {
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(new PermissionData(authService.createColumnFilter(getUser(headers),
+                        UUID.fromString(oid), collections, headers.getHeaderString(HttpHeaders.AUTHORIZATION))))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
     @Path("organisations/{oid}/permissions/{pid}")
     @PUT
     @Produces(UTF8JSON)
@@ -1235,6 +1267,43 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new PermissionData(authService.updatePermission(getUser(headers), UUID.fromString(oid), UUID.fromString(pid), permission.value, permission.description)))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
+    @Path("organisations/{oid}/permissions/columnfilter/{pid}")
+    @PUT
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Update a column filter permission.",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = PermissionData.class),
+            @ApiResponse(code = 400, message = "Permission already exists.", response = Error.class),
+            @ApiResponse(code = 404, message = "Organisation or permission not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response updateColumnFilterPermission(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "pid", required = true)
+            @PathParam(value = "pid") String pid,
+
+            @ApiParam(name = "collections", required = true)
+            @NotNull @Valid List<String> collections
+    ) throws ArlasException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(new PermissionData(authService.updateColumnFilter(getUser(headers),
+                        UUID.fromString(oid), UUID.fromString(pid), collections,
+                        headers.getHeaderString(HttpHeaders.AUTHORIZATION))))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
