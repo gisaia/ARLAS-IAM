@@ -1,6 +1,7 @@
 package io.arlas.iam.impl;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import io.arlas.client.ApiException;
 import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.commons.exceptions.NotAllowedException;
 import io.arlas.commons.exceptions.NotFoundException;
@@ -28,6 +29,7 @@ import static io.arlas.filter.config.TechnicalRoles.*;
 
 public class HibernateAuthService implements AuthService {
     private final Logger LOGGER = LoggerFactory.getLogger(HibernateAuthService.class);
+    private final ArlasService arlasService;
     private final ForbiddenOrganisationDao forbiddenOrganisationDao;
     private final OrganisationDao organisationDao;
     private final OrganisationMemberDao organisationMemberDao;
@@ -49,6 +51,7 @@ public class HibernateAuthService implements AuthService {
 
 
     public HibernateAuthService(SessionFactory factory, ArlasAuthServerConfiguration conf) {
+        this.arlasService = new ArlasService(conf);
         this.forbiddenOrganisationDao = new HibernateForbiddenOrganisationDao(factory);
         this.organisationDao = new HibernateOrganisationDao(factory);
         this.organisationMemberDao = new HibernateOrganisationMemberDao(factory);
@@ -450,6 +453,16 @@ public class HibernateAuthService implements AuthService {
     @Override
     public Set<Organisation> listOrganisations(User user) {
         return userDao.listOrganisations(user);
+    }
+
+    @Override
+    public List<String> getOrganisationCollections(User owner, UUID orgId, String token) throws ArlasException {
+        var org = getOrganisation(owner, orgId);
+        try {
+            return arlasService.getCollections(org.getName(), token);
+        } catch (ApiException e) {
+            throw new ArlasException("Error contacting Arlas Server:" + e.getMessage());
+        }
     }
 
     @Override

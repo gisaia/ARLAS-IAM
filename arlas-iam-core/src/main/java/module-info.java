@@ -7,6 +7,8 @@ module arlas.iam.core {
 
     requires transitive arlas.commons;
 
+    requires arlas.server.client;
+    requires com.auth0.jwt;
     requires com.fasterxml.jackson.annotation;
     requires dropwizard.db;
     requires dropwizard.hibernate;
@@ -20,5 +22,4 @@ module arlas.iam.core {
     requires org.hibernate.orm.core;
     requires org.slf4j;
     requires spring.security.crypto;
-    requires com.auth0.jwt;
 }

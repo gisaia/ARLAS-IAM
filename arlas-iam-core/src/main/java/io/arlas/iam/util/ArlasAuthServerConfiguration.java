@@ -20,4 +20,7 @@ public class ArlasAuthServerConfiguration extends ArlasConfiguration {
 
     @JsonProperty("anonymous_value")
     public String anonymousValue;
+
+    @JsonProperty("arlas_server_base_path")
+    public String arlasServerBasePath;
 }

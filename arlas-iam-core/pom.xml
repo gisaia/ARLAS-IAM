@@ -15,7 +15,7 @@
         <dependency>
             <groupId>io.arlas</groupId>
             <artifactId>arlas-commons</artifactId>
-            <version>${arlas-commons.version}</version>
+            <version>${arlas.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>jackson-databind</artifactId>
@@ -28,6 +28,30 @@
                 <exclusion>
                     <artifactId>jakarta.activation-api</artifactId>
                     <groupId>jakarta.activation</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>io.arlas</groupId>
+            <artifactId>arlas-server-client</artifactId>
+            <version>${arlas.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>jackson-annotations</artifactId>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jackson-core</artifactId>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jackson-databind</artifactId>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jackson-datatype-jsr310</artifactId>
+                    <groupId>com.fasterxml.jackson.datatype</groupId>
                 </exclusion>
             </exclusions>
         </dependency>

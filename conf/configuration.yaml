@@ -116,3 +116,6 @@ smtp:
 # Configuration of the cache
 arlas_cache_factory_class: ${ARLAS_IAM_CACHE_FACTORY_CLASS:-io.arlas.commons.cache.NoCacheFactory}
 arlas-cache-timeout: ${ARLAS_CACHE_TIMEOUT:-60}
+
+# Arlas server url
+arlas_server_base_path: ${ARLAS_SERVER_URL:-http://localhost:9999/}
