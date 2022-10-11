@@ -716,6 +716,35 @@ public class IAMRestService {
                 .build();
     }
 
+    @Timed
+    @Path("organisations/{oid}/collections")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "List collections of an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class, responseContainer = "List"),
+            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork(readOnly = true)
+    public Response getOrganisationCollections(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid
+    ) throws ArlasException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.getOrganisationCollections(getUser(headers), UUID.fromString(oid),
+                        headers.getHeaderString(HttpHeaders.AUTHORIZATION)).stream().sorted().toList())
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
     //----------------- roles -------------------
 
     @Timed

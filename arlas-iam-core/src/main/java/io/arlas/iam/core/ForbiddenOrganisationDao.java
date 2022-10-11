@@ -8,6 +8,7 @@ import java.util.Optional;
 public interface ForbiddenOrganisationDao {
 
     Optional<ForbiddenOrganisation> getName(String name);
+
     ForbiddenOrganisation addName(ForbiddenOrganisation name);
 
     List<ForbiddenOrganisation> listNames();
