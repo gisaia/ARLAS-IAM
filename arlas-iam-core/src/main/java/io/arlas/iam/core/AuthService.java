@@ -59,7 +59,9 @@ public interface AuthService {
     User removeRoleFromUser(User owner, UUID orgId, UUID userId, UUID roleId) throws NotOwnerException, NotFoundException, NotAllowedException, ForbiddenActionException;
 
     Permission createPermission(User owner, UUID orgId, String value, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException;
+    Permission createColumnFilter(User user, UUID fromString, List<String> collections, String token) throws ArlasException;
     Permission updatePermission(User owner, UUID orgId, UUID permissionId, String value, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException;
+    Permission updateColumnFilter(User owner, UUID orgId, UUID permissionId, List<String> collections, String token) throws ArlasException;
     Set<String> listPermissions(UUID userId) throws NotFoundException;
     Set<Permission> listPermissions(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
     Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException;
@@ -73,4 +75,5 @@ public interface AuthService {
     ForbiddenOrganisation addForbiddenOrganisation(User user, ForbiddenOrganisation name) throws AlreadyExistsException, NotAllowedException;
     List<ForbiddenOrganisation> listForbiddenOrganisation(User user) throws NotAllowedException;
     void removeForbiddenOrganisation(User user, String name) throws NotAllowedException, NotFoundException;
+
 }
