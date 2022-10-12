@@ -21,6 +21,8 @@ public interface AuthService {
 
     User createUser(String email, String locale, String timezone) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
     User verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException, InvalidTokenException, SendEmailException, NotFoundException;
+    void askPasswordReset(String email) throws SendEmailException;
+    User resetUserPassword(UUID userId, String resetToken, String password) throws SendEmailException, NotFoundException;
 
     Optional<User> readUser(UUID userId);
     User updateUser(User user, String oldPassword, String newPassword) throws NonMatchingPasswordException;

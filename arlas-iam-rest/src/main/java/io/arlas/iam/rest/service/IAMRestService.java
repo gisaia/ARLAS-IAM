@@ -171,6 +171,71 @@ public class IAMRestService {
     }
 
     @Timed
+    @Path("users/resetpassword")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Request a password modification if forgotten (send email with link).",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response askPasswordReset(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "email", required = true)
+            @NotNull @Valid String email
+    ) throws SendEmailException {
+        authService.askPasswordReset(email);
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity("ok")
+                .type(MediaType.TEXT_PLAIN)
+                .build();
+    }
+
+    @Timed
+    @Path("users/{id}/reset/{token}")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(
+            value = "Reset user password (through link received by email)",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = UserData.class),
+            @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
+            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
+            @ApiResponse(code = 412, message = "Verification token expired. A new one is sent.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response resetUserPassword(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "id", required = true)
+            @PathParam(value = "id") String id,
+
+            @ApiParam(name = "token", required = true)
+            @PathParam(value = "token") String token,
+
+            @ApiParam(name = "password", required = true)
+            @NotNull @Valid String password
+    ) throws SendEmailException, NotFoundException {
+        return Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(new UserData(authService.resetUserPassword(UUID.fromString(id), token, password)))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
     @Path("users/{id}/verify/{token}")
     @POST
     @Produces(UTF8JSON)

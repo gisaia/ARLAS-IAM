@@ -108,10 +108,12 @@ smtp:
   username: ${ARLAS_SMTP_USERNAME:-}
   password: ${ARLAS_SMTP_PASSWORD:-}
   from: ${ARLAS_SMTP_FROM:-}
-  link: ${ARLAS_SMTP_VERIFY_LINK:-/users/%s/verify/%s}
+  verify_link: ${ARLAS_SMTP_VERIFY_LINK:-/users/%s/verify/%s}
+  reset_link: ${ARLAS_SMTP_RESET_LINK:-/users/%s/reset/%s}
   template_dir: ${ARLAS_SMTP_TEMPLATE_DIR:-/opt/app}
   # can be localized, i.e. "verifyEmail_fr.ftlh", "verifyEmail_en.ftlh"...
-  template_file: ${ARLAS_SMTP_TEMPLATE_FILE:-verifyEmail.ftlh}
+  verify_template_file: ${ARLAS_SMTP_VERIFY_TEMPLATE_FILE:-verifyEmail.ftlh}
+  reset_template_file: ${ARLAS_SMTP_RESET_TEMPLATE_FILE:-resetEmail.ftlh}
 
 # Configuration of the cache
 arlas_cache_factory_class: ${ARLAS_IAM_CACHE_FACTORY_CLASS:-io.arlas.commons.cache.NoCacheFactory}

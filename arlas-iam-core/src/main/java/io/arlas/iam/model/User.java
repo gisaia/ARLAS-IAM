@@ -31,6 +31,10 @@ public class User {
     private String password;
 
     @Column
+    @JsonIgnore
+    private String tempToken;
+
+    @Column
     private String firstName;
 
     @Column
@@ -92,6 +96,14 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getTempToken() {
+        return tempToken;
+    }
+
+    public void setTempToken(String tempToken) {
+        this.tempToken = tempToken;
     }
 
     public String getFirstName() {

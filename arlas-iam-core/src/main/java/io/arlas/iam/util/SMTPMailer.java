@@ -55,37 +55,67 @@ public class SMTPMailer {
 
     }
 
-    public void sendEmail(User to, String token) throws SendEmailException {
+    public void sendActivationEmail(User to, String token) throws SendEmailException {
         if (this.conf.activated) {
-            try {
-                Message message = new MimeMessage(session);
-                message.setFrom(new InternetAddress(this.conf.from));
-                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to.getEmail()));
-                var messages = ResourceBundle.getBundle("messages", new Locale(to.getLocale()));
-                message.setSubject(messages.getString("email.subject"));
-
-                var mimeBodyPart = new MimeBodyPart();
-                mimeBodyPart.setContent(getMailContent(to, token), "text/html; charset=utf-8");
-
-                var multipart = new MimeMultipart();
-                multipart.addBodyPart(mimeBodyPart);
-
-                message.setContent(multipart);
-                Transport.send(message);
-            } catch (MessagingException e) {
-                LOGGER.error("Error sending email", e);
-                throw new SendEmailException("Could not send email");
-            }
+            var messages = ResourceBundle.getBundle("messages", new Locale(to.getLocale()));
+            sendEmail(to, messages.getString("email.verify.subject"), getActivationMailContent(to, token));
         } else {
-            LOGGER.warn(String.format("SMTP client not activated. Verification token: %s", token));
+            LOGGER.warn(String.format("SMTP client not activated. Activation token: %s", token));
         }
     }
 
-    public String getMailContent(User to, String token) {
-        var link = String.format(this.conf.link, to.getId().toString(), token);
+    public void sendPasswordResetEmail(User to, String token) throws SendEmailException {
+        if (this.conf.activated) {
+            var messages = ResourceBundle.getBundle("messages", new Locale(to.getLocale()));
+            sendEmail(to, messages.getString("email.reset.subject"), getPasswordResetMailContent(to, token));
+        } else {
+            LOGGER.warn(String.format("SMTP client not activated. Reset token: %s", token));
+        }
+    }
+
+    private void sendEmail(User to, String subject, String body) throws SendEmailException {
+        try {
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(this.conf.from));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to.getEmail()));
+            message.setSubject(subject);
+
+            var mimeBodyPart = new MimeBodyPart();
+            mimeBodyPart.setContent(body, "text/html; charset=utf-8");
+
+            var multipart = new MimeMultipart();
+            multipart.addBodyPart(mimeBodyPart);
+
+            message.setContent(multipart);
+            Transport.send(message);
+        } catch (MessagingException e) {
+            LOGGER.error("Error sending email", e);
+            throw new SendEmailException("Could not send email");
+        }
+    }
+
+    private String getActivationMailContent(User to, String token) {
+        var link = String.format(this.conf.verifyLink, to.getId().toString(), token);
         if (this.freemarkerConf != null) {
             try {
-                var mailTemplate = freemarkerConf.getTemplate(conf.templateFile, new Locale(to.getLocale()));
+                var mailTemplate = freemarkerConf.getTemplate(conf.verifyTemplateFile, new Locale(to.getLocale()));
+                var params = new HashMap<String, String>();
+                params.put("link", link);
+                Writer out = new StringWriter();
+                mailTemplate.process(params, out);
+                return out.toString();
+            } catch (TemplateException | IOException e) {
+                LOGGER.warn("Exception while processing email template. Will use hard coded mail content", e);
+            }
+        }
+        return "Follow this link to verify your email and set your password: " + link;
+    }
+
+    private String getPasswordResetMailContent(User to, String token) {
+        var link = String.format(this.conf.resetLink, to.getId().toString(), token);
+        if (this.freemarkerConf != null) {
+            try {
+                var mailTemplate = freemarkerConf.getTemplate(conf.resetTemplateFile, new Locale(to.getLocale()));
                 var params = new HashMap<String, String>();
                 params.put("link", link);
                 Writer out = new StringWriter();

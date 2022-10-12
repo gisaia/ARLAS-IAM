@@ -24,12 +24,18 @@ public class SMTPConfiguration {
     @JsonProperty("password")
     public String password;
 
-    @JsonProperty("link")
-    public String link;
+    @JsonProperty("verify_link")
+    public String verifyLink;
+
+    @JsonProperty("reset_link")
+    public String resetLink;
 
     @JsonProperty("template_dir")
     public String templateDir;
 
-    @JsonProperty("template_file")
-    public String templateFile;
+    @JsonProperty("verify_template_file")
+    public String verifyTemplateFile;
+
+    @JsonProperty("reset_template_file")
+    public String resetTemplateFile;
 }
