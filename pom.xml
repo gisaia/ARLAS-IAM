@@ -6,7 +6,7 @@
 
     <groupId>io.arlas.iam</groupId>
     <artifactId>arlas-iam-parent</artifactId>
-    <version>23.0.0-beta.7</version>
+    <version>23.0.0-beta.8</version>
     <modules>
         <module>arlas-iam-core</module>
         <module>arlas-iam-rest</module>
@@ -153,6 +153,42 @@
                         <swagger2markup.markupLanguage>MARKDOWN</swagger2markup.markupLanguage>
                     </config>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0-M3</version>
+                <executions>
+                    <execution>
+                        <id>enforce-lib-ban</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <!-- the activation framework was renamed to jarkata activation framework -->
+                                    <excludes>
+                                        <exclude>javax.activation:javax.actication-api</exclude>
+                                        <exclude>com.sun.activation:javax.activation</exclude>
+                                        <exclude>javax.activation:activation</exclude>
+                                    </excludes>
+                                    <message>use jakarta.activation:jakarta.activation-api or com.sun.activation:jakarta.activation instead of javax.activation</message>
+                                </bannedDependencies>
+                                <!-- if you use com.sun.activation:jakarta.activation -->
+                                <bannedDependencies>
+                                    <!-- the implementation com.sun.activation:jakarta.activation contains the api classes too -->
+                                    <excludes>
+                                        <exclude>jakarta.activation:jakarta.activation-api</exclude>
+                                    </excludes>
+                                    <message>the implementation com.sun.activation:jakarta.activation is included and it contains the api classes too</message>
+                                </bannedDependencies>
+                                <!--  -->
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

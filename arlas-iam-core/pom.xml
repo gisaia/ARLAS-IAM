@@ -5,7 +5,7 @@
     <parent>
         <artifactId>arlas-iam-parent</artifactId>
         <groupId>io.arlas.iam</groupId>
-        <version>23.0.0-beta.7</version>
+        <version>23.0.0-beta.8</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -16,12 +16,24 @@
             <groupId>io.arlas</groupId>
             <artifactId>arlas-commons</artifactId>
             <version>${arlas.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>jakarta.activation</groupId>
+                    <artifactId>jakarta.activation-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
             <groupId>io.arlas</groupId>
             <artifactId>arlas-server-client</artifactId>
             <version>${arlas.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>jakarta.activation</groupId>
+                    <artifactId>jakarta.activation-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -54,8 +66,8 @@
             <version>${jakartamail.version}</version>
             <exclusions>
                 <exclusion>
-                    <artifactId>jakarta.activation</artifactId>
                     <groupId>com.sun.activation</groupId>
+                    <artifactId>jakarta.activation</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
