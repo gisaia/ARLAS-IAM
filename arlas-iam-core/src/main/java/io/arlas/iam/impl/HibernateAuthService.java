@@ -83,13 +83,13 @@ public class HibernateAuthService implements AuthService {
     }
 
     private void sendActivationEmail(User user, String token) throws SendEmailException {
-        mailer.sendEmail(user, token);
+        mailer.sendActivationEmail(user, token);
     }
 
     private void generateNewVerificationToken(User user) throws SendEmailException {
         String verifyToken = KeyGenerators.string().generateKey();
         user.setCreationDate(LocalDateTime.now(ZoneOffset.UTC));
-        user.setPassword(encode(verifyToken));
+        user.setTempToken(verifyToken);
         userDao.updateUser(user);
         sendActivationEmail(user, verifyToken);
     }
@@ -221,8 +221,11 @@ public class HibernateAuthService implements AuthService {
             if (userDao.readUser(email).isEmpty()) {
                 var user = new User(email);
                 // in testing mode, we set the password to a known value
-                String verifyToken = this.verifyEmail ? KeyGenerators.string().generateKey() : "secret";
-                user.setPassword(encode(verifyToken));
+                String verifyToken = KeyGenerators.string().generateKey();
+                user.setTempToken(verifyToken);
+                if (!this.verifyEmail) {
+                    user.setPassword(encode("secret"));
+                }
                 user.setLocale(locale != null ? locale : Locale.ENGLISH.toString());
                 user.setTimezone(timezone != null ? timezone : "Europe/Paris");
                 user.setVerified(!this.verifyEmail);
@@ -231,7 +234,7 @@ public class HibernateAuthService implements AuthService {
                     sendActivationEmail(user, verifyToken);
                 } else {
                     try {
-                        verifyUser(user.getId(), verifyToken, user.getPassword());
+                        verifyUser(user.getId(), verifyToken, user.getTempToken());
                     } catch (AlreadyVerifiedException | NonMatchingPasswordException | InvalidTokenException | NotFoundException ignored) {
                     }
                 }
@@ -347,6 +350,29 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
+    public void askPasswordReset(String email) throws SendEmailException {
+        Optional<User> user = userDao.readUser(email);
+        if (user.isPresent()) {
+            var u = user.get();
+            String resetToken = KeyGenerators.string().generateKey();
+            u.setTempToken(resetToken);
+            userDao.updateUser(u);
+            mailer.sendPasswordResetEmail(u, resetToken);
+        }
+    }
+
+    @Override
+    public User resetUserPassword(UUID userId, String resetToken, String password) throws NotFoundException {
+        var u = readUser(userId).orElseThrow(() -> new NotFoundException("User not found."));
+        if (resetToken.equals(u.getTempToken())) {
+            u.setPassword(encode(password));
+            u.setTempToken(null);
+            userDao.updateUser(u);
+        }
+        return u;
+    }
+
+    @Override
     public boolean checkOrganisation(User owner) {
         return organisationDao.readOrganisation(getUserDomain(owner)).isPresent();
     }
@@ -363,9 +389,10 @@ public class HibernateAuthService implements AuthService {
             generateNewVerificationToken(u);
             throw new InvalidTokenException("Verification token expired.");
         }
-        if (matches(verifyToken, u.getPassword())) {
+        if (verifyToken.equals(u.getTempToken())) {
             u.setPassword(encode(password));
             u.setVerified(true);
+            u.setTempToken(null);
             userDao.updateUser(u);
             try {
                 createOrganisation(u, getUserOrgName(u));
