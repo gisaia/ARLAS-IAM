@@ -696,6 +696,31 @@ public class HibernateAuthService implements AuthService {
         return getOrganisation(owner, orgId).getPermissions();
     }
 
+    // TODO: use method from ARLAS Server once released
+    private boolean isColumnFilterHeader(String header) {
+        return header != null && header.startsWith("h:column-filter:");
+    }
+
+    private List<String> extractCollections(String columnFilter) {
+        return Arrays.stream(columnFilter.substring("h:column-filter:".length()).split(","))
+                .map(s -> s.split(":")[0]).toList();
+    }
+
+    @Override
+    public List<String> listCollectionsOfColumnFilter(User owner, UUID orgId, String token) throws ArlasException {
+        var org = getOrganisation(owner, orgId);
+        List<String> collections = org.getPermissions().stream()
+                .filter(p -> isColumnFilterHeader(p.getValue()))
+                .flatMap(p -> extractCollections(p.getValue()).stream())
+                .toList();
+
+        if (collections.contains(org.getName() + "_*")) {
+            return getOrganisationCollections(owner, orgId, token);
+        } else {
+            return collections;
+        }
+    }
+
     @Override
     public Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException {
         var org = getOrganisation(owner, orgId);
