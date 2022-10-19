@@ -36,7 +36,7 @@
         <maven.compiler.version>3.10.1</maven.compiler.version>
         <maven.shade.version>3.2.4</maven.shade.version>
 
-        <arlas.version>23.0.3</arlas.version>
+        <arlas.version>23.0.4</arlas.version>
         <postgresql.version>42.5.0</postgresql.version>
         <spring.security.version>5.7.3</spring.security.version>
         <jackson.databind.version>2.13.4</jackson.databind.version>
