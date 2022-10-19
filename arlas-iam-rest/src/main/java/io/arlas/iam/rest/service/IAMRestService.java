@@ -180,7 +180,7 @@ public class IAMRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = String.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class),
             @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
@@ -193,7 +193,7 @@ public class IAMRestService {
             @NotNull @Valid String email
     ) throws SendEmailException {
         authService.askPasswordReset(email);
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity("ok")
                 .type(MediaType.TEXT_PLAIN)
                 .build();
@@ -1265,6 +1265,34 @@ public class IAMRestService {
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new PermissionData(authService.createPermission(getUser(headers), UUID.fromString(oid), permission.value, permission.description)))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
+    @Path("organisations/{oid}/permissions/columnfilter")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "List collections of a column filter of an organisation",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class, responseContainer = "List"),
+            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork(readOnly = true)
+    public Response getCollectionsOfColumnFiltersInOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid
+    ) throws ArlasException {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.listCollectionsOfColumnFilter(getUser(headers), UUID.fromString(oid), headers.getHeaderString(HttpHeaders.AUTHORIZATION)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
