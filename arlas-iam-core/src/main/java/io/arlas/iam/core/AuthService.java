@@ -66,7 +66,7 @@ public interface AuthService {
     Permission updateColumnFilter(User owner, UUID orgId, UUID permissionId, List<String> collections, String token) throws ArlasException;
     Set<String> listPermissions(UUID userId) throws NotFoundException;
     Set<Permission> listPermissions(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
-    List<String> listCollectionsOfColumnFilter(User owner, UUID orgId, String token) throws ArlasException;
+    List<String> getCollectionsOfColumnFilter(User owner, UUID orgId, UUID permissionId, String token) throws ArlasException;
     Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException;
 
     Role addPermissionToRole(User owner, UUID orgId, UUID roleId, UUID permissionId) throws NotFoundException, NotOwnerException;

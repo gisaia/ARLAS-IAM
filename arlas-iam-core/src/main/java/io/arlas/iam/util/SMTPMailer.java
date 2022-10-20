@@ -36,6 +36,9 @@ public class SMTPMailer {
             props.put("mail.smtp.host", conf.host);
             props.put("mail.smtp.port", conf.port);
             props.put("mail.smtp.auth", "true");
+            if (conf.port.equals("587")) {
+                props.put("mail.smtp.starttls.enable", "true");
+            }
             this.session = Session.getInstance(props, new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
