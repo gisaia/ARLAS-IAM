@@ -1270,7 +1270,7 @@ public class IAMRestService {
     }
 
     @Timed
-    @Path("organisations/{oid}/permissions/columnfilter")
+    @Path("organisations/{oid}/permissions/columnfilter/{pid}")
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -1289,10 +1289,13 @@ public class IAMRestService {
             @Context HttpHeaders headers,
 
             @ApiParam(name = "oid", required = true)
-            @PathParam(value = "oid") String oid
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "pid", required = true)
+            @PathParam(value = "pid") String pid
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.listCollectionsOfColumnFilter(getUser(headers), UUID.fromString(oid), headers.getHeaderString(HttpHeaders.AUTHORIZATION)))
+                .entity(authService.getCollectionsOfColumnFilter(getUser(headers), UUID.fromString(oid), UUID.fromString(pid), headers.getHeaderString(HttpHeaders.AUTHORIZATION)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
