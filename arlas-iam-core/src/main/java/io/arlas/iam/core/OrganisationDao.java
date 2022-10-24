@@ -19,4 +19,6 @@ public interface OrganisationDao {
 
     Set<OrganisationMember> listUsers(Organisation organisation); // list users from the same organisations as the requesting user
 
+    Set<Organisation> listOrganisations();
+
 }
