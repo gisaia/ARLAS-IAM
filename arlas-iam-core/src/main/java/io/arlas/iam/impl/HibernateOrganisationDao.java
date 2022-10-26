@@ -1,8 +1,8 @@
 package io.arlas.iam.impl;
 
+import io.arlas.iam.core.OrganisationDao;
 import io.arlas.iam.model.Organisation;
 import io.arlas.iam.model.OrganisationMember;
-import io.arlas.iam.core.OrganisationDao;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
@@ -38,5 +38,10 @@ public class HibernateOrganisationDao extends AbstractDAO<Organisation> implemen
     @Override
     public Set<OrganisationMember> listUsers(Organisation organisation) {
         return organisation.getMembers();
+    }
+
+    @Override
+    public Set<Organisation> listOrganisations() {
+        return Set.copyOf(currentSession().createQuery("SELECT o FROM Organisation o", Organisation.class).getResultList());
     }
 }

@@ -479,7 +479,11 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public Set<Organisation> listOrganisations(User user) {
-        return userDao.listOrganisations(user);
+        if (isAdmin(user)) {
+            return organisationDao.listOrganisations();
+        } else {
+            return userDao.listOrganisations(user);
+        }
     }
 
     @Override
