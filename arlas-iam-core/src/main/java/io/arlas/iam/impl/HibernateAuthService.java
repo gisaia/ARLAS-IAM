@@ -179,11 +179,11 @@ public class HibernateAuthService implements AuthService {
 
     private Map<String, List<String>> listRoles(UUID userId) throws NotFoundException {
         Map<String, List<String>> orgRoles = new HashMap<>();
-        // we return a map of {"" -> [ roles...], "orgName1_" -> [ roles...], ...}
+        // we return a map of {"" -> [ roles...], "orgName1" -> [ roles...], ...}
         // (the empty key is for cross org roles such as "role/iam/admin")
         readUser(userId).orElseThrow(NotFoundException::new).getRoles()
                 .forEach(r -> {
-                    String orgName = r.getOrganisation().map(o -> o.getName()+"_").orElseGet(String::new);
+                    String orgName = r.getOrganisation().map(o -> o.getName()).orElseGet(String::new);
                     List<String> roles = Optional.ofNullable(orgRoles.get(orgName)).orElseGet(ArrayList::new);
                     roles.add(r.getName());
                     orgRoles.put(orgName, roles);
