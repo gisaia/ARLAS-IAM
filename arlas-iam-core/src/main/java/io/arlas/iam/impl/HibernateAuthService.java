@@ -700,16 +700,10 @@ public class HibernateAuthService implements AuthService {
         return getOrganisation(owner, orgId).getPermissions();
     }
 
-    // TODO: use method from ARLAS Server once released
-    private List<String> extractCollections(String columnFilter) {
-        return Arrays.stream(columnFilter.substring("h:column-filter:".length()).split(","))
-                .map(s -> s.split(":")[0]).toList();
-    }
-
     @Override
     public List<String> getCollectionsOfColumnFilter(User owner, UUID orgId, UUID permissionId, String token) throws ArlasException {
         var org = getOrganisation(owner, orgId);
-        List<String> collections = extractCollections(getPermission(org, permissionId).getValue());
+        List<String> collections = ArlasClaims.extractCollections(getPermission(org, permissionId).getValue());
 
         if (collections.contains(org.getName() + "_*")) {
             return getOrganisationCollections(owner, orgId, token);

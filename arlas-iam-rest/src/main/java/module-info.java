@@ -25,5 +25,4 @@ module arlas.iam.rest {
     requires swagger.annotations;
     requires org.eclipse.jetty.servlets;
     requires org.slf4j;
-    requires zipkin.core;
 }
