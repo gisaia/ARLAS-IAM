@@ -2,8 +2,6 @@ package io.arlas.iam.rest;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.smoketurner.dropwizard.zipkin.ZipkinBundle;
-import com.smoketurner.dropwizard.zipkin.ZipkinFactory;
 import io.arlas.commons.cache.BaseCacheManager;
 import io.arlas.commons.cache.CacheFactory;
 import io.arlas.commons.config.ArlasAuthConfiguration;
@@ -73,12 +71,6 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
             @Override
             protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(ArlasAuthServerConfiguration configuration) {
                 return configuration.swaggerBundleConfiguration;
-            }
-        });
-        bootstrap.addBundle(new ZipkinBundle<>(getName()) {
-            @Override
-            public ZipkinFactory getZipkinFactory(ArlasAuthServerConfiguration configuration) {
-                return configuration.zipkinConfiguration;
             }
         });
         bootstrap.addBundle(hibernate);
