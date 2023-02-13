@@ -1,11 +1,14 @@
 package io.arlas.iam.rest.service;
 
 import com.codahale.metrics.annotation.Timed;
+import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.commons.exceptions.NotAllowedException;
 import io.arlas.commons.exceptions.NotFoundException;
 import io.arlas.commons.rest.response.Error;
-import io.arlas.filter.config.TechnicalRoles;
+import io.arlas.commons.rest.utils.ServerConstants;
+import io.arlas.filter.core.IdentityParam;
+import io.arlas.filter.core.PolicyEnforcer;
 import io.arlas.iam.core.AuthService;
 import io.arlas.iam.exceptions.*;
 import io.arlas.iam.model.ForbiddenOrganisation;
@@ -14,17 +17,17 @@ import io.arlas.iam.model.User;
 import io.arlas.iam.rest.model.input.*;
 import io.arlas.iam.rest.model.output.*;
 import io.arlas.iam.util.ArlasAuthServerConfiguration;
-import io.arlas.iam.util.IdentityParam;
 import io.dropwizard.hibernate.UnitOfWork;
 import io.swagger.annotations.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Path("/")
 @Api(value = "/")
@@ -42,19 +45,14 @@ import java.util.*;
         )
 )
 public class IAMRestService {
-    private final Logger LOGGER = LoggerFactory.getLogger(IAMRestService.class);
     public static final String UTF8JSON = MediaType.APPLICATION_JSON + ";charset=utf-8";
 
     protected final AuthService authService;
-    protected final String userHeader;
-    protected final String groupsHeader;
-    protected final String anonymousValue;
+    private final ArlasAuthConfiguration configuration;
 
     public IAMRestService(AuthService authService, ArlasAuthServerConfiguration configuration) {
         this.authService = authService;
-        this.userHeader = configuration.arlasAuthConfiguration.headerUser;
-        this.groupsHeader = configuration.arlasAuthConfiguration.headerGroup;
-        this.anonymousValue = configuration.anonymousValue;
+        this.configuration = configuration.arlasAuthConfiguration;
     }
 
     // --------------- Users ---------------------
@@ -118,7 +116,7 @@ public class IAMRestService {
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
+    @ApiOperation(
             value = "Refresh access token",
             produces = UTF8JSON,
             consumes = UTF8JSON
@@ -137,7 +135,7 @@ public class IAMRestService {
             @PathParam(value = "refreshToken") String refreshToken
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(new LoginData(authService.refresh(getUser(headers), refreshToken, uriInfo.getBaseUri().getHost())))
+                .entity(new LoginData(authService.refresh(headers.getHeaderString(HttpHeaders.AUTHORIZATION), refreshToken, uriInfo.getBaseUri().getHost())))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
@@ -1555,11 +1553,13 @@ public class IAMRestService {
     @UnitOfWork(readOnly = true)
     public Response getPermissionToken(
             @Context UriInfo uriInfo,
-            @Context HttpHeaders headers
-    ) throws ArlasException {
+            @Context HttpHeaders headers,
 
+            @ApiParam(name = ServerConstants.ARLAS_ORG_FILTER)
+            @QueryParam(value = ServerConstants.ARLAS_ORG_FILTER) String orgFilter
+    ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.createPermissionToken(getIdentityParam(headers).userId, uriInfo.getBaseUri().getHost(), new Date()))
+                .entity(authService.createPermissionToken(getIdentityParam(headers).userId, orgFilter, uriInfo.getBaseUri().getHost(), new Date()))
                 .type(MediaType.TEXT_PLAIN_TYPE)
                 .build();
     }
@@ -1582,15 +1582,6 @@ public class IAMRestService {
     }
 
     protected IdentityParam getIdentityParam(HttpHeaders headers) {
-        String userId = Optional.ofNullable(headers.getHeaderString(this.userHeader))
-                .orElse(this.anonymousValue);
-
-        List<String> groups = Arrays.stream(
-                        Optional.ofNullable(headers.getHeaderString(this.groupsHeader)).orElse(TechnicalRoles.GROUP_PUBLIC).split(","))
-                .map(String::trim)
-                .toList();
-
-        LOGGER.debug("User='" + userId + "' / Groups='" + groups + "'");
-        return new IdentityParam(userId, groups);
+        return new IdentityParam(configuration, headers);
     }
 }

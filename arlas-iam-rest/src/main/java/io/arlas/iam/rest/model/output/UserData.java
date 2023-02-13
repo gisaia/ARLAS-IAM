@@ -47,7 +47,9 @@ public class UserData implements Comparable {
             Collections.sort(organisations);
         }
         user.getRoles().stream()
-                .filter(r -> org == null || (r.getOrganisation().isPresent() && r.getOrganisation().get().is(org)))
+                .filter(r -> org == null
+                        || (r.getOrganisation().isPresent() && r.getOrganisation().get().is(org))
+                        || r.getOrganisation().isEmpty())
                 .forEach(r -> roles.add(new RoleData(r)));
     }
 

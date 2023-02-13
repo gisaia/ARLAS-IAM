@@ -16,8 +16,8 @@ public interface AuthService {
     LoginSession login(String email, String password, String issuer) throws ArlasException;
     DecodedJWT verifyToken(String token);
     void logout(UUID userId);
-    LoginSession refresh(User user, String refreshToken, String issuer) throws ArlasException;
-    String createPermissionToken(String subject, String issuer, Date iat) throws ArlasException;
+    LoginSession refresh(String authHeader, String refreshToken, String issuer) throws ArlasException;
+    String createPermissionToken(String subject, String orgFilter, String issuer, Date iat) throws ArlasException;
 
     User createUser(String email, String locale, String timezone) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
     User verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException, InvalidTokenException, SendEmailException, NotFoundException;
@@ -64,7 +64,7 @@ public interface AuthService {
     Permission createColumnFilter(User user, UUID fromString, List<String> collections, String token) throws ArlasException;
     Permission updatePermission(User owner, UUID orgId, UUID permissionId, String value, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException;
     Permission updateColumnFilter(User owner, UUID orgId, UUID permissionId, List<String> collections, String token) throws ArlasException;
-    Set<String> listPermissions(UUID userId) throws NotFoundException;
+    Set<String> listPermissions(UUID userId, String orgFilter) throws NotFoundException;
     Set<Permission> listPermissions(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
     List<String> getCollectionsOfColumnFilter(User owner, UUID orgId, UUID permissionId, String token) throws ArlasException;
     Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException;

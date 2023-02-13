@@ -1,5 +1,7 @@
 package io.arlas.iam.impl;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.client.ApiException;
 import io.arlas.commons.exceptions.ArlasException;
@@ -25,6 +27,7 @@ import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.arlas.commons.rest.utils.ServerConstants.NO_ORG;
 import static io.arlas.filter.config.TechnicalRoles.*;
 
 public class HibernateAuthService implements AuthService {
@@ -157,7 +160,7 @@ public class HibernateAuthService implements AuthService {
     private User getAdmin() {
         if (this.admin == null) {
             // admin has been created at application startup so it must exist
-            this.admin = userDao.readUser(initConf.admin).get();
+            this.admin = userDao.readUser(initConf.admin).orElseGet(() -> new User(initConf.admin));
         }
         return this.admin;
     }
@@ -173,25 +176,27 @@ public class HibernateAuthService implements AuthService {
     private Set<Role> importDefaultAdminRole(User admin) {
         return TechnicalRoles.getTechnicalRolesList().stream()
                 .filter(systemRoles::contains)
-                .map(s -> roleDao.createOrUpdateRole(new Role(s, true).setUsers(Set.of(admin))))
+                .map(s -> roleDao.createOrUpdateRole(new Role(s, true).setUsers(Set.of(admin)).setTechnical(true)))
                 .collect(Collectors.toSet());
     }
 
-    private Map<String, List<String>> listRoles(UUID userId) throws NotFoundException {
+    private Map<String, List<String>> listRoles(UUID userId, String orgFilter) throws NotFoundException {
         Map<String, List<String>> orgRoles = new HashMap<>();
         // we return a map of {"" -> [ roles...], "orgName1" -> [ roles...], ...}
         // (the empty key is for cross org roles such as "role/iam/admin")
         readUser(userId).orElseThrow(NotFoundException::new).getRoles()
                 .forEach(r -> {
-                    String orgName = r.getOrganisation().map(o -> o.getName()).orElseGet(String::new);
-                    List<String> roles = Optional.ofNullable(orgRoles.get(orgName)).orElseGet(ArrayList::new);
-                    roles.add(r.getName());
-                    orgRoles.put(orgName, roles);
+                    String orgName = r.getOrganisation().map(Organisation::getName).orElse(NO_ORG);
+                    if (orgFilter == null || orgName.equals(orgFilter) || orgName.equals(NO_ORG)) {
+                        List<String> roles = Optional.ofNullable(orgRoles.get(orgName)).orElseGet(ArrayList::new);
+                        roles.add(r.getName());
+                        orgRoles.put(orgName, roles);
+                    }
                 });
         // manually add "group/public" which is given to everybody
-        List<String> publicRole = Optional.ofNullable(orgRoles.get("")).orElseGet(ArrayList::new);
+        List<String> publicRole = Optional.ofNullable(orgRoles.get(NO_ORG)).orElseGet(ArrayList::new);
         publicRole.add(GROUP_PUBLIC);
-        orgRoles.put("", publicRole);
+        orgRoles.put(NO_ORG, publicRole);
         return orgRoles;
     }
 
@@ -287,7 +292,19 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public LoginSession refresh(User user, String refreshToken, String issuer) throws ArlasException {
+    public LoginSession refresh(String authHeader, String refreshToken, String issuer) throws ArlasException {
+        if (authHeader == null || !authHeader.toLowerCase().startsWith("bearer ")) {
+            throw new InvalidTokenException("Invalid access token: " + authHeader);
+        }
+        User user = null;
+        try {
+            String accessToken = authHeader.substring(7);
+            DecodedJWT t = JWT.decode(accessToken);
+            user = readUser(UUID.fromString(t.getSubject()), true);
+        } catch (JWTDecodeException e) {
+            throw new InvalidTokenException("Invalid access token: " + authHeader, e);
+        }
+
         RefreshToken token = tokenDao.read(refreshToken).orElseThrow(() -> new InvalidTokenException("Invalid refresh token."));
         if (user.is(token.getUserId()) && token.getExpiryDate() >= System.currentTimeMillis() / 1000) {
             LoginSession ls = tokenManager.getLoginSession(user, issuer, new Date());
@@ -299,11 +316,12 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public String createPermissionToken(String subject, String issuer, Date iat)
+    public String createPermissionToken(String subject, String orgFilter, String issuer, Date iat)
             throws ArlasException {
+        LOGGER.info("Getting permission token with orgFilter="+orgFilter);
         return tokenManager.createPermissionToken(subject, issuer, iat,
-                listPermissions(UUID.fromString(subject)),
-                listRoles(UUID.fromString(subject)));
+                listPermissions(UUID.fromString(subject), orgFilter),
+                listRoles(UUID.fromString(subject), orgFilter));
     }
 
     @Override
@@ -429,8 +447,8 @@ public class HibernateAuthService implements AuthService {
             Organisation organisation = organisationDao.createOrganisation(new Organisation(name));
             // create default permissions
             var allDataPermission = createPermission(organisation,
-                    ArlasClaims.getHeaderColumnFilterDefault(name),
-                    "View all collections' data (" + name + "_*).");
+                    ArlasClaims.getHeaderColumnFilterDefault(""),
+                    "View all collections' data");
             // create default roles
             var defaultGroup = createRole(organisation, TechnicalRoles.getDefaultGroup(name),
                     "Default organisation group for dashboard sharing.");
@@ -652,7 +670,9 @@ public class HibernateAuthService implements AuthService {
         var org = getOrganisation(owner, orgId);
         var user = getUser(org, userId);
         List<String> currentRoles = user.getRoles().stream()
-                .filter(r -> org.is(r.getOrganisation().orElse(null)))
+                .filter(r ->
+                        org.is(r.getOrganisation().orElse(null))
+                        && !(r.isTechnical() && !r.isGroup())) // ignore technical roles except default group
                 .map(r -> r.getId().toString())
                 .toList();
 
@@ -688,10 +708,16 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Set<String> listPermissions(UUID userId) throws NotFoundException {
+    public Set<String> listPermissions(UUID userId, String orgFilter) throws NotFoundException {
         var user = readUser(userId).orElseThrow(() -> new NotFoundException("User not found."));
         Set<Permission> permissions = new HashSet<>();
-        user.getRoles().forEach(r -> permissions.addAll(r.getPermissions()));
+        user.getRoles().forEach(r -> {
+            String orgName = r.getOrganisation().map(Organisation::getName).orElse(NO_ORG);
+            if (orgFilter == null || orgName.equals(orgFilter) || orgName.equals(NO_ORG)) {
+                permissions.addAll(r.getPermissions());
+            }
+        });
+
         return permissions.stream().map(Permission::getValue).collect(Collectors.toSet());
     }
 

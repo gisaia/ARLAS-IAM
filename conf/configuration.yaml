@@ -41,7 +41,7 @@ swagger: # Configuration of SWAGGER for generating documentation and APIs
 arlas_cors:
   enabled: ${ARLAS_CORS_ENABLED:-true}
   allowed_origins: ${ARLAS_CORS_ALLOWED_ORIGINS:-"*"}
-  allowed_headers: ${ARLAS_CORS_ALLOWED_HEADERS:-"arlas-user,arlas-groups,arlas-organization,X-Requested-With,Content-Type,Accept,Origin,Authorization,WWW-Authenticate"}
+  allowed_headers: ${ARLAS_CORS_ALLOWED_HEADERS:-"arlas-user,arlas-groups,arlas-organization,arlas-org-filter,X-Requested-With,Content-Type,Accept,Origin,Authorization,WWW-Authenticate"}
   allowed_methods: ${ARLAS_CORS_ALLOWED_METHODS:-"OPTIONS,GET,PUT,POST,DELETE,HEAD"}
   allowed_credentials: ${ARLAS_CORS_ALLOWED_CREDENTIALS:-true}
   exposed_headers: ${ARLAS_CORS_EXPOSED_HEADERS:-"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,Location,WWW-Authenticate"}
@@ -53,9 +53,10 @@ arlas_auth:
   refresh_token_ttl: ${ARLAS_REFRESH_TOKEN_TTL:-3600000}
   # Verify token time to live in millisecond
   verify_token_ttl: ${ARLAS_VERIFY_TOKEN_TTL:-86400000}
-  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST}]
+  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,session/.*:PUT,users:POST,users/.*:POST}]
   header_user: ${ARLAS_HEADER_USER:-arlas-user}
   header_group: ${ARLAS_HEADER_GROUP:-arlas-groups}
+  anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}
   claim_roles: ${ARLAS_CLAIM_ROLES:-http://arlas.io/roles}
   claim_permissions: ${ARLAS_CLAIM_PERMISSIONS:-http://arlas.io/permissions}
   init:
@@ -63,9 +64,7 @@ arlas_auth:
     password: ${ARLAS_AUTH_INIT_PASSWORD:-admin}
     timezone: ${ARLAS_AUTH_INIT_TIMEZONE:-Europe/Paris}
     locale: ${ARLAS_AUTH_INIT_LOCALE:-en}
-    organisation: ${ARLAS_AUTH_INIT_ORG:-all}
 
-anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}
 # set this to "false" if you don't want new users to verify their email
 verify_email: ${ARLAS_IAM_VERIFY_EMAIL:-true}
 

@@ -111,8 +111,9 @@ public class Role {
         return isTechnical;
     }
 
-    public void setTechnical(boolean technical) {
+    public Role setTechnical(boolean technical) {
         isTechnical = technical;
+        return this;
     }
 
     public Optional<Organisation> getOrganisation() {
