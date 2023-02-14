@@ -4,6 +4,8 @@ import io.arlas.client.ApiClient;
 import io.arlas.client.ApiException;
 import io.arlas.client.api.CollectionsApi;
 import io.arlas.client.model.CollectionReference;
+import io.arlas.commons.rest.utils.ServerConstants;
+import io.arlas.filter.core.PolicyEnforcer;
 import io.arlas.iam.util.ArlasAuthServerConfiguration;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -20,11 +22,11 @@ public class ArlasService {
         return new CollectionsApi(
                 new ApiClient()
                         .setBasePath(arlasServerBasePath)
-                        .addDefaultHeader(HttpHeaders.AUTHORIZATION, token))
+                        .addDefaultHeader(HttpHeaders.AUTHORIZATION, token)
+                        .addDefaultHeader(ServerConstants.ARLAS_ORG_FILTER, organisation))
                 .getAll(false)
                 .stream()
                 .map(CollectionReference::getCollectionName)
-                .filter(c -> c.startsWith(organisation))
                 .toList();
     }
 }

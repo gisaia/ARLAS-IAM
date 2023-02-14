@@ -27,7 +27,7 @@ public class AuthITUser {
     private static final String PERMISSION1_DESC = "p1_desc";
     private static final String PERMISSION2 = "p2";
     private static final String PERMISSION2_DESC = "p2_desc";
-    private static final String PERMISSION_GROUP = "h:column-filter:foo.com_*:*";
+    private static final String PERMISSION_GROUP = "h:column-filter:*:*";
 
     protected static String arlasAppPath;
     protected static final String userHeader;

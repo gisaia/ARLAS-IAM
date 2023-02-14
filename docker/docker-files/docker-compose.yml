@@ -44,7 +44,7 @@ services:
       - ARLAS_IAM_PREFIX="${ARLAS_IAM_PREFIX:-/arlas_iam_server}"
       - ARLAS_IAM_APP_PATH="${ARLAS_IAM_APP_PATH:-/}"
       - ARLAS_ANONYMOUS_VALUE="${ARLAS_ANONYMOUS_VALUE:-anonymous}"
-      - ARLAS_AUTH_PUBLIC_URIS=${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,users:POST,users/.*:POST}
+      - ARLAS_AUTH_PUBLIC_URIS=${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,session/.*:PUT,users:POST,users/.*:POST}
       - ARLAS_IAM_VERIFY_EMAIL="${ARLAS_IAM_VERIFY_EMAIL:-true}"
       - ARLAS_IAM_HIBERNATE_URL="${ARLAS_IAM_HIBERNATE_URL:-jdbc:postgresql://db:5432/arlas_iam}"
       - ARLAS_IAM_HIBERNATE_USER="${ARLAS_IAM_HIBERNATE_USER:-pg-user}"
@@ -63,5 +63,51 @@ services:
       - ARLAS_IAM_LOGGING_LEVEL="${ARLAS_IAM_LOGGING_LEVEL:-INFO}"
       - ARLAS_IAM_LOGGING_CONSOLE_LEVEL="${ARLAS_IAM_LOGGING_CONSOLE_LEVEL:-INFO}"
       - ARLAS_SERVER_URL="${ARLAS_SERVER_URL:-http://arlas-server:9999/arlas/}"
+      - ARLAS_ACCESS_TOKEN_TTL="${ARLAS_ACCESS_TOKEN_TTL:-600000}"
     ports:
       - "9997:9997"
+
+  arlas-server:
+    image: gisaia/arlas-server:23.0.9
+    container_name: arlas-server
+    labels:
+      co.elastic.logs/enabled: true
+      co.elastic.logs/json.keys_under_root: true
+      co.elastic.logs/json.overwrite_keys: true
+      co.elastic.logs/json.add_error_key: true
+      co.elastic.logs/json.expand_keys: true
+    environment:
+    - ARLAS_ELASTIC_NODES=${ARLAS_ELASTIC_NODES:-690a605d3db34f749f1c7bb57e08e45f.europe-west1.gcp.cloud.es.io:9243}
+    - ARLAS_ELASTIC_ENABLE_SSL="${ARLAS_ELASTIC_ENABLE_SSL:-true}"
+    - ARLAS_ELASTIC_CREDENTIALS="${ARLAS_ELASTIC_CREDENTIALS:-elastic:ZR45O3x5sUJWJJ6PxsB8dkPQ}"
+    - ARLAS_ELASTIC_SKIP_MASTER="${ARLAS_ELASTIC_SKIP_MASTER:-true}"
+    - ARLAS_PREFIX="${ARLAS_PREFIX:-/arlas}"
+    - ARLAS_APP_PATH="${ARLAS_APP_PATH:-/}"
+    - ARLAS_BASE_URI="${ARLAS_BASE_URI:-http://arlas-server:9999/arlas/}"
+    - ARLAS_SERVICE_WFS_ENABLE="${ARLAS_SERVICE_WFS_ENABLE:-false}"
+    - ARLAS_INSPIRE_ENABLED="${ARLAS_INSPIRE_ENABLED:-false}"
+    - ARLAS_SERVICE_CSW_ENABLE="${ARLAS_SERVICE_CSW_ENABLE:-false}"
+    - ARLAS_SERVICE_RASTER_TILES_ENABLE="${ARLAS_SERVICE_RASTER_TILES_ENABLE:-false}"
+    - ARLAS_AUTH_POLICY_CLASS="${ARLAS_AUTH_POLICY_CLASS:-io.arlas.filter.impl.HTTPPolicyEnforcer}"
+    - ARLAS_AUTH_PERMISSION_URL="${ARLAS_AUTH_PERMISSION_URL:-http://arlas-iam-server:9997/arlas_iam_server/permissions}"
+    - ARLAS_CORS_ENABLED="${ARLAS_CORS_ENABLED:-false}"
+    - ARLAS_AUTH_CERT_URL="${ARLAS_AUTH_CERT_URL}"
+    - ARLAS_CACHE_FACTORY_CLASS="${ARLAS_CACHE_FACTORY_CLASS:-io.arlas.server.core.impl.cache.HazelcastCacheFactory}"
+    - ARLAS_CACHE_TIMEOUT="${ARLAS_CACHE_TIMEOUT:-5}"
+    - ARLAS_LOGGING_LEVEL=DEBUG
+    - ARLAS_LOGGING_CONSOLE_LEVEL=DEBUG
+    - ARLAS_ELASTIC_INDEX=.iamtest_arlas
+    #      - ELASTIC_APM_LOG_ECS_REFORMATTING=OVERRIDE
+    #      - ELASTIC_APM_LOG_ECS_FORMATTER_ALLOW_LIST=*
+    #      - ELASTIC_APM_APPLICATION_PACKAGES=io.arlas
+    #      - ELASTIC_APM_ENVIRONMENT=dev.cloud.arlas.io
+    #      - ELASTIC_APM_TRANSACTION_IGNORE_USER_AGENTS=GoogleHC/*, kube-probe/*, curl*, GoogleStackdriverMonitoring*
+    #      - ELASTIC_APM_SECRET_TOKEN=YDaIBr3Pfm9k69xuZk
+    #      - ELASTIC_APM_SERVER_URLS=https://1b48d14497994c518cf959079ddcfd6d.apm.europe-west1.gcp.cloud.es.io
+    #      - ELASTIC_APM_SERVICE_NAME=arlas-server
+    #      - ELASTIC_APM_USE_JAXRS_PATH_AS_TRANSACTION_NAME=true
+    #      - JDK_JAVA_OPTIONS=-javaagent:/opt/app/elastic-apm-agent.jar
+    ports:
+      - "9999:9999"
+    volumes:
+      - ${ARLAS_AUTH_LOCAL_CERT_FILE:-/tmp}:${ARLAS_AUTH_CERT_FILE:-/opt/app/arlas.pem}:ro

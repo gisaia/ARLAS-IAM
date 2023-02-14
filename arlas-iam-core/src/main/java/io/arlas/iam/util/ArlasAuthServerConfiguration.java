@@ -18,9 +18,6 @@ public class ArlasAuthServerConfiguration extends ArlasConfiguration {
     @JsonProperty("verify_email")
     public boolean verifyEmail;
 
-    @JsonProperty("anonymous_value")
-    public String anonymousValue;
-
     @JsonProperty("arlas_server_base_path")
     public String arlasServerBasePath;
 }
