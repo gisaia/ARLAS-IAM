@@ -6,7 +6,7 @@
 
     <groupId>io.arlas.iam</groupId>
     <artifactId>arlas-iam-parent</artifactId>
-    <version>23.0.0-beta.12</version>
+    <version>23.0.0-beta.11</version>
     <modules>
         <module>arlas-iam-core</module>
         <module>arlas-iam-rest</module>
@@ -36,15 +36,15 @@
         <maven.compiler.version>3.10.1</maven.compiler.version>
         <maven.shade.version>3.2.4</maven.shade.version>
 
-        <arlas.version>23.0.9</arlas.version>
-        <postgresql.version>42.5.3</postgresql.version>
-        <spring.security.version>6.0.1</spring.security.version>
-        <jackson.databind.version>2.14.1</jackson.databind.version>
+        <arlas.version>23.0.10-SNAPSHOT</arlas.version>
+        <postgresql.version>42.6.0</postgresql.version>
+        <spring.security.version>6.0.2</spring.security.version>
+        <jackson.databind.version>2.14.2</jackson.databind.version>
         <jakartamail.version>2.0.1</jakartamail.version>
         <activation.version>2.0.1</activation.version>
 
         <!-- REST AND DROPWIZARD -->
-        <dropwizard.version>2.1.4</dropwizard.version>
+        <dropwizard.version>2.1.5</dropwizard.version>
 
         <!-- TESTS -->
         <junit.version>4.13.2</junit.version>
