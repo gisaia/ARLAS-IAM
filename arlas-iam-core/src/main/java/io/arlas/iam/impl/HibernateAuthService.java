@@ -563,7 +563,8 @@ public class HibernateAuthService implements AuthService {
         // add default roles
         org.getRoles().stream()
                 .filter(r -> userDefaultRoles.contains(r.getName())
-                        || (isOwner && ownerDefaultRoles.contains(r.getName())))
+                        || (isOwner && ownerDefaultRoles.contains(r.getName()))
+                        || (isOwner && r.isGroup()))
                 .forEach(r -> roleDao.addRoleToUser(user, r));
         return org;
     }
@@ -628,7 +629,11 @@ public class HibernateAuthService implements AuthService {
     public Role createGroup(User owner, String name, String description, UUID orgId)
             throws AlreadyExistsException, NotOwnerException, NotFoundException {
         var org = getOrganisation(owner, orgId);
-        return createRole(org, TechnicalRoles.getNewDashboardGroupRole(org.getName(), name), description);
+        Role group = createRole(org, TechnicalRoles.getNewDashboardGroupRole(org.getName(), name), description);
+        for (OrganisationMember om : org.getMembers().stream().filter(om -> om.isOwner()).toList()) {
+            addRoleToUser(owner, orgId, om.getUser().getId(), group.getId());
+        }
+        return group;
     }
 
     @Override
