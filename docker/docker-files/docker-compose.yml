@@ -65,7 +65,7 @@ services:
       - ARLAS_SERVER_URL="${ARLAS_SERVER_URL:-http://arlas-server:9999/arlas/}"
       - ARLAS_ACCESS_TOKEN_TTL="${ARLAS_ACCESS_TOKEN_TTL:-600000}"
     ports:
-      - "9998:9997"
+      - "9997:9997"
 
   arlas-server:
     image: gisaia/arlas-server:24.0.1
