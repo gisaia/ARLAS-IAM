@@ -65,10 +65,10 @@ services:
       - ARLAS_SERVER_URL="${ARLAS_SERVER_URL:-http://arlas-server:9999/arlas/}"
       - ARLAS_ACCESS_TOKEN_TTL="${ARLAS_ACCESS_TOKEN_TTL:-600000}"
     ports:
-      - "9997:9997"
+      - "9998:9997"
 
   arlas-server:
-    image: gisaia/arlas-server:23.0.9
+    image: gisaia/arlas-server:24.0.1
     container_name: arlas-server
     labels:
       co.elastic.logs/enabled: true
@@ -80,7 +80,6 @@ services:
     - ARLAS_ELASTIC_NODES=${ARLAS_ELASTIC_NODES:-690a605d3db34f749f1c7bb57e08e45f.europe-west1.gcp.cloud.es.io:9243}
     - ARLAS_ELASTIC_ENABLE_SSL="${ARLAS_ELASTIC_ENABLE_SSL:-true}"
     - ARLAS_ELASTIC_CREDENTIALS="${ARLAS_ELASTIC_CREDENTIALS:-elastic:ZR45O3x5sUJWJJ6PxsB8dkPQ}"
-    - ARLAS_ELASTIC_SKIP_MASTER="${ARLAS_ELASTIC_SKIP_MASTER:-true}"
     - ARLAS_PREFIX="${ARLAS_PREFIX:-/arlas}"
     - ARLAS_APP_PATH="${ARLAS_APP_PATH:-/}"
     - ARLAS_BASE_URI="${ARLAS_BASE_URI:-http://arlas-server:9999/arlas/}"
