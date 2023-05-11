@@ -8,6 +8,7 @@ import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
 import java.util.Optional;
+import java.util.Set;
 
 public class HibernateOrganisationMemberDao extends AbstractDAO<OrganisationMember> implements OrganisationMemberDao {
     public HibernateOrganisationMemberDao(SessionFactory sessionFactory) {
@@ -21,7 +22,9 @@ public class HibernateOrganisationMemberDao extends AbstractDAO<OrganisationMemb
 
     @Override
     public Organisation addUserToOrganisation(User user, Organisation organisation, boolean isOwner) {
-        organisation.addMember(persist(new OrganisationMember(user, organisation, isOwner)));
+        var om = persist(new OrganisationMember(user, organisation, isOwner));
+        organisation.addMember(om);
+        user.addOrganisation(om);
         return organisation;
     }
 

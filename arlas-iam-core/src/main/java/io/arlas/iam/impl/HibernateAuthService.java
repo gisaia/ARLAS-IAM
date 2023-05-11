@@ -50,7 +50,7 @@ public class HibernateAuthService implements AuthService {
 
     private final List<String> systemRoles = Arrays.asList(ROLE_IAM_ADMIN, ROLE_ARLAS_IMPORTER);
 
-    private final List<String> ownerDefaultRoles = List.of(ROLE_ARLAS_OWNER, ROLE_ARLAS_BUILDER, ROLE_ARLAS_TAGGER);
+    private final List<String> ownerDefaultRoles = List.of(ROLE_ARLAS_OWNER);
 
 
     public HibernateAuthService(SessionFactory factory, ArlasAuthServerConfiguration conf) {
@@ -455,10 +455,20 @@ public class HibernateAuthService implements AuthService {
             defaultGroup.setTechnical(true);
             roleDao.createOrUpdateRole(defaultGroup);
             roleDao.addPermissionToRole(allDataPermission, defaultGroup);
-            TechnicalRoles.getTechnicalRolesList().stream()
-                    .filter(s -> !systemRoles.contains(s) && !GROUP_PUBLIC.equals(s))
-                    .forEach(s -> roleDao.createOrUpdateRole(new Role(s, "", true).setOrganisation(organisation)));
-            addUserToOrganisation(user, organisation, true);
+            Set<String> userDefaultRoles = new HashSet<>();
+            userDefaultRoles.add(defaultGroup.getId().toString());
+            for (String s : TechnicalRoles.getTechnicalRolesList()) {
+                if (!systemRoles.contains(s) && !GROUP_PUBLIC.equals(s)) {
+                    Role r = roleDao.createOrUpdateRole(new Role(s, "", true).setOrganisation(organisation));
+                    if (ownerDefaultRoles.contains(r.getName())) {
+                        userDefaultRoles.add(r.getId().toString());
+                    }
+                }
+            }
+            try {
+                addUserToOrganisation(user, user, organisation, userDefaultRoles, true);
+            } catch (NotAllowedException | ForbiddenActionException | NotFoundException ignored) {
+            }
             return organisation;
         } else {
             if (org.get().getMembers().stream().anyMatch(om -> om.getUser().is(user.getId()) && om.isOwner())) {
@@ -515,8 +525,8 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Organisation addUserToOrganisation(User owner, String email, UUID orgId, Boolean isOwner)
-            throws NotOwnerException, NotFoundException, AlreadyExistsException, ForbiddenActionException, SendEmailException, InvalidEmailException {
+    public Organisation addUserToOrganisation(User owner, String email, UUID orgId, Set<String> rids)
+            throws NotOwnerException, NotFoundException, AlreadyExistsException, ForbiddenActionException, SendEmailException, InvalidEmailException, NotAllowedException {
         var org = getOrganisation(owner, orgId);
         if (org.getName().equals(owner.getId().toString())) {
             throw new ForbiddenActionException("Cannot invite users in own organisation.");
@@ -529,46 +539,34 @@ public class HibernateAuthService implements AuthService {
         if (org.getMembers().stream().anyMatch(om -> om.getUser().is(uid))) {
             throw new AlreadyExistsException("User is already in organisation.");
         }
-        return addUserToOrganisation(user, org, isOwner);
+        return addUserToOrganisation(owner, user, org, rids);
+    }
+    
+    private Organisation addUserToOrganisation(User owner, User user, Organisation org, Set<String> rids) throws NotOwnerException, AlreadyExistsException, NotAllowedException, ForbiddenActionException, NotFoundException {
+        return addUserToOrganisation(owner, user, org, rids, false);
+    }
+
+    private Organisation addUserToOrganisation(User owner, User user, Organisation org, Set<String> rids, boolean isOwner) throws NotOwnerException, AlreadyExistsException, NotAllowedException, ForbiddenActionException, NotFoundException {
+        Organisation o = organisationMemberDao.addUserToOrganisation(user, org, isOwner);
+
+        updateRolesOfUser(owner, org.getId(), user.getId(), rids);
+        return o;
     }
 
     @Override
-    public User updateUserInOrganisation(User owner, UUID userId, UUID orgId, Boolean isOwner) throws NotOwnerException, NotFoundException, ForbiddenActionException {
+    public User updateUserInOrganisation(User owner, UUID userId, UUID orgId, Set<String> rids) throws NotOwnerException, NotFoundException, ForbiddenActionException, AlreadyExistsException, NotAllowedException {
         OrganisationMember member = listOrganisationUsers(owner, orgId).stream()
                 .filter(om -> om.getUser().is(userId))
                 .findFirst()
                 .orElseThrow(NotFoundException::new);
         if (owner.getId().equals(userId)) {
-            throw new ForbiddenActionException("Cannot remove oneself ownership");
+            throw new ForbiddenActionException("Cannot update oneself permissions");
         }
 
-        if (member.isOwner() != isOwner) {
-            if (isOwner) {
-                member.getOrganisation().getRoles().stream()
-                        .filter(r -> ownerDefaultRoles.contains(r.getName()))
-                        .forEach(r -> roleDao.addRoleToUser(member.getUser(), r));
-            } else {
-                member.getOrganisation().getRoles().stream()
-                        .filter(r -> ownerDefaultRoles.contains(r.getName()))
-                        .forEach(r -> roleDao.removeRoleFromUser(member.getUser(), r));
-            }
-        }
-        member.setOwner(isOwner);
+        updateRolesOfUser(owner, orgId, userId, rids);
         return organisationMemberDao.updateUserInOrganisation(member).getUser();
     }
-
-    private Organisation addUserToOrganisation(User user, Organisation org, Boolean isOwner) {
-        organisationMemberDao.addUserToOrganisation(user, org, isOwner);
-        List<String> userDefaultRoles = List.of(TechnicalRoles.getDefaultGroup(org.getName()), ROLE_ARLAS_USER);
-        // add default roles
-        org.getRoles().stream()
-                .filter(r -> userDefaultRoles.contains(r.getName())
-                        || (isOwner && ownerDefaultRoles.contains(r.getName()))
-                        || (isOwner && r.isGroup()))
-                .forEach(r -> roleDao.addRoleToUser(user, r));
-        return org;
-    }
-
+    
     @Override
     public Organisation removeUserFromOrganisation(User owner, UUID userId, UUID orgId)
             throws NotOwnerException, NotFoundException {
@@ -673,11 +671,15 @@ public class HibernateAuthService implements AuthService {
     public User updateRolesOfUser(User owner, UUID orgId, UUID userId, Set<String> newRoles)
             throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException, ForbiddenActionException {
         var org = getOrganisation(owner, orgId);
-        var user = getUser(org, userId);
+        var member = listOrganisationUsers(owner, orgId).stream()
+                .filter(om -> om.getUser().is(userId))
+                .findFirst()
+                .orElseThrow(NotFoundException::new);
+        var user = member.getUser();
+
         List<String> currentRoles = user.getRoles().stream()
                 .filter(r ->
-                        org.is(r.getOrganisation().orElse(null))
-                        && !(r.isTechnical() && !r.isGroup())) // ignore technical roles except default group
+                        org.is(r.getOrganisation().orElse(null)))
                 .map(r -> r.getId().toString())
                 .toList();
 
@@ -692,6 +694,10 @@ public class HibernateAuthService implements AuthService {
         for (String r : deletedRoles) {
             removeRoleFromUser(owner, orgId, userId, UUID.fromString(r));
         }
+
+        member.setOwner(newRoles.stream()
+                .map(r -> roleDao.readRole(UUID.fromString(r)).get().getName())
+                .anyMatch(n -> n.equals(ROLE_ARLAS_OWNER)));
 
         return getUser(org, userId);
     }

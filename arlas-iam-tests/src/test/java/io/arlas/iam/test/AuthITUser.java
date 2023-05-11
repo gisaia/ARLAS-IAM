@@ -120,7 +120,7 @@ public class AuthITUser {
         orgId = createOrganisation(userId1).then().statusCode(201)
                 .body("name", equalTo(ORG))
                 .body("displayName", equalTo(ORG_DISPLAY))
-                .body("members", hasSize(1)) // admin + owner
+                .body("members", hasSize(1))
                 .body("members[0].isOwner", equalTo(true))
                 .body("members[0].member.email", is(USER1))
                 .extract().jsonPath().get("id");
@@ -228,17 +228,17 @@ public class AuthITUser {
     @Test
     public void test38ListPermissions() {
         listPermissions(userId1, userId2).then().statusCode(200)
-                .body("", hasSize(2))
+                .body("", hasSize(1))
                 .body("[0].value", is(oneOf(PERMISSION1, PERMISSION2, PERMISSION_GROUP)));
     }
 
     @Test
     public void test93DeleteUserFromRole() {
         getUser(userId2, userId2).then().statusCode(200)
-                .body("roles", hasSize(4)); // 2 automatic roles + 2 created
+                .body("roles", hasSize(2)); // 2 created
         deleteUserFromRole(userId1, userId2, fooRoleId2).then().statusCode(202);
         getUser(userId2, userId2).then().statusCode(200)
-                .body("roles", hasSize(3));
+                .body("roles", hasSize(1));
     }
 
     @Test
@@ -359,7 +359,7 @@ public class AuthITUser {
                 .pathParam("oid", orgId)
                 .contentType("application/json")
                 .body(String.format("""
-                        {"email":"%s","isOwner": false}
+                        {"email":"%s","rids": []}
                         """, email))
                 .post(arlasAppPath.concat("organisations/{oid}/users"));
 

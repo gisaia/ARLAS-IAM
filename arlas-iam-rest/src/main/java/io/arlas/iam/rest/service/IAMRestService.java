@@ -8,7 +8,6 @@ import io.arlas.commons.exceptions.NotFoundException;
 import io.arlas.commons.rest.response.Error;
 import io.arlas.commons.rest.utils.ServerConstants;
 import io.arlas.filter.core.IdentityParam;
-import io.arlas.filter.core.PolicyEnforcer;
 import io.arlas.iam.core.AuthService;
 import io.arlas.iam.exceptions.*;
 import io.arlas.iam.model.ForbiddenOrganisation;
@@ -620,9 +619,9 @@ public class IAMRestService {
 
             @ApiParam(name = "user", required = true)
             @NotNull @Valid OrgUserDef user
-    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException, SendEmailException, InvalidEmailException {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException, SendEmailException, InvalidEmailException, NotAllowedException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(new OrgData(authService.addUserToOrganisation(getUser(headers), user.email, UUID.fromString(oid), user.isOwner)))
+                .entity(new OrgData(authService.addUserToOrganisation(getUser(headers), user.email, UUID.fromString(oid), user.rids)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
@@ -633,7 +632,7 @@ public class IAMRestService {
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Update ownership of an organisation by a user.",
+            value = "Update roles of an organisation by a user.",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
@@ -654,10 +653,10 @@ public class IAMRestService {
             @PathParam(value = "uid") String uid,
 
             @ApiParam(name = "user", required = true)
-            @NotNull @Valid UpdateOrgUserDef user
-    ) throws NotFoundException, NotOwnerException, ForbiddenActionException {
+            @NotNull @Valid UpdateListDef user
+    ) throws NotFoundException, NotOwnerException, ForbiddenActionException, AlreadyExistsException, NotAllowedException {
         return Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(new UserData(authService.updateUserInOrganisation(getUser(headers), UUID.fromString(uid), UUID.fromString(oid), user.isOwner)))
+                .entity(new UserData(authService.updateUserInOrganisation(getUser(headers), UUID.fromString(uid), UUID.fromString(oid), user.ids)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
@@ -900,7 +899,11 @@ public class IAMRestService {
             @PathParam(value = "oid") String oid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.listRoles(getUser(headers), UUID.fromString(oid)).stream().map(RoleData::new).sorted().toList())
+                .entity(authService.listRoles(getUser(headers), UUID.fromString(oid))
+                        .stream()
+                        .filter(r -> r.getName().startsWith("role/arlas/"))
+                        .map(RoleData::new)
+                        .sorted().toList())
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
