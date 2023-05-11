@@ -41,8 +41,8 @@ public interface AuthService {
     Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
     List<String> listUserEmailsFromOwnDomain(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
 
-    Organisation addUserToOrganisation(User owner, String email, UUID orgId, Boolean isOwner) throws NotOwnerException, NotFoundException, AlreadyExistsException, ForbiddenActionException, SendEmailException, InvalidEmailException;
-    User updateUserInOrganisation(User owner, UUID userId, UUID orgId, Boolean isOwner) throws NotOwnerException, NotFoundException, ForbiddenActionException;
+    Organisation addUserToOrganisation(User owner, String email, UUID orgId, Set<String> rids) throws NotOwnerException, NotFoundException, AlreadyExistsException, ForbiddenActionException, SendEmailException, InvalidEmailException, NotAllowedException;
+    User updateUserInOrganisation(User owner, UUID userId, UUID orgId, Set<String> rids) throws NotOwnerException, NotFoundException, ForbiddenActionException, AlreadyExistsException, NotAllowedException;
     Organisation removeUserFromOrganisation(User owner, UUID userId, UUID orgId) throws NotOwnerException, NotFoundException, NotAllowedException;
 
     Role createRole(User owner, String name, String description, UUID orgId) throws AlreadyExistsException, NotFoundException, NotOwnerException;

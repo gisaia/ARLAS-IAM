@@ -68,7 +68,7 @@ services:
       - "9997:9997"
 
   arlas-server:
-    image: gisaia/arlas-server:24.0.1
+    image: gisaia/arlas-server:24.0.2-SNAPSHOT
     container_name: arlas-server
     labels:
       co.elastic.logs/enabled: true

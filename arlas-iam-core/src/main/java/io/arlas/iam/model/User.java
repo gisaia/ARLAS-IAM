@@ -183,6 +183,10 @@ public class User {
         this.organisations = organisations;
     }
 
+    public void addOrganisation(OrganisationMember om) {
+        this.organisations.add(om);
+    }
+
     public Set<Role> getRoles() {
         return roles;
     }
