@@ -492,7 +492,10 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
-        return organisationDao.listUsers(getOrganisation(owner, orgId));
+        return organisationDao.listUsers(getOrganisation(owner, orgId))
+                .stream()
+                .filter(m -> !isAdmin(m.getUser()))
+                .collect(Collectors.toSet());
 
     }
 
