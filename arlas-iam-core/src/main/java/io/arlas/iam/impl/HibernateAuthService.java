@@ -239,8 +239,8 @@ public class HibernateAuthService implements AuthService {
                     sendActivationEmail(user, verifyToken);
                 } else {
                     try {
-                        verifyUser(user.getId(), verifyToken, user.getTempToken());
-                    } catch (AlreadyVerifiedException | NonMatchingPasswordException | InvalidTokenException | NotFoundException ignored) {
+                        createOrganisation(user, getUserOrgName(user));
+                    } catch (AlreadyExistsException | NotOwnerException | ForbiddenOrganisationNameException ignored) {
                     }
                 }
                 return user;
@@ -670,8 +670,7 @@ public class HibernateAuthService implements AuthService {
         }
     }
 
-    @Override
-    public User updateRolesOfUser(User owner, UUID orgId, UUID userId, Set<String> newRoles)
+    private User updateRolesOfUser(User owner, UUID orgId, UUID userId, Set<String> newRoles)
             throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException, ForbiddenActionException {
         var org = getOrganisation(owner, orgId);
         var member = listOrganisationUsers(owner, orgId).stream()

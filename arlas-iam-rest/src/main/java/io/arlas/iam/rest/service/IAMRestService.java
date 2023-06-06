@@ -941,42 +941,6 @@ public class IAMRestService {
     }
 
     @Timed
-    @Path("organisations/{oid}/users/{uid}/roles")
-    @PUT
-    @Produces(UTF8JSON)
-    @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Modify roles of a user within an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
-    )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = UserData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
-
-    @UnitOfWork(readOnly = true)
-    public Response putRoles(
-            @Context UriInfo uriInfo,
-            @Context HttpHeaders headers,
-
-            @ApiParam(name = "oid", required = true)
-            @PathParam(value = "oid") String oid,
-
-            @ApiParam(name = "uid", required = true)
-            @PathParam(value = "uid") String uid,
-
-            @ApiParam(name = "ridList", required = true)
-            @NotNull @Valid UpdateListDef ridList
-
-    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException, ForbiddenActionException {
-        return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(new UserData(authService.updateRolesOfUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), ridList.ids), false))
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .build();
-    }
-
-    @Timed
     @Path("organisations/{oid}/users/{uid}/roles/{rid}")
     @POST
     @Produces(UTF8JSON)
@@ -1086,7 +1050,7 @@ public class IAMRestService {
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Update a group in an organisation",
+            value = "Update a role's group in an organisation",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
