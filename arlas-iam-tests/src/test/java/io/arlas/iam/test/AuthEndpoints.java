@@ -2,6 +2,7 @@ package io.arlas.iam.test;
 
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 
 import java.util.Optional;
 
@@ -247,11 +248,14 @@ public class AuthEndpoints {
                 .delete(arlasAppPath.concat("organisations/{oid}/users/{uid}/roles/{rid}"));
     }
 
-    protected Response listUsers(String userId) {
-        return given()
+    protected Response listUsers(String userId, String rname) {
+        RequestSpecification req = given()
                 .header(AUTH_HEADER, getToken(userId))
-                .pathParam("oid", orgId)
-                .contentType("application/json")
+                .pathParam("oid", orgId);
+        if (rname != null) {
+            req = req.queryParam("rname", rname);
+        }
+        return req.contentType("application/json")
                 .get(arlasAppPath.concat("organisations/{oid}/users"));
 
     }
@@ -303,11 +307,5 @@ public class AuthEndpoints {
                 .contentType("application/json")
                 .delete(arlasAppPath.concat("permissions/{pid}/roles/{rid}"));
     }
-
-    // ----------------
-
-//    protected RequestSpecification givenForUser(String id) {
-//        return given().header(userHeader, id);
-//    }
 
 }

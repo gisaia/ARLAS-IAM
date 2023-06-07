@@ -519,10 +519,13 @@ public class IAMRestService {
             @Context HttpHeaders headers,
 
             @ApiParam(name = "oid", required = true)
-            @PathParam(value = "oid") String oid
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "rname")
+            @QueryParam(value = "rname") String rname
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid)).stream().map(MemberData::new).sorted().toList())
+                .entity(authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid), Optional.ofNullable(rname)).stream().map(MemberData::new).sorted().toList())
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
@@ -580,7 +583,7 @@ public class IAMRestService {
             @ApiParam(name = "uid", required = true)
             @PathParam(value = "uid") String uid
     ) throws NotFoundException, NotOwnerException {
-        Optional<OrganisationMember> u = authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid))
+        Optional<OrganisationMember> u = authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid), Optional.empty())
                 .stream()
                 .filter(om -> om.getUser().is(UUID.fromString(uid)))
                 .findFirst();
