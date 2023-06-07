@@ -146,7 +146,7 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test040ListUsers() {
-        listUsers(userId1).then().statusCode(200)
+        listUsers(userId1, null).then().statusCode(200)
                 .body("", hasSize(1))
                 .body("[0].member.email", is(USER1));
     }
@@ -156,7 +156,7 @@ public class AuthITUser extends AuthEndpoints {
         addUserToOrganisation(userId1, USER2).then().statusCode(201);
         getUser(userId2, userId2).then().statusCode(200)
                 .body("organisations", hasSize(2));
-        listUsers(userId1).then().statusCode(200)
+        listUsers(userId1, null).then().statusCode(200)
                 .body("", hasSize(2));
     }
 
@@ -202,6 +202,13 @@ public class AuthITUser extends AuthEndpoints {
         addUserInRole(userId1, userId2, fooRoleId2).then().statusCode(201)
                 .body("id", equalTo(userId2));
         // TODO check role list
+    }
+
+    @Test
+    public void test054ListUsersWithRole() {
+        listUsers(userId1, ROLE1).then().statusCode(200)
+                .body("", hasSize(1))
+                .body("[0].member.email", is(USER2));
     }
 
     @Test

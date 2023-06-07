@@ -490,11 +490,22 @@ public class HibernateAuthService implements AuthService {
         // TODO : delete associated resources
     }
 
+    private Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
+        return listOrganisationUsers(owner, orgId, Optional.empty());
+    }
+
     @Override
-    public Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
+    public Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId, Optional<String> roleName) throws NotOwnerException, NotFoundException {
         return organisationDao.listUsers(getOrganisation(owner, orgId))
                 .stream()
                 .filter(m -> !isAdmin(m.getUser()))
+                .filter(m -> {
+                    try {
+                        return roleName.isEmpty() || listRoles(owner, orgId, m.getUser().getId()).stream().anyMatch(r -> r.getName().equals(roleName.get()));
+                    } catch (NotFoundException | NotOwnerException ignored) {
+                        throw new RuntimeException(ignored);
+                    }
+                })
                 .collect(Collectors.toSet());
 
     }

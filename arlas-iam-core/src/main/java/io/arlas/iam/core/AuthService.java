@@ -38,7 +38,7 @@ public interface AuthService {
     Set<Organisation> listOrganisations(User user);
     List<String> getOrganisationCollections(User owner, UUID orgId, String token) throws ArlasException;
 
-    Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
+    Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId, Optional<String> roleName) throws NotOwnerException, NotFoundException;
     List<String> listUserEmailsFromOwnDomain(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
 
     Organisation addUserToOrganisation(User owner, String email, UUID orgId, Set<String> rids) throws NotOwnerException, NotFoundException, AlreadyExistsException, ForbiddenActionException, SendEmailException, InvalidEmailException, NotAllowedException;
