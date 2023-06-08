@@ -18,15 +18,19 @@ import io.arlas.iam.rest.model.output.*;
 import io.arlas.iam.util.ArlasAuthServerConfiguration;
 import io.dropwizard.hibernate.UnitOfWork;
 import io.swagger.annotations.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+
+import static io.arlas.commons.rest.utils.ServerConstants.ARLAS_ORG_FILTER;
+import static io.arlas.filter.impl.AbstractPolicyEnforcer.*;
 
 @Path("/")
 @Api(value = "/")
@@ -44,7 +48,10 @@ import java.util.UUID;
         )
 )
 public class IAMRestService {
+    private final Logger LOGGER = LoggerFactory.getLogger(IAMRestService.class);
     public static final String UTF8JSON = MediaType.APPLICATION_JSON + ";charset=utf-8";
+    public static final String EVENT_ACTION = "event.action";
+    public static final String ORG_ID = "organization.id";
 
     protected final AuthService authService;
     private final ArlasAuthConfiguration configuration;
@@ -52,6 +59,37 @@ public class IAMRestService {
     public IAMRestService(AuthService authService, ArlasAuthServerConfiguration configuration) {
         this.authService = authService;
         this.configuration = configuration.arlasAuthConfiguration;
+    }
+
+    private void logUAM(HttpServletRequest request, HttpHeaders headers, String action, String log) {
+        logUAM(request, headers,  null, action, log);
+    }
+
+    private void logUAM(HttpServletRequest request, HttpHeaders headers, String oid, String action, String log) {
+        String ip = Optional.ofNullable(request.getHeader(X_FORWARDED_FOR))
+                .orElseGet(request::getRemoteAddr)
+                .split(",")[0].trim();
+        if (oid != null) MDC.put(ORG_ID, oid);
+        Enumeration<String> orgFilter = request.getHeaders(ARLAS_ORG_FILTER);
+        if (orgFilter.hasMoreElements()) {
+            MDC.put(ORGANIZATION_NAME, orgFilter.nextElement());
+        }
+        if (MDC.get(USER_ID) == null) {
+            MDC.put(USER_ID, getIdentityParam(headers).userId);
+        }
+        MDC.put(EVENT_KIND, EVENT);
+        MDC.put(HTTP_REQUEST_METHOD, request.getMethod());
+        MDC.put(URL_PATH, request.getRequestURI());
+        MDC.put(URL_QUERY, request.getQueryString());
+        MDC.put(USER_AGENT_ORIGINAL, request.getHeader(HttpHeaders.USER_AGENT));
+        MDC.put(HTTP_REQUEST_REFERRER, request.getHeader(REFERER));
+        MDC.put(CLIENT_ADDRESS, ip);
+        MDC.put(CLIENT_IP, ip);
+        MDC.put(EVENT_CATEGORY, IAM);
+        MDC.put(EVENT_TYPE, ALLOWED);
+        MDC.put(EVENT_ACTION, action);
+        LOGGER.info(log);
+        MDC.clear();
     }
 
     // --------------- Users ---------------------
@@ -74,14 +112,19 @@ public class IAMRestService {
     public Response login(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "loginDef", required = true)
             @NotNull @Valid LoginDef loginDef
     ) throws ArlasException {
-        return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(new LoginData(authService.login(loginDef.email, loginDef.password, uriInfo.getBaseUri().getHost())))
+        LoginData loginData = new LoginData(authService.login(loginDef.email, loginDef.password, uriInfo.getBaseUri().getHost()));
+        Response response = Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity(loginData)
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        MDC.put(USER_ID, loginData.user.id.toString());
+        logUAM(request, headers,  "session", "user-login");
+        return response;
     }
 
     @Timed
@@ -101,9 +144,11 @@ public class IAMRestService {
     @UnitOfWork
     public Response logout(
             @Context UriInfo uriInfo,
-            @Context HttpHeaders headers
+            @Context HttpHeaders headers,
+            @Context HttpServletRequest request
     ) throws NotFoundException {
         authService.logout(getUser(headers).getId());
+        logUAM(request, headers,  "session", "user-logout");
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity("Session deleted.")
                 .type(MediaType.TEXT_PLAIN_TYPE)
@@ -129,14 +174,17 @@ public class IAMRestService {
     public Response refresh(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "refreshToken", required = true)
             @PathParam(value = "refreshToken") String refreshToken
     ) throws ArlasException {
-        return Response.ok(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new LoginData(authService.refresh(headers.getHeaderString(HttpHeaders.AUTHORIZATION), refreshToken, uriInfo.getBaseUri().getHost())))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  "session", "refresh-token");
+        return response;
     }
 
     @Timed
@@ -157,14 +205,17 @@ public class IAMRestService {
     public Response createUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "userDef", required = true)
             @NotNull @Valid NewUserDef userDef
     ) throws AlreadyExistsException, InvalidEmailException, SendEmailException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.createUser(userDef.email, userDef.locale, userDef.timezone)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  "users", String.format("create-user-account (email=%s)", userDef.email));
+        return response;
     }
 
     @Timed
@@ -185,11 +236,13 @@ public class IAMRestService {
     public Response askPasswordReset(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "email", required = true)
             @NotNull @Valid String email
     ) throws SendEmailException {
         authService.askPasswordReset(email);
+        logUAM(request, headers,  "users", "ask-password-reset");
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity("ok")
                 .type(MediaType.TEXT_PLAIN)
@@ -216,6 +269,7 @@ public class IAMRestService {
     public Response resetUserPassword(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "id", required = true)
             @PathParam(value = "id") String id,
@@ -226,10 +280,12 @@ public class IAMRestService {
             @ApiParam(name = "password", required = true)
             @NotNull @Valid String password
     ) throws SendEmailException, NotFoundException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.resetUserPassword(UUID.fromString(id), token, password)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  "users", "password-reset");
+        return response;
     }
 
     @Timed
@@ -252,6 +308,7 @@ public class IAMRestService {
     public Response verifyUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "id", required = true)
             @PathParam(value = "id") String id,
@@ -262,10 +319,12 @@ public class IAMRestService {
             @ApiParam(name = "password", required = true)
             @NotNull @Valid String password
     ) throws NonMatchingPasswordException, AlreadyVerifiedException, InvalidTokenException, SendEmailException, NotFoundException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.verifyUser(UUID.fromString(id), token, password)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  "users", "verify-user-account");
+        return response;
     }
 
     @Timed
@@ -286,11 +345,11 @@ public class IAMRestService {
     public Response readUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "id", required = true)
             @PathParam(value = "id") String id
     ) throws NotFoundException {
-
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(getUser(headers, id)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
@@ -315,12 +374,14 @@ public class IAMRestService {
     public Response deleteUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "id", required = true)
             @PathParam(value = "id") String id
     ) throws NotFoundException, NotAllowedException {
         checkLoggedInUser(headers, id);
         authService.deleteUser(UUID.fromString(id));
+        logUAM(request, headers,  "users", "delete-user-account");
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity("User deleted.")
                 .type(MediaType.TEXT_PLAIN_TYPE)
@@ -347,6 +408,7 @@ public class IAMRestService {
     public Response updateUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
 
             @ApiParam(name = "id", required = true)
@@ -356,10 +418,12 @@ public class IAMRestService {
             @NotNull @Valid UpdateUserDef updateDef
 
     ) throws NotFoundException, NonMatchingPasswordException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.updateUser(getUser(headers, id), updateDef.oldPassword, updateDef.newPassword)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  "users", "change-password");
+        return response;
     }
 
     // --------------- Organisations ---------------------
@@ -381,10 +445,13 @@ public class IAMRestService {
     @UnitOfWork
     public Response createOrganisation(
             @Context UriInfo uriInfo,
-            @Context HttpHeaders headers
+            @Context HttpHeaders headers,
+            @Context HttpServletRequest request
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenOrganisationNameException {
+        OrgData data = new OrgData(authService.createOrganisation(getUser(headers)));
+        logUAM(request, headers,  data.id.toString(), "organisations", "create-domain-organisation");
         return Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(new OrgData(authService.createOrganisation(getUser(headers))))
+                .entity(data)
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
@@ -408,12 +475,15 @@ public class IAMRestService {
     public Response createOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "name", required = true)
             @PathParam(value = "name") String name
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenOrganisationNameException {
+        OrgData data = new OrgData(authService.createOrganisation(getUser(headers), name));
+        logUAM(request, headers,  data.id.toString(), "organisations", String.format("create-custom-organisation (name=%s)", name));
         return Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(new OrgData(authService.createOrganisation(getUser(headers), name)))
+                .entity(data)
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
@@ -437,11 +507,13 @@ public class IAMRestService {
     public Response deleteOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid
     ) throws NotFoundException, NotOwnerException, ForbiddenActionException {
         authService.deleteOrganisation(getUser(headers), UUID.fromString(oid));
+        logUAM(request, headers,  oid, "organisations", "delete-organisation");
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity("organisation deleted")
                 .type(MediaType.TEXT_PLAIN_TYPE)
@@ -465,7 +537,8 @@ public class IAMRestService {
     @UnitOfWork
     public Response checkOrganisation(
             @Context UriInfo uriInfo,
-            @Context HttpHeaders headers
+            @Context HttpHeaders headers,
+            @Context HttpServletRequest request
     ) throws NotFoundException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgExists(authService.checkOrganisation(getUser(headers))))
@@ -490,7 +563,8 @@ public class IAMRestService {
     @UnitOfWork(readOnly = true)
     public Response getOrganisations(
             @Context UriInfo uriInfo,
-            @Context HttpHeaders headers
+            @Context HttpHeaders headers,
+            @Context HttpServletRequest request
     ) throws NotFoundException {
         User user = getUser(headers);
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -517,6 +591,7 @@ public class IAMRestService {
     public Response getUsers(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -548,6 +623,7 @@ public class IAMRestService {
     public Response getEmails(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid
@@ -576,6 +652,7 @@ public class IAMRestService {
     public Response getUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -616,6 +693,7 @@ public class IAMRestService {
     public Response addUserToOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -623,10 +701,12 @@ public class IAMRestService {
             @ApiParam(name = "user", required = true)
             @NotNull @Valid OrgUserDef user
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException, SendEmailException, InvalidEmailException, NotAllowedException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgData(authService.addUserToOrganisation(getUser(headers), user.email, UUID.fromString(oid), user.rids)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("add-user (email=%s)", user.email));
+        return response;
     }
 
     @Timed
@@ -635,7 +715,7 @@ public class IAMRestService {
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Update roles of an organisation by a user.",
+            value = "Update roles of a user in an organisation.",
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
@@ -648,6 +728,7 @@ public class IAMRestService {
     public Response updateUserInOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -658,10 +739,12 @@ public class IAMRestService {
             @ApiParam(name = "user", required = true)
             @NotNull @Valid UpdateListDef user
     ) throws NotFoundException, NotOwnerException, ForbiddenActionException, AlreadyExistsException, NotAllowedException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.updateUserInOrganisation(getUser(headers), UUID.fromString(uid), UUID.fromString(oid), user.ids)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("update-user-roles (uid=%s)(roles=%s)", uid, user.ids));
+        return response;
     }
 
     @Timed
@@ -683,6 +766,7 @@ public class IAMRestService {
     public Response removeUserFromOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -690,10 +774,12 @@ public class IAMRestService {
             @ApiParam(name = "uid", required = true)
             @PathParam(value = "uid") String uid
     ) throws NotFoundException, NotOwnerException, NotAllowedException {
-        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgData(authService.removeUserFromOrganisation(getUser(headers), UUID.fromString(uid), UUID.fromString(oid))))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("remove-user (uid=%s)", uid));
+        return response;
     }
 
     // ------------- forbidden organisations --------------
@@ -716,14 +802,17 @@ public class IAMRestService {
     public Response addForbiddenOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "forbiddenOrganisation", required = true)
             @NotNull @Valid ForbiddenOrganisation forbiddenOrganisation
     ) throws AlreadyExistsException, NotFoundException, NotAllowedException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.addForbiddenOrganisation(getUser(headers), forbiddenOrganisation))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  "stoplist", String.format("add-forbidden-name (name=%s)", forbiddenOrganisation.name));
+        return response;
     }
 
     @Timed
@@ -745,11 +834,13 @@ public class IAMRestService {
     public Response removeNameFromForbiddenOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "name", required = true)
             @PathParam(value = "name") String name
     ) throws NotFoundException, NotAllowedException {
         authService.removeForbiddenOrganisation(getUser(headers), name);
+        logUAM(request, headers,  "stoplist", String.format("remove-forbidden-name (name=%s)", name));
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity("ok")
                 .type(MediaType.TEXT_PLAIN)
@@ -773,7 +864,8 @@ public class IAMRestService {
     @UnitOfWork(readOnly = true)
     public Response listForbiddenOrganisations(
             @Context UriInfo uriInfo,
-            @Context HttpHeaders headers
+            @Context HttpHeaders headers,
+            @Context HttpServletRequest request
     ) throws NotFoundException, NotAllowedException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.listForbiddenOrganisation(getUser(headers)))
@@ -799,6 +891,7 @@ public class IAMRestService {
     public Response getOrganisationCollections(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid
@@ -831,6 +924,7 @@ public class IAMRestService {
     public Response addRoleToOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -838,10 +932,12 @@ public class IAMRestService {
             @ApiParam(name = "roleDef", required = true)
             @NotNull @Valid RoleDef roleDef
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new RoleData(authService.createRole(getUser(headers), roleDef.name, roleDef.description, UUID.fromString(oid))))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("add-role (name=%s)", roleDef.name));
+        return response;
     }
 
     @Timed
@@ -863,6 +959,7 @@ public class IAMRestService {
     public Response updateRoleInOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -873,10 +970,12 @@ public class IAMRestService {
             @ApiParam(name = "roleDef", required = true)
             @NotNull @Valid RoleDef roleDef
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException {
-        return Response.ok(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new RoleData(authService.updateRole(getUser(headers), roleDef.name, roleDef.description, UUID.fromString(oid), UUID.fromString(rid))))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("update-role (rid=%s, new-name=%s)", rid, roleDef.name));
+        return response;
     }
 
     @Timed
@@ -897,6 +996,7 @@ public class IAMRestService {
     public Response getRolesOfOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid
@@ -930,6 +1030,7 @@ public class IAMRestService {
     public Response getRoles(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -962,6 +1063,7 @@ public class IAMRestService {
     public Response addRoleToUserInOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -972,10 +1074,12 @@ public class IAMRestService {
             @ApiParam(name = "rid", required = true)
             @PathParam(value = "rid") String rid
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.addRoleToUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), UUID.fromString(rid)), false))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("add-role-to-user (uid=%s, rid=%s)", uid, rid));
+        return response;
     }
 
     @Timed
@@ -997,6 +1101,7 @@ public class IAMRestService {
     public Response removeRoleFromUserInOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1007,10 +1112,12 @@ public class IAMRestService {
             @ApiParam(name = "rid", required = true)
             @PathParam(value = "rid") String rid
     ) throws NotFoundException, NotOwnerException, NotAllowedException, ForbiddenActionException {
-        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new UserData(authService.removeRoleFromUser(getUser(headers), UUID.fromString(oid), UUID.fromString(uid), UUID.fromString(rid)), false))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("remove-role-from-user (uid=%s, rid=%s)", uid, rid));
+        return response;
     }
 
     //----------------- groups -------------------
@@ -1034,17 +1141,20 @@ public class IAMRestService {
     public Response addGroupToOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
             @ApiParam(name = "roleDef", required = true)
-            @NotNull @Valid RoleDef roleDef
+            @NotNull @Valid RoleDef groupDef
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(new RoleData(authService.createGroup(getUser(headers), roleDef.name, roleDef.description, UUID.fromString(oid))))
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(new RoleData(authService.createGroup(getUser(headers), groupDef.name, groupDef.description, UUID.fromString(oid))))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("add-group (name=%s)", groupDef.name));
+        return response;
     }
 
     @Timed
@@ -1066,6 +1176,7 @@ public class IAMRestService {
     public Response updateGroupInOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1076,10 +1187,12 @@ public class IAMRestService {
             @ApiParam(name = "roleDef", required = true)
             @NotNull @Valid RoleDef roleDef
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException {
-        return Response.ok(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new RoleData(authService.updateGroup(getUser(headers), roleDef.name, roleDef.description, UUID.fromString(oid), UUID.fromString(rid))))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("update-group (rid=%s, new-name=%s)", rid, roleDef.name));
+        return response;
     }
 
     @Timed
@@ -1100,6 +1213,7 @@ public class IAMRestService {
     public Response getGroupsOfOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid
@@ -1129,6 +1243,7 @@ public class IAMRestService {
     public Response getGroups(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1163,6 +1278,7 @@ public class IAMRestService {
     public Response getPermissions(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1196,6 +1312,7 @@ public class IAMRestService {
     public Response getPermissionsOfOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid
@@ -1224,6 +1341,7 @@ public class IAMRestService {
     public Response addPermission(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1231,10 +1349,12 @@ public class IAMRestService {
             @ApiParam(name = "permission", required = true)
             @NotNull @Valid PermissionDef permission
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new PermissionData(authService.createPermission(getUser(headers), UUID.fromString(oid), permission.value, permission.description)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("add-permission (permission=%s)", permission.value));
+        return response;
     }
 
     @Timed
@@ -1255,6 +1375,7 @@ public class IAMRestService {
     public Response getCollectionsOfColumnFiltersInOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1286,6 +1407,7 @@ public class IAMRestService {
     public Response addColumnFilterPermission(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1293,11 +1415,13 @@ public class IAMRestService {
             @ApiParam(name = "collections", required = true)
             @NotNull @Valid List<String> collections
     ) throws ArlasException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new PermissionData(authService.createColumnFilter(getUser(headers),
                         UUID.fromString(oid), collections, headers.getHeaderString(HttpHeaders.AUTHORIZATION))))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("add-columnfilter (collections=%s)", collections));
+        return response;
     }
 
     @Timed
@@ -1319,6 +1443,7 @@ public class IAMRestService {
     public Response updatePermission(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1329,10 +1454,12 @@ public class IAMRestService {
             @ApiParam(name = "permission", required = true)
             @NotNull @Valid PermissionDef permission
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
-        return Response.ok(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new PermissionData(authService.updatePermission(getUser(headers), UUID.fromString(oid), UUID.fromString(pid), permission.value, permission.description)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("update-permission (pid=%s, new-value=%s)", pid, permission.value));
+        return response;
     }
 
     @Timed
@@ -1354,6 +1481,7 @@ public class IAMRestService {
     public Response updateColumnFilterPermission(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1364,12 +1492,14 @@ public class IAMRestService {
             @ApiParam(name = "collections", required = true)
             @NotNull @Valid List<String> collections
     ) throws ArlasException {
-        return Response.ok(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new PermissionData(authService.updateColumnFilter(getUser(headers),
                         UUID.fromString(oid), UUID.fromString(pid), collections,
                         headers.getHeaderString(HttpHeaders.AUTHORIZATION))))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("update-columnfilter (pid=%s, new-collections=%s)", pid, collections));
+        return response;
     }
 
     @Timed
@@ -1389,6 +1519,7 @@ public class IAMRestService {
     public Response listPermissionOfRole(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1422,6 +1553,7 @@ public class IAMRestService {
     public Response updatePermissionOfRole(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1433,10 +1565,12 @@ public class IAMRestService {
             @NotNull @Valid UpdateListDef pidList
 
     ) throws NotFoundException, NotOwnerException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new RoleData(authService.updatePermissionsOfRole(getUser(headers), UUID.fromString(oid), UUID.fromString(rid), pidList.ids)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("update-role-permissions (rid=%s, new-permissions=%s)", rid, pidList.ids));
+        return response;
     }
 
     @Timed
@@ -1456,6 +1590,7 @@ public class IAMRestService {
     public Response addPermissionToRole(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1466,10 +1601,12 @@ public class IAMRestService {
             @ApiParam(name = "pid", required = true)
             @PathParam(value = "pid") String pid
     ) throws NotFoundException, NotOwnerException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
                 .entity(new RoleData(authService.addPermissionToRole(getUser(headers), UUID.fromString(oid), UUID.fromString(rid), UUID.fromString(pid))))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("add-permission-to-role (rid=%s, pid=%s)", rid, pid));
+        return response;
     }
 
     @Timed
@@ -1490,6 +1627,7 @@ public class IAMRestService {
     public Response removePermissionFromRole(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1500,10 +1638,12 @@ public class IAMRestService {
             @ApiParam(name = "pid", required = true)
             @PathParam(value = "pid") String pid
     ) throws NotFoundException, NotOwnerException {
-        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+        Response response = Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new RoleData(authService.removePermissionFromRole(getUser(headers), UUID.fromString(oid), UUID.fromString(rid), UUID.fromString(pid))))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
+        logUAM(request, headers,  oid, "organisations", String.format("remove-permission-from-role (rid=%s, pid=%s)", rid, pid));
+        return response;
     }
 
     @Timed
@@ -1524,6 +1664,7 @@ public class IAMRestService {
     public Response getPermissionToken(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
+            @Context HttpServletRequest request,	
 
             @ApiParam(name = ServerConstants.ARLAS_ORG_FILTER)
             @QueryParam(value = ServerConstants.ARLAS_ORG_FILTER) String orgFilter
