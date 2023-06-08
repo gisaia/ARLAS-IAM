@@ -38,6 +38,12 @@ services:
       dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-package-only}
     image: docker.cloudsmith.io/gisaia/private/arlas-iam-server:${ARLAS_IAM_SERVER_VERSION:-latest}
     container_name: arlas-iam-server
+    labels:
+      co.elastic.logs/enabled: true
+      co.elastic.logs/json.keys_under_root: true
+      co.elastic.logs/json.overwrite_keys: true
+      co.elastic.logs/json.add_error_key: true
+      co.elastic.logs/json.expand_keys: true
     environment:
       - ARLAS_IAM_HOST="${ARLAS_IAM_HOST:-localhost}"
       - ARLAS_IAM_PORT="${ARLAS_IAM_PORT:-9997}"
@@ -64,6 +70,16 @@ services:
       - ARLAS_IAM_LOGGING_CONSOLE_LEVEL="${ARLAS_IAM_LOGGING_CONSOLE_LEVEL:-INFO}"
       - ARLAS_SERVER_URL="${ARLAS_SERVER_URL:-http://arlas-server:9999/arlas/}"
       - ARLAS_ACCESS_TOKEN_TTL="${ARLAS_ACCESS_TOKEN_TTL:-600000}"
+    #      - ELASTIC_APM_LOG_ECS_REFORMATTING=OVERRIDE
+    #      - ELASTIC_APM_LOG_ECS_FORMATTER_ALLOW_LIST=*
+    #      - ELASTIC_APM_APPLICATION_PACKAGES=io.arlas
+    #      - ELASTIC_APM_ENVIRONMENT=dev.cloud.arlas.io
+    #      - ELASTIC_APM_TRANSACTION_IGNORE_USER_AGENTS=GoogleHC/*, kube-probe/*, curl*, GoogleStackdriverMonitoring*
+    #      - ELASTIC_APM_SECRET_TOKEN=YDaIBr3Pfm9k69xuZk
+    #      - ELASTIC_APM_SERVER_URLS=https://1b48d14497994c518cf959079ddcfd6d.apm.europe-west1.gcp.cloud.es.io
+    #      - ELASTIC_APM_SERVICE_NAME=arlas-server
+    #      - ELASTIC_APM_USE_JAXRS_PATH_AS_TRANSACTION_NAME=true
+    #      - JDK_JAVA_OPTIONS=-javaagent:/opt/app/elastic-apm-agent.jar
     ports:
       - "9997:9997"
 
