@@ -47,6 +47,12 @@ public class Role {
             inverseJoinColumns = @JoinColumn(name = "id_user"))
     private Set<User> users = new HashSet<>();
 
+    @ManyToMany()
+    @JoinTable(name = "ApiKeyRole",
+            joinColumns = @JoinColumn(name = "id_role"),
+            inverseJoinColumns = @JoinColumn(name = "id_apikey"))
+    private Set<ApiKey> apiKeys = new HashSet<>();
+
     @ManyToMany(mappedBy="roles", cascade= CascadeType.REMOVE)
     private Set<Permission> permissions = new HashSet<>();
 
@@ -133,6 +139,17 @@ public class Role {
     public Role setUsers(Set<User> users) {
         this.users = users;
         return this;
+    }
+
+    public Set<ApiKey> getApiKeys() {
+        return apiKeys;
+    }
+
+    public void setApiKeys(Set<ApiKey> apiKeys) {
+        this.apiKeys = apiKeys;
+    }
+    public void addApiKeys(ApiKey apiKey) {
+        this.apiKeys.add(apiKey);
     }
 
     public Set<Permission> getPermissions() {

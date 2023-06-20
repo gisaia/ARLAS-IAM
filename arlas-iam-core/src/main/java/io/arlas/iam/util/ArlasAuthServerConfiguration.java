@@ -18,6 +18,9 @@ public class ArlasAuthServerConfiguration extends ArlasConfiguration {
     @JsonProperty("verify_email")
     public boolean verifyEmail;
 
+    @JsonProperty("api_key_max_ttl")
+    public int apiKeyMaxTtl;
+
     @JsonProperty("arlas_server_base_path")
     public String arlasServerBasePath;
 }

@@ -13,12 +13,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Priority;
 import javax.ws.rs.Priorities;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.ext.Provider;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
+
+import static io.arlas.commons.rest.utils.ServerConstants.ARLAS_API_KEY;
 
 @Provider
 @Priority(Priorities.AUTHORIZATION)
@@ -38,9 +39,16 @@ public class ArlasPolicyEnforcer extends AbstractPolicyEnforcer {
     @Override
     @UnitOfWork
     protected Object getObjectToken(String token, String orgFilter) throws Exception {
-        LOGGER.debug("accessToken=" + decodeToken(token));
-        DecodedJWT accessToken = authService.verifyToken(token);
-        String rpt = authService.createPermissionToken(accessToken.getSubject(), orgFilter, accessToken.getIssuer(), new Date());
+        String rpt = null;
+        if (token.startsWith(ARLAS_API_KEY)) {
+            String[] key = token.split(":");
+            LOGGER.debug("apiKeyId=" + key[1]);
+            rpt = authService.createPermissionToken(key[1], key[2], ARLAS_API_KEY);
+        } else {
+            LOGGER.debug("accessToken=" + decodeToken(token));
+            DecodedJWT accessToken = authService.verifyToken(token);
+            rpt = authService.createPermissionToken(accessToken.getSubject(), orgFilter, accessToken.getIssuer(), new Date());
+        }
         LOGGER.debug("RPT=" + decodeToken(rpt));
         return JWT.decode(rpt);
     }
