@@ -18,6 +18,7 @@ public interface AuthService {
     void logout(UUID userId);
     LoginSession refresh(String authHeader, String refreshToken, String issuer) throws ArlasException;
     String createPermissionToken(String subject, String orgFilter, String issuer, Date iat) throws ArlasException;
+    String createPermissionToken(String keyId, String keySecret, String issuer) throws ArlasException;
 
     User createUser(String email, String locale, String timezone) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
     User verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException, InvalidTokenException, SendEmailException, NotFoundException;
@@ -30,6 +31,9 @@ public interface AuthService {
 
     Optional<User> activateUser(UUID userId);
     Optional<User> deactivateUser(UUID userId) throws NotAllowedException;
+
+    ApiKey createApiKey(User user, UUID ownerId, UUID oid, String name, int ttlInDays, Set<String> roleIds) throws NotAllowedException, NotFoundException;
+    void deleteApiKey(User user, UUID ownerId, UUID oid, UUID apiKeyId) throws NotFoundException, NotAllowedException;
 
     boolean checkOrganisation(User owner);
     Organisation createOrganisation(User user, String name) throws AlreadyExistsException, NotOwnerException, NotFoundException, ForbiddenOrganisationNameException;
@@ -62,7 +66,6 @@ public interface AuthService {
     Permission createColumnFilter(User user, UUID fromString, List<String> collections, String token) throws ArlasException;
     Permission updatePermission(User owner, UUID orgId, UUID permissionId, String value, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException;
     Permission updateColumnFilter(User owner, UUID orgId, UUID permissionId, List<String> collections, String token) throws ArlasException;
-    Set<String> listPermissions(UUID userId, String orgFilter) throws NotFoundException;
     Set<Permission> listPermissions(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
     List<String> getCollectionsOfColumnFilter(User owner, UUID orgId, UUID permissionId, String token) throws ArlasException;
     Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException;

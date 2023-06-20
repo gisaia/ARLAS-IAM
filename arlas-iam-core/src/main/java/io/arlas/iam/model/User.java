@@ -64,6 +64,9 @@ public class User {
     @ManyToMany(mappedBy="users", cascade= CascadeType.REMOVE)
     private Set<Role> roles = new HashSet<>();
 
+    @OneToMany(mappedBy="owner", cascade = CascadeType.REMOVE)
+    private Set<ApiKey> apiKeys = new HashSet<>();
+
     private User() {}
 
     public User(String email) {
@@ -193,6 +196,14 @@ public class User {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    public Set<ApiKey> getApiKeys() {
+        return apiKeys;
+    }
+
+    public void setApiKeys(Set<ApiKey> apiKeys) {
+        this.apiKeys = apiKeys;
     }
 
     public User updateLastUpdate() {

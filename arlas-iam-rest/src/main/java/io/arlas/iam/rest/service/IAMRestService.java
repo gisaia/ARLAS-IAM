@@ -10,6 +10,7 @@ import io.arlas.commons.rest.utils.ServerConstants;
 import io.arlas.filter.core.IdentityParam;
 import io.arlas.iam.core.AuthService;
 import io.arlas.iam.exceptions.*;
+import io.arlas.iam.model.ApiKey;
 import io.arlas.iam.model.ForbiddenOrganisation;
 import io.arlas.iam.model.OrganisationMember;
 import io.arlas.iam.model.User;
@@ -188,6 +189,81 @@ public class IAMRestService {
     }
 
     @Timed
+    @Path("/organisations/{oid}/users/{uid}/apikeys")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Create an API Key",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = ApiKey.class),
+            @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response createApiKey(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+            @Context HttpServletRequest request,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "uid", required = true)
+            @PathParam(value = "uid") String uid,
+
+            @ApiParam(name = "apiKeyDef", required = true)
+            @NotNull @Valid ApiKeyDef keyDef
+    ) throws NotFoundException, NotAllowedException {
+        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
+                .entity(authService.createApiKey(getUser(headers), UUID.fromString(uid), UUID.fromString(oid), keyDef.name, keyDef.ttlInDays, keyDef.roleIds))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+        logUAM(request, headers,  "users", String.format("create-api-key (name=%s)", keyDef.name));
+        return response;
+    }
+
+    @Timed
+    @Path("/organisations/{oid}/users/{uid}/apikeys/{kid}")
+    @DELETE
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Delete an API Key",
+            produces = UTF8JSON,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 400, message = "Non matching passwords.", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork
+    public Response deleteApiKey(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+            @Context HttpServletRequest request,
+
+            @ApiParam(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @ApiParam(name = "uid", required = true)
+            @PathParam(value = "uid") String uid,
+
+            @ApiParam(name = "kid", required = true)
+            @PathParam(value = "kid") String kid
+    ) throws NotFoundException, NotAllowedException {
+        authService.deleteApiKey(getUser(headers), UUID.fromString(uid), UUID.fromString(oid), UUID.fromString(kid));
+        logUAM(request, headers,  "users", String.format("delete-api-key (id=%s)", kid));
+        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+                .entity("Api key deleted.")
+                .type(MediaType.TEXT_PLAIN_TYPE)
+                .build();
+
+    }
+
+    @Timed
     @Path("users")
     @POST
     @Produces(UTF8JSON)
@@ -345,7 +421,6 @@ public class IAMRestService {
     public Response readUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = "id", required = true)
             @PathParam(value = "id") String id
@@ -537,8 +612,7 @@ public class IAMRestService {
     @UnitOfWork
     public Response checkOrganisation(
             @Context UriInfo uriInfo,
-            @Context HttpHeaders headers,
-            @Context HttpServletRequest request
+            @Context HttpHeaders headers
     ) throws NotFoundException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new OrgExists(authService.checkOrganisation(getUser(headers))))
@@ -563,8 +637,7 @@ public class IAMRestService {
     @UnitOfWork(readOnly = true)
     public Response getOrganisations(
             @Context UriInfo uriInfo,
-            @Context HttpHeaders headers,
-            @Context HttpServletRequest request
+            @Context HttpHeaders headers
     ) throws NotFoundException {
         User user = getUser(headers);
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -591,7 +664,6 @@ public class IAMRestService {
     public Response getUsers(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -623,7 +695,6 @@ public class IAMRestService {
     public Response getEmails(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid
@@ -652,7 +723,6 @@ public class IAMRestService {
     public Response getUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -864,8 +934,7 @@ public class IAMRestService {
     @UnitOfWork(readOnly = true)
     public Response listForbiddenOrganisations(
             @Context UriInfo uriInfo,
-            @Context HttpHeaders headers,
-            @Context HttpServletRequest request
+            @Context HttpHeaders headers
     ) throws NotFoundException, NotAllowedException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.listForbiddenOrganisation(getUser(headers)))
@@ -891,7 +960,6 @@ public class IAMRestService {
     public Response getOrganisationCollections(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid
@@ -996,7 +1064,6 @@ public class IAMRestService {
     public Response getRolesOfOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid
@@ -1030,7 +1097,6 @@ public class IAMRestService {
     public Response getRoles(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1213,7 +1279,6 @@ public class IAMRestService {
     public Response getGroupsOfOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid
@@ -1243,7 +1308,6 @@ public class IAMRestService {
     public Response getGroups(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1278,7 +1342,6 @@ public class IAMRestService {
     public Response getPermissions(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1375,7 +1438,6 @@ public class IAMRestService {
     public Response getCollectionsOfColumnFiltersInOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1519,7 +1581,6 @@ public class IAMRestService {
     public Response listPermissionOfRole(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
@@ -1664,7 +1725,6 @@ public class IAMRestService {
     public Response getPermissionToken(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
 
             @ApiParam(name = ServerConstants.ARLAS_ORG_FILTER)
             @QueryParam(value = ServerConstants.ARLAS_ORG_FILTER) String orgFilter

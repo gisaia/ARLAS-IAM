@@ -40,11 +40,13 @@ public class HibernateAuthService implements AuthService {
     private final RoleDao roleDao;
     private final UserDao userDao;
     private final RefreshTokenDao tokenDao;
+    private final ApiKeyDao apiKeyDao;
     private final BCryptPasswordEncoder encoder;
     private final SMTPMailer mailer;
     private final TokenManager tokenManager;
     private final boolean verifyEmail; // set to true in production, false in testing mode
     private final long verifyTokenTtl;
+    private final long apiKeyMaxTtl;
     private final InitConfiguration initConf;
     private User admin;
 
@@ -62,11 +64,13 @@ public class HibernateAuthService implements AuthService {
         this.roleDao = new HibernateRoleDao(factory);
         this.userDao = new HibernateUserDao(factory);
         this.tokenDao = new HibernateRefreshTokenDao(factory);
+        this.apiKeyDao = new HibernateApiKeyDao(factory);
         this.encoder = new BCryptPasswordEncoder();
         this.mailer = new SMTPMailer(conf.smtp);
         this.tokenManager = new TokenManager(factory, conf.arlasAuthConfiguration);
         this.verifyEmail = conf.verifyEmail;
         this.verifyTokenTtl = conf.arlasAuthConfiguration.verifyTokenTTL;
+        this.apiKeyMaxTtl = conf.apiKeyMaxTtl;
         this.initConf = conf.arlasAuthConfiguration.initConfiguration;
     }
 
@@ -181,18 +185,21 @@ public class HibernateAuthService implements AuthService {
     }
 
     private Map<String, List<String>> listRoles(UUID userId, String orgFilter) throws NotFoundException {
+        return listRoles(readUser(userId).orElseThrow(NotFoundException::new).getRoles(), orgFilter);
+    }
+
+    private Map<String, List<String>> listRoles(Set<Role> roles, String orgFilter) throws NotFoundException {
         Map<String, List<String>> orgRoles = new HashMap<>();
         // we return a map of {"" -> [ roles...], "orgName1" -> [ roles...], ...}
         // (the empty key is for cross org roles such as "role/iam/admin")
-        readUser(userId).orElseThrow(NotFoundException::new).getRoles()
-                .forEach(r -> {
-                    String orgName = r.getOrganisation().map(Organisation::getName).orElse(NO_ORG);
-                    if (orgFilter == null || orgName.equals(orgFilter) || orgName.equals(NO_ORG)) {
-                        List<String> roles = Optional.ofNullable(orgRoles.get(orgName)).orElseGet(ArrayList::new);
-                        roles.add(r.getName());
-                        orgRoles.put(orgName, roles);
-                    }
-                });
+        roles.forEach(r -> {
+            String orgName = r.getOrganisation().map(Organisation::getName).orElse(NO_ORG);
+            if (orgFilter == null || orgName.equals(orgFilter) || orgName.equals(NO_ORG)) {
+                List<String> roleList = Optional.ofNullable(orgRoles.get(orgName)).orElseGet(ArrayList::new);
+                roleList.add(r.getName());
+                orgRoles.put(orgName, roleList);
+            }
+        });
         // manually add "group/public" which is given to everybody
         List<String> publicRole = Optional.ofNullable(orgRoles.get(NO_ORG)).orElseGet(ArrayList::new);
         publicRole.add(GROUP_PUBLIC);
@@ -322,6 +329,56 @@ public class HibernateAuthService implements AuthService {
         return tokenManager.createPermissionToken(subject, issuer, iat,
                 listPermissions(UUID.fromString(subject), orgFilter),
                 listRoles(UUID.fromString(subject), orgFilter));
+    }
+
+    @Override
+    public ApiKey createApiKey(User user, UUID ownerId, UUID orgId, String name, int ttlInDays, Set<String> roleIds) throws NotAllowedException, NotFoundException {
+        if (user.is(ownerId) || isAdmin(user)) {
+            var org = organisationDao.readOrganisation(orgId).orElseThrow(() -> new NotFoundException("Organisation not found."));
+            var secret = KeyGenerators.string().generateKey();
+            Set<Role> roles = roleIds.stream()
+                    .map(id -> roleDao.readRole(UUID.fromString(id)).get())
+                    .collect(Collectors.toSet());
+            ApiKey apiKey = new ApiKey(name,
+                    KeyGenerators.string().generateKey(),
+                    encode(secret),
+                    (int) Math.min(apiKeyMaxTtl, ttlInDays),
+                    user,
+                    org,
+                    roles);
+            apiKeyDao.createApiKey(apiKey);
+            roles.forEach(r -> { r.addApiKeys(apiKey); roleDao.createOrUpdateRole(r); });
+            return new ApiKey(name, apiKey.getKeyId(), secret, apiKey.getTtlInDays(), user, org, apiKey.getRoles());
+        } else {
+            throw new NotAllowedException("Only owner or admin can create this key.");
+        }
+    }
+
+    @Override
+    public void deleteApiKey(User user, UUID ownerId, UUID oid, UUID apiKeyId) throws NotFoundException, NotAllowedException {
+        if (user.is(ownerId) || isAdmin(user)) {
+            ApiKey apiKey = user.getApiKeys().stream()
+                    .filter(k -> k.getId().equals(apiKeyId))
+                    .findFirst()
+                    .orElseThrow(NotFoundException::new);
+            apiKeyDao.deleteApiKey(apiKey);
+        } else {
+            throw new NotAllowedException("Only owner or admin can delete this key.");
+        }
+    }
+
+    @Override
+    public String createPermissionToken(String keyId, String keySecret, String issuer) throws ArlasException {
+        ApiKey key = apiKeyDao.readApiKey(keyId).orElseThrow(NotFoundException::new);
+        if (key.getCreationDate().toEpochSecond(ZoneOffset.UTC) + (long) key.getTtlInDays()*24*60*60
+                > LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
+                && matches(keySecret, key.getKeySecret())) {
+            return tokenManager.createPermissionToken(key.getOwner().getId().toString(), issuer, new Date(),
+                    listPermissions(key.getRoles(), null),
+                    listRoles(key.getRoles(), null));
+        } else {
+            throw new ExpiredKeyException();
+        }
     }
 
     @Override
@@ -502,8 +559,8 @@ public class HibernateAuthService implements AuthService {
                 .filter(m -> {
                     try {
                         return roleName.isEmpty() || listRoles(owner, orgId, m.getUser().getId()).stream().anyMatch(r -> r.getName().equals(roleName.get()));
-                    } catch (NotFoundException | NotOwnerException ignored) {
-                        throw new RuntimeException(ignored);
+                    } catch (NotFoundException | NotOwnerException e) {
+                        throw new RuntimeException(e);
                     }
                 })
                 .collect(Collectors.toSet());
@@ -731,11 +788,13 @@ public class HibernateAuthService implements AuthService {
         return user;
     }
 
-    @Override
-    public Set<String> listPermissions(UUID userId, String orgFilter) throws NotFoundException {
-        var user = readUser(userId).orElseThrow(() -> new NotFoundException("User not found."));
+    private Set<String> listPermissions(UUID userId, String orgFilter) throws NotFoundException {
+        return listPermissions(readUser(userId).orElseThrow(() -> new NotFoundException("User not found.")).getRoles(), orgFilter);
+
+    }
+    private Set<String> listPermissions(Set<Role> roles, String orgFilter) throws NotFoundException {
         Set<Permission> permissions = new HashSet<>();
-        user.getRoles().forEach(r -> {
+        roles.forEach(r -> {
             String orgName = r.getOrganisation().map(Organisation::getName).orElse(NO_ORG);
             if (orgFilter == null || orgName.equals(orgFilter) || orgName.equals(NO_ORG)) {
                 permissions.addAll(r.getPermissions());

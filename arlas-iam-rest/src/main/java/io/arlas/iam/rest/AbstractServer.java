@@ -52,7 +52,8 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
                     Role.class,
                     User.class,
                     TokenSecret.class,
-                    RefreshToken.class) {
+                    RefreshToken.class,
+                    ApiKey.class) {
                 @Override
                 public DataSourceFactory getDataSourceFactory(ArlasAuthServerConfiguration configuration) {
                     return configuration.database;
