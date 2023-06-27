@@ -60,6 +60,8 @@ public interface AuthService {
     List<Role> listGroups(User owner, UUID orgId, UUID userId) throws NotFoundException, NotOwnerException;
 
     User addRoleToUser(User owner, UUID orgId, UUID userId, UUID roleId) throws NotFoundException, NotOwnerException, AlreadyExistsException;
+    User updateRolesOfUser(User owner, UUID orgId, UUID userId, Set<String> rids)
+            throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException, ForbiddenActionException;
     User removeRoleFromUser(User owner, UUID orgId, UUID userId, UUID roleId) throws NotOwnerException, NotFoundException, NotAllowedException, ForbiddenActionException;
 
     Permission createPermission(User owner, UUID orgId, String value, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException;

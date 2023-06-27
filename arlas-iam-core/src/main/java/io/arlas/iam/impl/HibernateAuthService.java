@@ -738,7 +738,8 @@ public class HibernateAuthService implements AuthService {
         }
     }
 
-    private User updateRolesOfUser(User owner, UUID orgId, UUID userId, Set<String> newRoles)
+    @Override
+    public User updateRolesOfUser(User owner, UUID orgId, UUID userId, Set<String> newRoles)
             throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException, ForbiddenActionException {
         var org = getOrganisation(owner, orgId);
         var member = listOrganisationUsers(owner, orgId).stream()
