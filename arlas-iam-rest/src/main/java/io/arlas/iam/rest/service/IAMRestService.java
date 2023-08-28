@@ -547,7 +547,7 @@ public class IAMRestService {
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
-    public Response createOrganisation(
+    public Response createOrganisationWithName(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
             @Context HttpServletRequest request,	
