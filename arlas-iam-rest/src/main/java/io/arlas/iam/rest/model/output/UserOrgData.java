@@ -1,9 +1,9 @@
 package io.arlas.iam.rest.model.output;
 
 import io.arlas.iam.model.Organisation;
+import io.arlas.iam.model.OrganisationMember;
 import io.arlas.iam.model.User;
 
-import java.util.List;
 import java.util.UUID;
 
 public class UserOrgData implements Comparable {
@@ -18,7 +18,7 @@ public class UserOrgData implements Comparable {
         this.displayName = o.getDisplayName();
         this.isOwner = o.getMembers().stream()
                 .filter(m -> m.getUser().is(u.getId()))
-                .map(m -> m.isOwner())
+                .map(OrganisationMember::isOwner)
                 .findFirst()
                 .orElse(false);
     }
