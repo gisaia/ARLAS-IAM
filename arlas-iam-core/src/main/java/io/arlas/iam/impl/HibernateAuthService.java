@@ -506,18 +506,20 @@ public class HibernateAuthService implements AuthService {
             var allDataPermission = createPermission(organisation,
                     ArlasClaims.getHeaderColumnFilterDefault(""),
                     "View all collections' data");
+
             // create default roles
             var defaultGroup = createRole(organisation, TechnicalRoles.getDefaultGroup(name),
                     "Default organisation group for dashboard sharing.");
             defaultGroup.setTechnical(true);
             roleDao.createOrUpdateRole(defaultGroup);
             roleDao.addPermissionToRole(allDataPermission, defaultGroup);
+
             Set<String> userDefaultRoles = new HashSet<>();
             userDefaultRoles.add(defaultGroup.getId().toString());
             for (String s : TechnicalRoles.getTechnicalRolesList()) {
                 if (!systemRoles.contains(s) && !GROUP_PUBLIC.equals(s)) {
                     Role r = roleDao.createOrUpdateRole(new Role(s, "", true).setOrganisation(organisation));
-                    if (ownerDefaultRoles.contains(r.getName())) {
+                    if (getUserOrgName(user).equals(name) || ownerDefaultRoles.contains(r.getName())) {
                         userDefaultRoles.add(r.getId().toString());
                     }
                 }
@@ -573,13 +575,16 @@ public class HibernateAuthService implements AuthService {
 
         List<User> result = userDao.listUsers(org.getName());
         result.removeAll(org.getMembers().stream().map(OrganisationMember::getUser).toList());
+        result.remove(getAdmin());
         return result.stream().map(User::getEmail).sorted().toList();
     }
 
     @Override
     public Set<Organisation> listOrganisations(User user) {
         if (isAdmin(user)) {
-            return organisationDao.listOrganisations();
+            Set<Organisation> orgs = organisationDao.listOrganisations();
+            orgs.forEach(o -> o.addMember(new OrganisationMember(user, o, true)));
+            return orgs;
         } else {
             return userDao.listOrganisations(user);
         }
@@ -784,6 +789,9 @@ public class HibernateAuthService implements AuthService {
         var role = getRole(user, roleId).orElseThrow(() -> new NotFoundException("Role was not assigned to user."));
         if (owner.is(userId) && role.getName().equals(TechnicalRoles.getDefaultGroup(org.getName()))) {
             throw new ForbiddenActionException("Owner cannot remove themselves from the default group of their organisation.");
+        }
+        if (owner.is(userId) && role.getName().equals(ROLE_ARLAS_OWNER)) {
+            throw new ForbiddenActionException("Owner cannot remove their own 'owner' role.");
         }
         roleDao.removeRoleFromUser(user, role);
         return user;
