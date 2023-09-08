@@ -516,9 +516,10 @@ public class HibernateAuthService implements AuthService {
 
             Set<String> userDefaultRoles = new HashSet<>();
             userDefaultRoles.add(defaultGroup.getId().toString());
-            for (String s : TechnicalRoles.getTechnicalRolesList()) {
+            Map<String, Map<String, List<String>>> technicalRoles = getTechnicalRolesPermissions();
+            for (String s : technicalRoles.keySet()) {
                 if (!systemRoles.contains(s) && !GROUP_PUBLIC.equals(s)) {
-                    Role r = roleDao.createOrUpdateRole(new Role(s, "", true).setOrganisation(organisation));
+                    Role r = roleDao.createOrUpdateRole(new Role(s, technicalRoles.get(s).get("description").get(0), true).setOrganisation(organisation));
                     if (getUserOrgName(user).equals(name) || ownerDefaultRoles.contains(r.getName())) {
                         userDefaultRoles.add(r.getId().toString());
                     }
