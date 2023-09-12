@@ -63,7 +63,8 @@ public class SMTPMailer {
             var messages = ResourceBundle.getBundle("messages", new Locale(to.getLocale()));
             sendEmail(to, messages.getString("email.verify.subject"), getActivationMailContent(to, token));
         } else {
-            LOGGER.warn(String.format("SMTP client not activated. Activation token: %s", token));
+            LOGGER.warn(String.format("SMTP client not activated. UserId: %s / Activation token: %s",
+                    to.getId().toString(), token));
         }
     }
 

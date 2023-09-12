@@ -22,11 +22,20 @@ public class OrganisationMember {
     @Column(name="is_owner")
     private boolean isOwner;
 
+    @Type(type = "org.hibernate.type.NumericBooleanType")
+    @Column(name="is_admin")
+    private boolean isAdmin;
+
     private OrganisationMember() {}
 
     public OrganisationMember(User user, Organisation organisation, boolean isOwner) {
+        this(user, organisation, isOwner, false);
+    }
+
+    public OrganisationMember(User user, Organisation organisation, boolean isOwner, boolean isAdmin) {
         this.pk = new OrganisationMemberPk(user, organisation);
         this.isOwner = isOwner;
+        this.isAdmin = isAdmin;
     }
 
     public OrganisationMemberPk getPk() {
@@ -43,6 +52,14 @@ public class OrganisationMember {
 
     public void setOwner(boolean isOwner) {
         this.isOwner = isOwner;
+    }
+
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+
+    public void setAdmin(boolean admin) {
+        isAdmin = admin;
     }
 
     public User getUser() {
