@@ -1,6 +1,7 @@
 package io.arlas.iam.rest.model.output;
 
 import io.arlas.iam.model.Organisation;
+import io.arlas.iam.model.OrganisationMember;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +21,7 @@ public class OrgData implements Comparable {
         this.name = o.getName();
         this.displayName = o.getDisplayName();
         if (withMembers) {
-            this.members = o.getMembers().stream().map(MemberData::new).toList();
+            this.members = o.getMembers().stream().filter(om -> !om.isAdmin()).map(MemberData::new).toList();
         }
     }
 

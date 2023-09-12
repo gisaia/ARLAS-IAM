@@ -211,7 +211,7 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public void initDatabase() {
-        if (userDao.listUsers().size() == 0) {
+        if (userDao.listUsers().isEmpty()) {
             LOGGER.info("***** Database is empty. Init is executed.");
             User admin = new User(initConf.admin);
             admin.setPassword(encode(initConf.password));
@@ -515,19 +515,25 @@ public class HibernateAuthService implements AuthService {
             roleDao.addPermissionToRole(allDataPermission, defaultGroup);
 
             Set<String> userDefaultRoles = new HashSet<>();
+            Set<String> adminDefaultRoles = new HashSet<>();
             userDefaultRoles.add(defaultGroup.getId().toString());
             Map<String, Map<String, List<String>>> technicalRoles = getTechnicalRolesPermissions();
             for (String s : technicalRoles.keySet()) {
                 if (!systemRoles.contains(s) && !GROUP_PUBLIC.equals(s)) {
                     Role r = roleDao.createOrUpdateRole(new Role(s, technicalRoles.get(s).get("description").get(0), true).setOrganisation(organisation));
-                    if (getUserOrgName(user).equals(name) || ownerDefaultRoles.contains(r.getName())) {
+                    adminDefaultRoles.add(r.getId().toString());
+                    if (getUserOrgName(user).equals(name) || isAdmin || ownerDefaultRoles.contains(r.getName())) {
                         userDefaultRoles.add(r.getId().toString());
                     }
                 }
             }
             try {
                 addUserToOrganisation(user, user, organisation, userDefaultRoles, true);
-            } catch (NotAllowedException | ForbiddenActionException | NotFoundException ignored) {
+                if (!isAdmin) {
+                    addUserToOrganisation(user, getAdmin(), organisation, adminDefaultRoles, true);
+                }
+            } catch (NotAllowedException | ForbiddenActionException | NotFoundException e) {
+                LOGGER.warn("Cannot add user to org.", e);
             }
             return organisation;
         } else {
@@ -551,14 +557,18 @@ public class HibernateAuthService implements AuthService {
     }
 
     private Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
-        return listOrganisationUsers(owner, orgId, Optional.empty());
+        return listOrganisationUsers(owner, orgId, Optional.empty(), true);
     }
 
     @Override
     public Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId, Optional<String> roleName) throws NotOwnerException, NotFoundException {
+        return listOrganisationUsers(owner, orgId, roleName, false);
+    }
+
+    private Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId, Optional<String> roleName, boolean showAdmin) throws NotOwnerException, NotFoundException {
         return organisationDao.listUsers(getOrganisation(owner, orgId))
                 .stream()
-                .filter(m -> !isAdmin(m.getUser()))
+                .filter(m -> showAdmin || !isAdmin(m.getUser()))
                 .filter(m -> {
                     try {
                         return roleName.isEmpty() || listRoles(owner, orgId, m.getUser().getId()).stream().anyMatch(r -> r.getName().equals(roleName.get()));
@@ -582,13 +592,7 @@ public class HibernateAuthService implements AuthService {
 
     @Override
     public Set<Organisation> listOrganisations(User user) {
-        if (isAdmin(user)) {
-            Set<Organisation> orgs = organisationDao.listOrganisations();
-            orgs.forEach(o -> o.addMember(new OrganisationMember(user, o, true)));
-            return orgs;
-        } else {
-            return userDao.listOrganisations(user);
-        }
+        return userDao.listOrganisations(user);
     }
 
     @Override
@@ -624,7 +628,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     private Organisation addUserToOrganisation(User owner, User user, Organisation org, Set<String> rids, boolean isOwner) throws NotOwnerException, AlreadyExistsException, NotAllowedException, ForbiddenActionException, NotFoundException {
-        Organisation o = organisationMemberDao.addUserToOrganisation(user, org, isOwner);
+        Organisation o = organisationMemberDao.addUserToOrganisation(user, org, isOwner, isAdmin(user));
 
         updateRolesOfUser(owner, org.getId(), user.getId(), rids);
         return o;
@@ -705,7 +709,7 @@ public class HibernateAuthService implements AuthService {
             throws AlreadyExistsException, NotOwnerException, NotFoundException {
         var org = getOrganisation(owner, orgId);
         Role group = createRole(org, TechnicalRoles.getNewDashboardGroupRole(org.getName(), name), description);
-        for (OrganisationMember om : org.getMembers().stream().filter(om -> om.isOwner()).toList()) {
+        for (OrganisationMember om : org.getMembers().stream().filter(OrganisationMember::isOwner).toList()) {
             addRoleToUser(owner, orgId, om.getUser().getId(), group.getId());
         }
         return group;
@@ -860,7 +864,7 @@ public class HibernateAuthService implements AuthService {
         List<String> serverCollections = getOrganisationCollections(owner, orgId, token);
         List<String> targetCollections = new ArrayList<>(collections);
         targetCollections.removeAll(serverCollections);
-        if (targetCollections.size() > 0) {
+        if (!targetCollections.isEmpty()) {
             throw new ForbiddenActionException("Collections not available on server: " + targetCollections);
         }
     }

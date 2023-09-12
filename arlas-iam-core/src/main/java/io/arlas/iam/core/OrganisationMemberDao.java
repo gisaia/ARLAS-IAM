@@ -9,7 +9,7 @@ public interface OrganisationMemberDao {
 
     OrganisationMember updateUserInOrganisation(OrganisationMember user);
 
-    Organisation addUserToOrganisation(User user, Organisation organisation, boolean isOwner);
+    Organisation addUserToOrganisation(User user, Organisation organisation, boolean isOwner, boolean isAdmin);
 
     Organisation removeUserFromOrganisation(User user, Organisation organisation);
 
