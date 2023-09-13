@@ -635,20 +635,6 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public User updateUserInOrganisation(User owner, UUID userId, UUID orgId, Set<String> rids) throws NotOwnerException, NotFoundException, ForbiddenActionException, AlreadyExistsException, NotAllowedException {
-        OrganisationMember member = listOrganisationUsers(owner, orgId).stream()
-                .filter(om -> om.getUser().is(userId))
-                .findFirst()
-                .orElseThrow(NotFoundException::new);
-        if (owner.getId().equals(userId)) {
-            throw new ForbiddenActionException("Cannot update oneself permissions");
-        }
-
-        updateRolesOfUser(owner, orgId, userId, rids);
-        return organisationMemberDao.updateUserInOrganisation(member).getUser();
-    }
-    
-    @Override
     public Organisation removeUserFromOrganisation(User owner, UUID userId, UUID orgId)
             throws NotOwnerException, NotFoundException {
         Organisation org = getOrganisation(owner, orgId);

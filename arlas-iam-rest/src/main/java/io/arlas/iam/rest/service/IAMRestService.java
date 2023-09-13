@@ -786,44 +786,6 @@ public class IAMRestService {
 
     @Timed
     @Path("organisations/{oid}/users/{uid}")
-    @PUT
-    @Produces(UTF8JSON)
-    @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Update roles of a user in an organisation.",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
-    )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = UserData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
-
-    @UnitOfWork
-    public Response updateUserInOrganisation(
-            @Context UriInfo uriInfo,
-            @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
-
-            @ApiParam(name = "oid", required = true)
-            @PathParam(value = "oid") String oid,
-
-            @ApiParam(name = "uid", required = true)
-            @PathParam(value = "uid") String uid,
-
-            @ApiParam(name = "user", required = true)
-            @NotNull @Valid UpdateListDef user
-    ) throws NotFoundException, NotOwnerException, ForbiddenActionException, AlreadyExistsException, NotAllowedException {
-        Response response = Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(new UserData(authService.updateUserInOrganisation(getUser(headers), UUID.fromString(uid), UUID.fromString(oid), user.ids)))
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .build();
-        logUAM(request, headers,  oid, "organisations", String.format("update-user-roles (uid=%s)(roles=%s)", uid, user.ids));
-        return response;
-    }
-
-    @Timed
-    @Path("organisations/{oid}/users/{uid}")
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -1130,7 +1092,7 @@ public class IAMRestService {
             @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
-    @UnitOfWork(readOnly = true)
+    @UnitOfWork
     public Response putRoles(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
