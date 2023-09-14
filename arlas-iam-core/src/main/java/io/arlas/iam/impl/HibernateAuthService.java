@@ -52,8 +52,6 @@ public class HibernateAuthService implements AuthService {
 
     private final List<String> systemRoles = Arrays.asList(ROLE_IAM_ADMIN, ROLE_ARLAS_IMPORTER);
 
-    private final List<String> ownerDefaultRoles = List.of(ROLE_ARLAS_OWNER);
-
 
     public HibernateAuthService(SessionFactory factory, ArlasAuthServerConfiguration conf) {
         this.arlasService = new ArlasService(conf);
@@ -515,22 +513,18 @@ public class HibernateAuthService implements AuthService {
             roleDao.addPermissionToRole(allDataPermission, defaultGroup);
 
             Set<String> userDefaultRoles = new HashSet<>();
-            Set<String> adminDefaultRoles = new HashSet<>();
             userDefaultRoles.add(defaultGroup.getId().toString());
             Map<String, Map<String, List<String>>> technicalRoles = getTechnicalRolesPermissions();
             for (String s : technicalRoles.keySet()) {
                 if (!systemRoles.contains(s) && !GROUP_PUBLIC.equals(s)) {
                     Role r = roleDao.createOrUpdateRole(new Role(s, technicalRoles.get(s).get("description").get(0), true).setOrganisation(organisation));
-                    adminDefaultRoles.add(r.getId().toString());
-                    if (getUserOrgName(user).equals(name) || isAdmin || ownerDefaultRoles.contains(r.getName())) {
-                        userDefaultRoles.add(r.getId().toString());
-                    }
+                    userDefaultRoles.add(r.getId().toString());
                 }
             }
             try {
                 addUserToOrganisation(user, user, organisation, userDefaultRoles, true);
                 if (!isAdmin) {
-                    addUserToOrganisation(user, getAdmin(), organisation, adminDefaultRoles, true);
+                    addUserToOrganisation(user, getAdmin(), organisation, userDefaultRoles, true);
                 }
             } catch (NotAllowedException | ForbiddenActionException | NotFoundException e) {
                 LOGGER.warn("Cannot add user to org.", e);
