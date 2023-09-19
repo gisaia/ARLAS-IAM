@@ -93,6 +93,32 @@ public class IAMRestService {
         MDC.clear();
     }
 
+    // --------------- Forward auth ---------------------
+    @Timed
+    @Path("auth")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(UTF8JSON)
+    @ApiOperation(authorizations = @Authorization("JWT"),
+            value = "Validate authentication to another URI",
+            produces = MediaType.TEXT_PLAIN,
+            consumes = UTF8JSON
+    )
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class),
+            @ApiResponse(code = 401, message = "Unauthenticated", response = Error.class),
+            @ApiResponse(code = 403, message = "Forbidden", response = Error.class),
+            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+
+    @UnitOfWork(readOnly = true)
+    public Response forwardAuth(
+            @Context UriInfo uriInfo
+    ) {
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
+                .entity("ok")
+                .type(MediaType.TEXT_PLAIN_TYPE)
+                .build();
+    }
+
     // --------------- Users ---------------------
 
     @Timed
