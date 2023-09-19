@@ -24,7 +24,7 @@ public class OrganisationMember {
 
     @Type(type = "org.hibernate.type.NumericBooleanType")
     @Column(name="is_admin")
-    private boolean isAdmin;
+    private boolean isAdmin = false;
 
     private OrganisationMember() {}
 
