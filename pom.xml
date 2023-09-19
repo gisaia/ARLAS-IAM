@@ -39,7 +39,7 @@
         <arlas.version>24.0.4-SNAPSHOT</arlas.version>
         <dropwizard.version>2.1.7</dropwizard.version>
         <postgresql.version>42.6.0</postgresql.version>
-        <spring.security.version>6.1.3</spring.security.version>
+        <spring.security.version>6.1.4</spring.security.version>
         <jackson.version>2.15.2</jackson.version>
         <snake.yaml.version>2.0</snake.yaml.version>
 
