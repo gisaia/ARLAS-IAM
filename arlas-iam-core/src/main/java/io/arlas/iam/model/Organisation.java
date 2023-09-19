@@ -69,6 +69,11 @@ public class Organisation {
         this.displayName = name.indexOf(".") != -1 ? name.substring(0, name.indexOf(".")) : name;
     }
 
+    public Organisation setDisplayName(String displayName) {
+        this.displayName = displayName;
+        return this;
+    }
+
     public String getDisplayName() {
         return displayName;
     }

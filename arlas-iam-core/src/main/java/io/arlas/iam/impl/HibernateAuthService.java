@@ -499,7 +499,11 @@ public class HibernateAuthService implements AuthService {
 
         Optional<Organisation> org = organisationDao.readOrganisation(name);
         if (org.isEmpty()) {
-            Organisation organisation = organisationDao.createOrganisation(new Organisation(name));
+            var newOrg = new Organisation(name);
+            if (getUserOrgName(user).equals(name)) {
+                newOrg.setDisplayName(user.getEmail().substring(0, user.getEmail().indexOf("@")));
+            }
+            Organisation organisation = organisationDao.createOrganisation(newOrg);
             // create default permissions
             var allDataPermission = createPermission(organisation,
                     ArlasClaims.getHeaderColumnFilterDefault(""),
