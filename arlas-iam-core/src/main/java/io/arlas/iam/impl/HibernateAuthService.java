@@ -160,11 +160,8 @@ public class HibernateAuthService implements AuthService {
     }
 
     private User getAdmin() {
-        if (this.admin == null) {
-            // admin has been created at application startup so it must exist
-            this.admin = userDao.readUser(initConf.admin).orElseGet(() -> new User(initConf.admin));
-        }
-        return this.admin;
+        // admin has been created at application startup so it must exist
+        return userDao.readUser(initConf.admin).orElseGet(() -> new User(initConf.admin));
     }
 
     private boolean isAdmin(UUID userId) {
