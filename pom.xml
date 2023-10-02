@@ -6,7 +6,7 @@
 
     <groupId>io.arlas.iam</groupId>
     <artifactId>arlas-iam-parent</artifactId>
-    <version>24.0.2-beta.7</version>
+    <version>24.0.2-beta.8</version>
     <modules>
         <module>arlas-iam-core</module>
         <module>arlas-iam-rest</module>

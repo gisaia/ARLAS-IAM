@@ -48,7 +48,6 @@ public class HibernateAuthService implements AuthService {
     private final long verifyTokenTtl;
     private final long apiKeyMaxTtl;
     private final InitConfiguration initConf;
-    private User admin;
 
     private final List<String> systemRoles = Arrays.asList(ROLE_IAM_ADMIN, ROLE_ARLAS_IMPORTER);
 
@@ -215,7 +214,6 @@ public class HibernateAuthService implements AuthService {
             admin.setVerified(true);
             admin = userDao.createUser(admin);
             admin.setRoles(importDefaultAdminRole(admin));
-            this.admin = userDao.updateUser(admin);
         } else {
             LOGGER.info("***** Database is not empty. Init is skipped.");
         }
@@ -318,12 +316,27 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public String createPermissionToken(String subject, String orgFilter, String issuer, Date iat)
+    public String createPermissionToken(String subject, Optional<String> email, String orgFilter, String issuer, Date iat)
             throws ArlasException {
         LOGGER.info("Getting permission token with orgFilter="+orgFilter);
-        return tokenManager.createPermissionToken(subject, issuer, iat,
+        return tokenManager.createPermissionToken(subject, email, issuer, iat,
                 listPermissions(UUID.fromString(subject), orgFilter),
                 listRoles(UUID.fromString(subject), orgFilter));
+    }
+
+    @Override
+    public String createPermissionToken(String keyId, String keySecret, String issuer) throws ArlasException {
+        ApiKey key = apiKeyDao.readApiKey(keyId).orElseThrow(NotFoundException::new);
+        if (key.getCreationDate().toEpochSecond(ZoneOffset.UTC) + (long) key.getTtlInDays()*24*60*60
+                > LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
+                && matches(keySecret, key.getKeySecret())) {
+            return tokenManager.createPermissionToken(key.getOwner().getId().toString(), Optional.empty(), issuer,
+                    new Date(),
+                    listPermissions(key.getRoles(), null),
+                    listRoles(key.getRoles(), null));
+        } else {
+            throw new ExpiredKeyException();
+        }
     }
 
     @Override
@@ -359,20 +372,6 @@ public class HibernateAuthService implements AuthService {
             apiKeyDao.deleteApiKey(apiKey);
         } else {
             throw new NotAllowedException("Only owner or admin can delete this key.");
-        }
-    }
-
-    @Override
-    public String createPermissionToken(String keyId, String keySecret, String issuer) throws ArlasException {
-        ApiKey key = apiKeyDao.readApiKey(keyId).orElseThrow(NotFoundException::new);
-        if (key.getCreationDate().toEpochSecond(ZoneOffset.UTC) + (long) key.getTtlInDays()*24*60*60
-                > LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
-                && matches(keySecret, key.getKeySecret())) {
-            return tokenManager.createPermissionToken(key.getOwner().getId().toString(), issuer, new Date(),
-                    listPermissions(key.getRoles(), null),
-                    listRoles(key.getRoles(), null));
-        } else {
-            throw new ExpiredKeyException();
         }
     }
 

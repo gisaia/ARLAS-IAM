@@ -1,6 +1,7 @@
 package io.arlas.iam.util;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -16,10 +17,7 @@ import io.arlas.iam.model.User;
 import org.hibernate.SessionFactory;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class TokenManager {
     private Algorithm algorithm;
@@ -62,18 +60,19 @@ public class TokenManager {
                 createRefreshToken(), (iat.getTime() + this.refreshTokenTTL)/1000);
     }
 
-    public String createPermissionToken(String subject, String issuer, Date iat, Set<String> permissions, Map<String, List<String>> roles) throws ArlasException {
+    public String createPermissionToken(String subject, Optional<String> email, String issuer, Date iat, Set<String> permissions, Map<String, List<String>> roles) throws ArlasException {
         try {
             storeSecret();
             Date exp = new Date(iat.getTime() + this.accessTokenTTL);
-            return JWT.create()
+            JWTCreator.Builder builder = JWT.create()
                     .withIssuer(issuer)
                     .withSubject(subject)
                     .withIssuedAt(iat)
                     .withExpiresAt(exp)
                     .withClaim(this.authConf.claimPermissions, permissions.stream().toList())
-                    .withClaim(this.authConf.claimRoles, roles)
-                    .sign(this.algorithm);
+                    .withClaim(this.authConf.claimRoles, roles);
+            email.ifPresent(s -> builder.withClaim("email", s));
+            return builder.sign(this.algorithm);
         } catch (JWTCreationException exception){
             throw new ArlasException("Invalid Signing configuration / Couldn't convert Claims.");
         }
@@ -90,6 +89,7 @@ public class TokenManager {
                     .withExpiresAt(exp)
                     .withClaim("http://arlas.io/locale", subject.getLocale())
                     .withClaim("http://arlas.io/timezone", subject.getTimezone())
+                    .withClaim("email", subject.getEmail())
                     .sign(this.algorithm);
         } catch (JWTCreationException exception){
             throw new InvalidTokenException("Invalid Signing configuration / Couldn't convert Claims.");

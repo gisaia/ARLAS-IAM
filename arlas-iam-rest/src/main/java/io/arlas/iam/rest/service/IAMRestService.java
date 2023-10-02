@@ -1759,7 +1759,7 @@ public class IAMRestService {
             @QueryParam(value = ServerConstants.ARLAS_ORG_FILTER) String orgFilter
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.createPermissionToken(getIdentityParam(headers).userId, orgFilter, uriInfo.getBaseUri().getHost(), new Date()))
+                .entity(authService.createPermissionToken(getIdentityParam(headers).userId, getIdentityParam(headers).email, orgFilter, uriInfo.getBaseUri().getHost(), new Date()))
                 .type(MediaType.TEXT_PLAIN_TYPE)
                 .build();
     }
