@@ -47,7 +47,7 @@ public class ArlasPolicyEnforcer extends AbstractPolicyEnforcer {
         } else {
             LOGGER.debug("accessToken=" + decodeToken(token));
             DecodedJWT accessToken = authService.verifyToken(token);
-            rpt = authService.createPermissionToken(accessToken.getSubject(), orgFilter, accessToken.getIssuer(), new Date());
+            rpt = authService.createPermissionToken(getSubject(accessToken), getSubjectEmail(accessToken), orgFilter, accessToken.getIssuer(), new Date());
         }
         LOGGER.debug("RPT=" + decodeToken(rpt));
         return JWT.decode(rpt);

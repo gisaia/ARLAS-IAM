@@ -243,10 +243,10 @@ public class AuthITUser extends AuthEndpoints {
     @Test
     public void test900DeleteUserFromRole() {
         getUser(userId2, userId2).then().statusCode(200)
-                .body("roles", hasSize(8)); // 2 created
+                .body("roles", hasSize(9)); // 2 created
         deleteUserFromRole(userId1, userId2, fooRoleId2).then().statusCode(202);
         getUser(userId2, userId2).then().statusCode(200)
-                .body("roles", hasSize(7));
+                .body("roles", hasSize(8));
     }
 
     @Test
