@@ -60,7 +60,7 @@ public class TokenManager {
                 createRefreshToken(), (iat.getTime() + this.refreshTokenTTL)/1000);
     }
 
-    public String createPermissionToken(String subject, Optional<String> email, String issuer, Date iat, Set<String> permissions, Map<String, List<String>> roles) throws ArlasException {
+    public String createPermissionToken(String subject, String issuer, Date iat, Set<String> permissions, Map<String, List<String>> roles) throws ArlasException {
         try {
             storeSecret();
             Date exp = new Date(iat.getTime() + this.accessTokenTTL);
@@ -71,7 +71,6 @@ public class TokenManager {
                     .withExpiresAt(exp)
                     .withClaim(this.authConf.claimPermissions, permissions.stream().toList())
                     .withClaim(this.authConf.claimRoles, roles);
-            email.ifPresent(s -> builder.withClaim("email", s));
             return builder.sign(this.algorithm);
         } catch (JWTCreationException exception){
             throw new ArlasException("Invalid Signing configuration / Couldn't convert Claims.");

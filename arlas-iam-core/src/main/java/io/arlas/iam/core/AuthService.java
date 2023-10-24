@@ -17,7 +17,7 @@ public interface AuthService {
     DecodedJWT verifyToken(String token);
     void logout(UUID userId);
     LoginSession refresh(String authHeader, String refreshToken, String issuer) throws ArlasException;
-    String createPermissionToken(String subject, Optional<String> email, String orgFilter, String issuer, Date iat) throws ArlasException;
+    String createPermissionToken(String subject, String orgFilter, String issuer, Date iat) throws ArlasException;
     String createPermissionToken(String keyId, String keySecret, String issuer) throws ArlasException;
 
     User createUser(String email, String locale, String timezone) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
@@ -42,7 +42,7 @@ public interface AuthService {
     Set<Organisation> listOrganisations(User user);
     List<String> getOrganisationCollections(User owner, UUID orgId, String token) throws ArlasException;
 
-    Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId, Optional<String> roleName) throws NotOwnerException, NotFoundException;
+    Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId, String roleName) throws NotOwnerException, NotFoundException;
     List<String> listUserEmailsFromOwnDomain(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
 
     Organisation addUserToOrganisation(User owner, String email, UUID orgId, Set<String> rids) throws NotOwnerException, NotFoundException, AlreadyExistsException, ForbiddenActionException, SendEmailException, InvalidEmailException, NotAllowedException;
