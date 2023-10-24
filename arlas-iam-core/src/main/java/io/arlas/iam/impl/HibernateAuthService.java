@@ -159,7 +159,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     private User getAdmin() {
-        // admin has been created at application startup so it must exist
+        // admin has been created at application startup, so it must exist
         return userDao.readUser(initConf.admin).orElseGet(() -> new User(initConf.admin));
     }
 
@@ -182,7 +182,7 @@ public class HibernateAuthService implements AuthService {
         return listRoles(readUser(userId).orElseThrow(NotFoundException::new).getRoles(), orgFilter);
     }
 
-    private Map<String, List<String>> listRoles(Set<Role> roles, String orgFilter) throws NotFoundException {
+    private Map<String, List<String>> listRoles(Set<Role> roles, String orgFilter) {
         Map<String, List<String>> orgRoles = new HashMap<>();
         // we return a map of {"" -> [ roles...], "orgName1" -> [ roles...], ...}
         // (the empty key is for cross org roles such as "role/iam/admin")
@@ -296,7 +296,7 @@ public class HibernateAuthService implements AuthService {
         if (authHeader == null || !authHeader.toLowerCase().startsWith("bearer ")) {
             throw new InvalidTokenException("Invalid access token: " + authHeader);
         }
-        User user = null;
+        User user;
         try {
             String accessToken = authHeader.substring(7);
             DecodedJWT t = JWT.decode(accessToken);
@@ -316,10 +316,10 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public String createPermissionToken(String subject, Optional<String> email, String orgFilter, String issuer, Date iat)
+    public String createPermissionToken(String subject, String orgFilter, String issuer, Date iat)
             throws ArlasException {
         LOGGER.info("Getting permission token with orgFilter="+orgFilter);
-        return tokenManager.createPermissionToken(subject, email, issuer, iat,
+        return tokenManager.createPermissionToken(subject, issuer, iat,
                 listPermissions(UUID.fromString(subject), orgFilter),
                 listRoles(UUID.fromString(subject), orgFilter));
     }
@@ -330,7 +330,7 @@ public class HibernateAuthService implements AuthService {
         if (key.getCreationDate().toEpochSecond(ZoneOffset.UTC) + (long) key.getTtlInDays()*24*60*60
                 > LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
                 && matches(keySecret, key.getKeySecret())) {
-            return tokenManager.createPermissionToken(key.getOwner().getId().toString(), Optional.empty(), issuer,
+            return tokenManager.createPermissionToken(key.getOwner().getId().toString(), issuer,
                     new Date(),
                     listPermissions(key.getRoles(), null),
                     listRoles(key.getRoles(), null));
@@ -345,7 +345,7 @@ public class HibernateAuthService implements AuthService {
             var org = organisationDao.readOrganisation(orgId).orElseThrow(() -> new NotFoundException("Organisation not found."));
             var secret = KeyGenerators.string().generateKey();
             Set<Role> roles = roleIds.stream()
-                    .map(id -> roleDao.readRole(UUID.fromString(id)).get())
+                    .map(id -> roleDao.readRole(UUID.fromString(id)).orElseThrow())
                     .collect(Collectors.toSet());
             ApiKey apiKey = new ApiKey(name,
                     KeyGenerators.string().generateKey(),
@@ -523,9 +523,6 @@ public class HibernateAuthService implements AuthService {
             }
             try {
                 addUserToOrganisation(user, user, organisation, userDefaultRoles, true);
-                if (!isAdmin) {
-                    addUserToOrganisation(user, getAdmin(), organisation, userDefaultRoles, true);
-                }
             } catch (NotAllowedException | ForbiddenActionException | NotFoundException e) {
                 LOGGER.warn("Cannot add user to org.", e);
             }
@@ -551,21 +548,21 @@ public class HibernateAuthService implements AuthService {
     }
 
     private Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
-        return listOrganisationUsers(owner, orgId, Optional.empty(), true);
+        return listOrganisationUsers(owner, orgId, null, true);
     }
 
     @Override
-    public Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId, Optional<String> roleName) throws NotOwnerException, NotFoundException {
+    public Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId, String roleName) throws NotOwnerException, NotFoundException {
         return listOrganisationUsers(owner, orgId, roleName, false);
     }
 
-    private Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId, Optional<String> roleName, boolean showAdmin) throws NotOwnerException, NotFoundException {
+    private Set<OrganisationMember> listOrganisationUsers(User owner, UUID orgId, String roleName, boolean showAdmin) throws NotOwnerException, NotFoundException {
         return organisationDao.listUsers(getOrganisation(owner, orgId))
                 .stream()
                 .filter(m -> showAdmin || !isAdmin(m.getUser()))
                 .filter(m -> {
                     try {
-                        return roleName.isEmpty() || listRoles(owner, orgId, m.getUser().getId()).stream().anyMatch(r -> r.getName().equals(roleName.get()));
+                        return roleName == null || listRoles(owner, orgId, m.getUser().getId()).stream().anyMatch(r -> r.getName().equals(roleName));
                     } catch (NotFoundException | NotOwnerException e) {
                         throw new RuntimeException(e);
                     }
@@ -757,7 +754,7 @@ public class HibernateAuthService implements AuthService {
         }
 
         member.setOwner(newRoles.stream()
-                .map(r -> roleDao.readRole(UUID.fromString(r)).get().getName())
+                .map(r -> roleDao.readRole(UUID.fromString(r)).orElseThrow().getName())
                 .anyMatch(n -> n.equals(ROLE_ARLAS_OWNER)));
 
         return getUser(org, userId);
@@ -786,7 +783,7 @@ public class HibernateAuthService implements AuthService {
         return listPermissions(readUser(userId).orElseThrow(() -> new NotFoundException("User not found.")).getRoles(), orgFilter);
 
     }
-    private Set<String> listPermissions(Set<Role> roles, String orgFilter) throws NotFoundException {
+    private Set<String> listPermissions(Set<Role> roles, String orgFilter) {
         Set<Permission> permissions = new HashSet<>();
         roles.forEach(r -> {
             String orgName = r.getOrganisation().map(Organisation::getName).orElse(NO_ORG);

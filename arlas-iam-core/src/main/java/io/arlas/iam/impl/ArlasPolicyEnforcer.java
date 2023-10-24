@@ -39,7 +39,7 @@ public class ArlasPolicyEnforcer extends AbstractPolicyEnforcer {
     @Override
     @UnitOfWork
     protected Object getObjectToken(String token, String orgFilter) throws Exception {
-        String rpt = null;
+        String rpt;
         if (token.startsWith(ARLAS_API_KEY)) {
             String[] key = token.split(":");
             LOGGER.debug("apiKeyId=" + key[1]);
@@ -47,7 +47,7 @@ public class ArlasPolicyEnforcer extends AbstractPolicyEnforcer {
         } else {
             LOGGER.debug("accessToken=" + decodeToken(token));
             DecodedJWT accessToken = authService.verifyToken(token);
-            rpt = authService.createPermissionToken(getSubject(accessToken), getSubjectEmail(accessToken), orgFilter, accessToken.getIssuer(), new Date());
+            rpt = authService.createPermissionToken(getSubject(accessToken), orgFilter, accessToken.getIssuer(), new Date());
         }
         LOGGER.debug("RPT=" + decodeToken(rpt));
         return JWT.decode(rpt);

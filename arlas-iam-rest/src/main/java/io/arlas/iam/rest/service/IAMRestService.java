@@ -79,6 +79,8 @@ public class IAMRestService {
             MDC.put(USER_ID, getIdentityParam(headers).userId);
         }
         MDC.put(EVENT_KIND, EVENT);
+        MDC.put(EVENT_CATEGORY, IAM);
+        MDC.put(EVENT_TYPE, ALLOWED);
         MDC.put(HTTP_REQUEST_METHOD, request.getMethod());
         MDC.put(URL_PATH, request.getRequestURI());
         MDC.put(URL_QUERY, request.getQueryString());
@@ -86,8 +88,6 @@ public class IAMRestService {
         MDC.put(HTTP_REQUEST_REFERRER, request.getHeader(REFERER));
         MDC.put(CLIENT_ADDRESS, ip);
         MDC.put(CLIENT_IP, ip);
-        MDC.put(EVENT_CATEGORY, IAM);
-        MDC.put(EVENT_TYPE, ALLOWED);
         MDC.put(EVENT_ACTION, action);
         LOGGER.info(log);
         MDC.clear();
@@ -206,12 +206,10 @@ public class IAMRestService {
             @ApiParam(name = "refreshToken", required = true)
             @PathParam(value = "refreshToken") String refreshToken
     ) throws ArlasException {
-        Response response = Response.ok(uriInfo.getRequestUriBuilder().build())
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new LoginData(authService.refresh(headers.getHeaderString(HttpHeaders.AUTHORIZATION), refreshToken, uriInfo.getBaseUri().getHost())))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
-        logUAM(request, headers,  "session", "refresh-token");
-        return response;
     }
 
     @Timed
@@ -698,7 +696,7 @@ public class IAMRestService {
             @QueryParam(value = "rname") String rname
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid), Optional.ofNullable(rname))
+                .entity(authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid), rname)
                         .stream()
                         .filter(om -> !om.isAdmin())
                         .map(MemberData::new)
@@ -761,7 +759,7 @@ public class IAMRestService {
             @ApiParam(name = "uid", required = true)
             @PathParam(value = "uid") String uid
     ) throws NotFoundException, NotOwnerException {
-        Optional<OrganisationMember> u = authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid), Optional.empty())
+        Optional<OrganisationMember> u = authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid), null)
                 .stream()
                 .filter(om -> om.getUser().is(UUID.fromString(uid)))
                 .findFirst();
@@ -1759,7 +1757,7 @@ public class IAMRestService {
             @QueryParam(value = ServerConstants.ARLAS_ORG_FILTER) String orgFilter
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(authService.createPermissionToken(getIdentityParam(headers).userId, getIdentityParam(headers).email, orgFilter, uriInfo.getBaseUri().getHost(), new Date()))
+                .entity(authService.createPermissionToken(getIdentityParam(headers).userId, orgFilter, uriInfo.getBaseUri().getHost(), new Date()))
                 .type(MediaType.TEXT_PLAIN_TYPE)
                 .build();
     }
