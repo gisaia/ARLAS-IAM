@@ -503,11 +503,11 @@ public class HibernateAuthService implements AuthService {
             // create default permissions
             var allDataPermission = createPermission(organisation,
                     ArlasClaims.getHeaderColumnFilterDefault(""),
-                    "View all collections' data");
+                    "View all collections");
 
             // create default roles
             var defaultGroup = createRole(organisation, TechnicalRoles.getDefaultGroup(name),
-                    "Default organisation group for dashboard sharing.");
+                    "Default group for dashboard sharing.");
             defaultGroup.setTechnical(true);
             roleDao.createOrUpdateRole(defaultGroup);
             roleDao.addPermissionToRole(allDataPermission, defaultGroup);

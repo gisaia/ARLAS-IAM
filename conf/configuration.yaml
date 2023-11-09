@@ -50,7 +50,7 @@ arlas_auth:
   # Access token time to live in millisecond
   access_token_ttl: ${ARLAS_ACCESS_TOKEN_TTL:-600000}
   # Refresh token time to live in millisecond
-  refresh_token_ttl: ${ARLAS_REFRESH_TOKEN_TTL:-3600000}
+  refresh_token_ttl: ${ARLAS_REFRESH_TOKEN_TTL:-600000}
   # Verify token time to live in millisecond
   verify_token_ttl: ${ARLAS_VERIFY_TOKEN_TTL:-86400000}
   public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,session/.*:PUT,users:POST,users/.*:POST,organisations/check:GET}]
@@ -92,8 +92,10 @@ database:
   minSize: 8
   # the maximum number of connections to keep open
   maxSize: 32
-  # whether idle connections should be validated
-  checkConnectionWhileIdle: false
+  # whether or not connections will be validated before being borrowed from the pool
+  checkConnectionOnBorrow: true
+  # whether or not connections will be validated after being returned to the pool
+  checkConnectionOnReturn: true
 
 # SMTP configuration. Used to send account verification email.
 smtp:
