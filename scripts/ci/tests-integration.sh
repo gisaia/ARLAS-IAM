@@ -30,6 +30,7 @@ cd ${SCRIPT_PATH}/../..
 function start_stack() {
   mkdir -p /tmp/iam
   export ARLAS_IAM_DATADIR="/tmp/iam"
+  export ARLAS_IAM_PRIVATE_ORG=true
   export ARLAS_IAM_VERIFY_EMAIL=false
   export ARLAS_AUTH_PUBLIC_URIS=".*"
   ./scripts/docker-clean.sh

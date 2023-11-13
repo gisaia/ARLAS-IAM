@@ -68,6 +68,9 @@ arlas_auth:
 # set this to "false" if you don't want new users to verify their email
 verify_email: ${ARLAS_IAM_VERIFY_EMAIL:-true}
 
+# Whether private organisations are created
+create_private_org: ${ARLAS_IAM_PRIVATE_ORG:-false}
+
 # API key max TTL in days
 api_key_max_ttl: ${ARLAS_IAM_API_KEY_MAX_TTL:-365}
 

@@ -45,6 +45,7 @@ public class HibernateAuthService implements AuthService {
     private final SMTPMailer mailer;
     private final TokenManager tokenManager;
     private final boolean verifyEmail; // set to true in production, false in testing mode
+    private final boolean createPrivateOrg; // set to true in production, false in testing mode
     private final long verifyTokenTtl;
     private final long apiKeyMaxTtl;
     private final InitConfiguration initConf;
@@ -66,6 +67,7 @@ public class HibernateAuthService implements AuthService {
         this.mailer = new SMTPMailer(conf.smtp);
         this.tokenManager = new TokenManager(factory, conf.arlasAuthConfiguration);
         this.verifyEmail = conf.verifyEmail;
+        this.createPrivateOrg = conf.createPrivateOrg;
         this.verifyTokenTtl = conf.arlasAuthConfiguration.verifyTokenTTL;
         this.apiKeyMaxTtl = conf.apiKeyMaxTtl;
         this.initConf = conf.arlasAuthConfiguration.initConfiguration;
@@ -237,7 +239,7 @@ public class HibernateAuthService implements AuthService {
                 user = userDao.createUser(user);
                 if (this.verifyEmail) {
                     sendActivationEmail(user, verifyToken);
-                } else {
+                } else if (this.createPrivateOrg) {
                     try {
                         createOrganisation(user, getUserOrgName(user));
                     } catch (AlreadyExistsException | NotOwnerException | ForbiddenOrganisationNameException ignored) {
@@ -463,10 +465,12 @@ public class HibernateAuthService implements AuthService {
             u.setVerified(true);
             u.setTempToken(null);
             userDao.updateUser(u);
-            try {
-                createOrganisation(u, getUserOrgName(u));
-            } catch (AlreadyExistsException | NotOwnerException | ForbiddenOrganisationNameException ignored) {
-                // cannot happen
+            if (this.createPrivateOrg) {
+                try {
+                    createOrganisation(u, getUserOrgName(u));
+                } catch (AlreadyExistsException | NotOwnerException | ForbiddenOrganisationNameException ignored) {
+                    // cannot happen
+                }
             }
         } else {
             throw new NonMatchingPasswordException("Verification token does not match");
@@ -686,9 +690,6 @@ public class HibernateAuthService implements AuthService {
             throws AlreadyExistsException, NotOwnerException, NotFoundException {
         var org = getOrganisation(owner, orgId);
         Role group = createRole(org, TechnicalRoles.getNewDashboardGroupRole(org.getName(), name), description);
-        for (OrganisationMember om : org.getMembers().stream().filter(OrganisationMember::isOwner).toList()) {
-            addRoleToUser(owner, orgId, om.getUser().getId(), group.getId());
-        }
         return group;
     }
 

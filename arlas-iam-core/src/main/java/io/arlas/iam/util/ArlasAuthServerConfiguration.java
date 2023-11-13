@@ -18,6 +18,9 @@ public class ArlasAuthServerConfiguration extends ArlasConfiguration {
     @JsonProperty("verify_email")
     public boolean verifyEmail;
 
+    @JsonProperty("create_private_org")
+    public boolean createPrivateOrg;
+
     @JsonProperty("api_key_max_ttl")
     public int apiKeyMaxTtl;
 
