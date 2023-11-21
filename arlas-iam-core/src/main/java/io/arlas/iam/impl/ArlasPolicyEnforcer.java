@@ -61,13 +61,5 @@ public class ArlasPolicyEnforcer extends AbstractPolicyEnforcer {
         } else {
             return Collections.emptyMap();
         }
-        // TODO: activate fix when validated
-//        if (!jwtClaimRoles.isNull()) {
-//            Object value = jwtClaimRoles.asMap().get(org.orElse(""));
-//            if (value != null) {
-//                return Collections.singletonMap(org.orElse(""), value);
-//            }
-//        }
-//        return Collections.emptyMap();
     }
 }
