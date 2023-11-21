@@ -190,7 +190,9 @@ public class HibernateAuthService implements AuthService {
         // (the empty key is for cross org roles such as "role/iam/admin")
         roles.forEach(r -> {
             String orgName = r.getOrganisation().map(Organisation::getName).orElse(NO_ORG);
-            if (orgFilter == null || orgName.equals(orgFilter) || orgName.equals(NO_ORG)) {
+            // if no orgFilter, we only keep the roles associated to "no org"
+            if ((orgFilter == null && orgName.equals(NO_ORG))
+                    || (orgFilter != null && orgName.equals(orgFilter))) {
                 List<String> roleList = Optional.ofNullable(orgRoles.get(orgName)).orElseGet(ArrayList::new);
                 roleList.add(r.getName());
                 orgRoles.put(orgName, roleList);
@@ -788,7 +790,9 @@ public class HibernateAuthService implements AuthService {
         Set<Permission> permissions = new HashSet<>();
         roles.forEach(r -> {
             String orgName = r.getOrganisation().map(Organisation::getName).orElse(NO_ORG);
-            if (orgFilter == null || orgName.equals(orgFilter) || orgName.equals(NO_ORG)) {
+            // if no orgFilter, we only keep the permissions associated to "no org"
+            if ((orgFilter == null && orgName.equals(NO_ORG))
+                    || (orgFilter != null && orgName.equals(orgFilter))) {
                 permissions.addAll(r.getPermissions());
             }
         });
