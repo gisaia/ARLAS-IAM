@@ -202,6 +202,10 @@ public class User {
         return apiKeys;
     }
 
+    public void addApiKey(ApiKey apiKey) {
+        this.apiKeys.add(apiKey);
+    }
+
     public void setApiKeys(Set<ApiKey> apiKeys) {
         this.apiKeys = apiKeys;
     }

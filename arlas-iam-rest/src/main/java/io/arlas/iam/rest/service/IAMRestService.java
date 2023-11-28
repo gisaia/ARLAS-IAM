@@ -1601,7 +1601,7 @@ public class IAMRestService {
             produces = UTF8JSON,
             consumes = UTF8JSON
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = PermissionData.class, responseContainer = "List"),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = PermissionData.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
 
     @UnitOfWork
@@ -1615,7 +1615,7 @@ public class IAMRestService {
             @ApiParam(name = "rid", required = true)
             @PathParam(value = "rid") String rid
     ) throws NotFoundException, NotOwnerException {
-        return Response.created(uriInfo.getRequestUriBuilder().build())
+        return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.listPermissionsOfRole(getUser(headers), UUID.fromString(oid), UUID.fromString(rid))
                         .stream()
                         .map(PermissionData::new)

@@ -1,0 +1,16 @@
+services:
+  smtp4dev:
+    image: rnwood/smtp4dev:linux-amd64-latest
+    container_name: smtp4dev
+    expose:
+      - 25
+    ports:
+      - 8025:80
+    environment:
+      - ServerOptions__HostName=smtp4dev
+    volumes:
+      - smtp4dev-data:/smtp4dev
+
+volumes:
+  smtp4dev-data:
+    name: smtp4dev-data
