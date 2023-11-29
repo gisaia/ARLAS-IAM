@@ -22,12 +22,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
+import javax.ws.rs.core.HttpHeaders;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static io.arlas.commons.rest.utils.ServerConstants.NO_ORG;
+import static io.arlas.commons.rest.utils.ServerConstants.*;
 import static io.arlas.filter.config.TechnicalRoles.*;
 
 public class HibernateAuthService implements AuthService {
@@ -336,10 +337,27 @@ public class HibernateAuthService implements AuthService {
                 && matches(keySecret, key.getKeySecret())) {
             return tokenManager.createPermissionToken(key.getOwner().getId().toString(), issuer,
                     new Date(),
-                    listPermissions(key.getRoles(), null),
-                    listRoles(key.getRoles(), null));
+                    listPermissions(key.getRoles(), key.getOrg().getName()),
+                    listRoles(key.getRoles(), key.getOrg().getName()));
         } else {
             throw new ExpiredKeyException();
+        }
+    }
+
+    @Override
+    public String createPermissionToken(HttpHeaders headers) throws ArlasException {
+        String keyIdHeader = headers.getHeaderString(ARLAS_API_KEY_ID);
+        String keySecretHeader = headers.getHeaderString(ARLAS_API_KEY_SECRET);
+        String authHeader = headers.getHeaderString(HttpHeaders.AUTHORIZATION);
+        List<String> orgFilter = headers.getRequestHeader(ARLAS_ORG_FILTER);
+        if (keyIdHeader != null && keySecretHeader != null) {
+            return createPermissionToken(keyIdHeader, keySecretHeader, ARLAS_API_KEY);
+        } else {
+            DecodedJWT accessToken = verifyToken(authHeader);
+            return createPermissionToken(accessToken.getSubject(),
+                    orgFilter == null ? null : orgFilter.get(0),
+                    accessToken.getIssuer(),
+                    new Date());
         }
     }
 
@@ -348,10 +366,12 @@ public class HibernateAuthService implements AuthService {
         if (user.is(ownerId) || isAdmin(user)) {
             var org = organisationDao.readOrganisation(orgId).orElseThrow(() -> new NotFoundException("Organisation not found."));
             var secret = KeyGenerators.string().generateKey();
-            Set<Role> userRoles = userDao.readUser(ownerId).orElseThrow(NotFoundException::new).getRoles();
+            Set<Role> userRoles = readUser(ownerId, true).getRoles().stream()
+                    .filter(r -> r.getOrganisation().isPresent() && r.getOrganisation().get().getId().equals(orgId))
+                    .collect(Collectors.toSet());
             Set<Role> roles = roleIds.stream()
                     .map(id -> roleDao.readRole(UUID.fromString(id)).orElseThrow())
-                    .filter(userRoles::contains) // ensure we keep only roles belonging to ApiKey owner
+                    .filter(userRoles::contains) // ensure we keep only roles belonging to ApiKey owner and organisation
                     .collect(Collectors.toSet());
             ApiKey apiKey = new ApiKey(name,
                     KeyGenerators.string().generateKey(),
