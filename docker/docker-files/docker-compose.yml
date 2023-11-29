@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   db:
     image: postgres
@@ -13,25 +11,22 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ${ARLAS_IAM_DATADIR:-/tmp}:/var/lib/postgresql/data
+      - arlas-iam-db:/var/lib/postgresql/data
 
-#  pgadmin:
-#    image: dpage/pgadmin4:latest
-#    container_name: pgadmin
-#    restart: always
-#    environment:
-#      PGADMIN_DEFAULT_EMAIL: tech@gisaia.com
-#      PGADMIN_DEFAULT_PASSWORD: secret
-#      PGADMIN_LISTEN_PORT: 80
-#    ports:
-#      - "8080:80"
-#    volumes:
-#    # on your local host: chmod -R 777 /home/user/projects/postgis/pgadmin
-#    #- /home/user/projects/postgis/pgadmin/servers.json:/pgadmin4/servers.json
-#    #- /home/user/projects/postgis/pgadmin/data:/var/lib/pgadmin
-#      - ${PGA_CONFIG}:/pgadmin4/servers.json
-#      - ${PGA_DATADIR}:/var/lib/pgadmin
-#
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: tech@gisaia.com
+      PGADMIN_DEFAULT_PASSWORD: secret
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "8080:80"
+    volumes:
+      - arlas-iam-pg-conf:/pgadmin4/servers.json
+      - arlas-iam-pg:/var/lib/pgadmin
+
   arlas-iam-server:
     build:
       context: ../..
@@ -51,21 +46,21 @@ services:
       - ARLAS_IAM_APP_PATH="${ARLAS_IAM_APP_PATH:-/}"
       - ARLAS_ANONYMOUS_VALUE="${ARLAS_ANONYMOUS_VALUE:-anonymous}"
       - ARLAS_AUTH_PUBLIC_URIS=${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,session/.*:PUT,users:POST,users/.*:POST}
-      - ARLAS_IAM_VERIFY_EMAIL="${ARLAS_IAM_VERIFY_EMAIL:-true}"
       - ARLAS_IAM_PRIVATE_ORG="${ARLAS_IAM_PRIVATE_ORG:-false}"
       - ARLAS_IAM_HIBERNATE_URL="${ARLAS_IAM_HIBERNATE_URL:-jdbc:postgresql://db:5432/arlas_iam}"
       - ARLAS_IAM_HIBERNATE_USER="${ARLAS_IAM_HIBERNATE_USER:-pg-user}"
       - ARLAS_IAM_HIBERNATE_PASSWORD="${ARLAS_IAM_HIBERNATE_PASSWORD:-iAMs00perSecrEET}"
       - ARLAS_IAM_HIBERNATE_DRIVER="${ARLAS_IAM_HIBERNATE_DRIVER:-org.postgresql.Driver}"
       - ARLAS_IAM_HIBERNATE_DIALECT="${ARLAS_IAM_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}"
-      - ARLAS_SMTP_ACTIVATED="${ARLAS_SMTP_ACTIVATED:-false}"
-      - ARLAS_SMTP_HOST="${ARLAS_SMTP_HOST:-}"
+      - ARLAS_IAM_VERIFY_EMAIL="${ARLAS_IAM_VERIFY_EMAIL:-false}"
+      - ARLAS_SMTP_ACTIVATED="${ARLAS_SMTP_ACTIVATED:-true}"
+      - ARLAS_SMTP_HOST="${ARLAS_SMTP_HOST:-smtp4dev}"
       - ARLAS_SMTP_PORT="${ARLAS_SMTP_PORT:-25}"
       - ARLAS_SMTP_USERNAME="${ARLAS_SMTP_USERNAME:-}"
       - ARLAS_SMTP_PASSWORD="${ARLAS_SMTP_PASSWORD:-}"
-      - ARLAS_SMTP_FROM="${ARLAS_SMTP_FROM:-}"
-      - ARLAS_SMTP_VERIFY_LINK="${ARLAS_SMTP_VERIFY_LINK:-/users/%s/verify/%s}"
-      - ARLAS_SMTP_RESET_LINK="${ARLAS_SMTP_RESET_LINK:-/users/%s/reset/%s}"
+      - ARLAS_SMTP_FROM="${ARLAS_SMTP_FROM:-iam@arlas.io}"
+      - ARLAS_SMTP_VERIFY_LINK="${ARLAS_SMTP_VERIFY_LINK:-http://localhost/hub/verify/%s/user/%s}"
+      - ARLAS_SMTP_RESET_LINK="${ARLAS_SMTP_RESET_LINK:-http://localhost/hub/reset/%s/user/%s}"
       - ARLAS_CACHE_TIMEOUT="${ARLAS_CACHE_TIMEOUT:-5}"
       - ARLAS_IAM_LOGGING_LEVEL="${ARLAS_IAM_LOGGING_LEVEL:-INFO}"
       - ARLAS_IAM_LOGGING_CONSOLE_LEVEL="${ARLAS_IAM_LOGGING_CONSOLE_LEVEL:-INFO}"
@@ -85,7 +80,7 @@ services:
       - "9997:9997"
 
   arlas-server:
-    image: gisaia/arlas-server:24.0.2-SNAPSHOT
+    image: gisaia/arlas-server:24.0.4-SNAPSHOT
     container_name: arlas-server
     labels:
       co.elastic.logs/enabled: true
@@ -125,5 +120,11 @@ services:
     #      - JDK_JAVA_OPTIONS=-javaagent:/opt/app/elastic-apm-agent.jar
     ports:
       - "9999:9999"
-    volumes:
-      - ${ARLAS_AUTH_LOCAL_CERT_FILE:-/tmp}:${ARLAS_AUTH_CERT_FILE:-/opt/app/arlas.pem}:ro
+
+volumes:
+  arlas-iam-db:
+    name: arlas-iam-db
+  arlas-iam-pg:
+    name: arlas-iam-pg
+  arlas-iam-pg-conf:
+    name: arlas-iam-pg-conf

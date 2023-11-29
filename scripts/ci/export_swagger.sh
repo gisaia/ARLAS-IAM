@@ -36,7 +36,6 @@ function clean_exit {
 
 function start_stack() {
   ./scripts/docker-clean.sh
-  export ARLAS_IAM_DATADIR="/tmp/iam"
   export ARLAS_IAM_VERIFY_EMAIL=false
   export ARLAS_AUTH_PUBLIC_URIS=".*"
   ./scripts/docker-run.sh --build

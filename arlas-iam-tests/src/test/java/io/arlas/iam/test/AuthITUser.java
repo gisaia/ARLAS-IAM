@@ -1,10 +1,12 @@
 package io.arlas.iam.test;
 
 import io.restassured.path.json.JsonPath;
+import io.restassured.response.ValidatableResponse;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -37,6 +39,8 @@ public class AuthITUser extends AuthEndpoints {
         token1 = json.get("accessToken");
         refreshToken1 = json.get("refreshToken.value");
         token2 = login(USER2).then().statusCode(200)
+                .extract().jsonPath().get("accessToken");
+        tokenAdmin = login(ADMIN, ADMIN_PASSWORD).then().statusCode(200)
                 .extract().jsonPath().get("accessToken");
     }
 
@@ -83,8 +87,9 @@ public class AuthITUser extends AuthEndpoints {
 //        logout(userId1).then().statusCode(200);
 //        getUser(userId1).then().statusCode(401);
 //
-//        token1 = login(USER1, refreshToken1).then().statusCode(200)
-//                .extract().jsonPath().get("accessToken");
+//        JsonPath json = login(USER1).then().statusCode(200).extract().jsonPath();
+//        token1 = json.get("accessToken");
+//        refreshToken1 = json.get("refreshToken.value");
 //    }
 
     @Test
@@ -140,8 +145,15 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test034DeleteOrganisationNotOwner() {
-        deleteOrganisation(userId2).then().statusCode(400);
+        deleteOrganisation(userId2).then().statusCode(403);
         getUser(userId1).then().statusCode(200).body("organisations", hasSize(2));
+    }
+
+    @Test
+    public void test039ListUsersOfDomain() {
+        listUsersOfDomain().then().statusCode(200)
+                .body("", hasSize(1))
+                .body("[0]", is(USER2));
     }
 
     @Test
@@ -168,7 +180,7 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test043GetUserFromOrganisationAsUser() {
-        getUserFromOrganisation(userId2, userId1).then().statusCode(400);
+        getUserFromOrganisation(userId2, userId1).then().statusCode(403);
     }
 
     @Test
@@ -191,17 +203,16 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test052AddRoleToOrganisationNotOwned() {
-        createRole(userId2, "whatever_role", "").then().statusCode(400);
+        createRole(userId2, "whatever_role", "").then().statusCode(403);
     }
 
     @Test
     public void test053AddUserInRole() {
-        addUserInRole(userId1, userId2, fooRoleId1).then().statusCode(201)
+        addRoleToUser(userId1, userId2, fooRoleId1).then().statusCode(201)
                 .body("id", equalTo(userId2));
 
-        addUserInRole(userId1, userId2, fooRoleId2).then().statusCode(201)
+        addRoleToUser(userId1, userId2, fooRoleId2).then().statusCode(201)
                 .body("id", equalTo(userId2));
-        // TODO check role list
     }
 
     @Test
@@ -212,12 +223,37 @@ public class AuthITUser extends AuthEndpoints {
     }
 
     @Test
-    public void test054AddUserInRoleNotOwned() {
-        addUserInRole(userId2, userId1, fooRoleId1).then().statusCode(400);
+    public void test055AddUserInRoleNotOwned() {
+        addRoleToUser(userId2, userId1, fooRoleId1).then().statusCode(403);
     }
 
     @Test
-    public void test060AddPermission() {
+    public void test056AddRoleToUser() {
+        updateRolesOfUser(userId1, userId2, fooRoleId1).then().statusCode(200)
+                .body("id", equalTo(userId2));
+    }
+
+    @Test
+    public void test057ListRolesOfUser() {
+        listUserRoles(userId1, userId2).then().statusCode(200)
+                .body("", hasSize(1));
+    }
+
+    @Test
+    public void test058ListRolesOfOrg() {
+        // returns "role/arlas/..." only
+        listOrgRoles().then().statusCode(200)
+                .body("", hasSize(6));
+    }
+
+    @Test
+    public void test059UpdateRole() {
+        updateRole(userId1, fooRoleId1, ROLE1, ROLE1_DESC_UPDATED).then().statusCode(200)
+                .body("description", equalTo(ROLE1_DESC_UPDATED));
+    }
+
+    @Test
+    public void test060AddPermissions() {
         permissionId1 = addPermission(userId1, PERMISSION1, PERMISSION1_DESC).then().statusCode(201)
                 .body("value", equalTo(PERMISSION1))
                 .body("description", equalTo(PERMISSION1_DESC))
@@ -231,20 +267,178 @@ public class AuthITUser extends AuthEndpoints {
     @Test
     public void test061AddPermissionToRole() {
         addPermissionToRole(userId1, fooRoleId1, permissionId1).then().statusCode(201);
+        listPermissionsOfRole(userId1, fooRoleId1).then().statusCode(200)
+                .body("", hasSize(1));
     }
 
     @Test
     public void test062ListUserPermissions() {
-        listPermissions(userId1, userId2).then().statusCode(200)
+        listPermissionsOfUser(userId1, userId2).then().statusCode(200)
                 .body("", hasSize(1))
                 .body("[0].value", is(oneOf(PERMISSION1, PERMISSION2, PERMISSION_GROUP)));
     }
 
     @Test
+    public void test063ListOrgPermissions() {
+        listPermissionsOfOrganisation().then().statusCode(200)
+                .body("", hasSize(3));
+    }
+
+    @Test
+    public void test064UpdatePermissions() {
+        updatePermission(userId1, permissionId1, PERMISSION1, PERMISSION1_DESC_UPDATED).then().statusCode(200)
+                .body("description", equalTo(PERMISSION1_DESC_UPDATED));
+    }
+
+    @Test
+    public void test065ListPermissionsOfRole() {
+        listPermissionsOfRole(userId1, fooRoleId1).then().statusCode(200)
+                .body("", hasSize(1))
+                .body("[0].value", equalTo(PERMISSION1));
+    }
+
+    @Test
+    public void test066DeletePermissionsOfRole() {
+        deletePermissionFromRole(userId1, fooRoleId1, permissionId1).then().statusCode(202);
+        listPermissionsOfRole(userId1, fooRoleId1).then().statusCode(200)
+                .body("", hasSize(0));
+    }
+
+    @Test
+    public void test067UpdatePermissionsOfRole() {
+        updatePermissionsOfRole(userId1, fooRoleId1, permissionId1).then().statusCode(201);
+        listPermissionsOfRole(userId1, fooRoleId1).then().statusCode(200)
+                .body("", hasSize(1));
+    }
+
+    @Test
+    public void test070AddGroup() {
+        groupId1 = addGroup(userId1, GRP1, GRP1_DESC).then().statusCode(201)
+                .body("name", equalTo(GRP1))
+                .body("description", equalTo(GRP1_DESC))
+                .extract().jsonPath().get("id");
+    }
+
+    @Test
+    public void test071UpdateGroup() {
+        updateGroup(userId1, groupId1, GRP1, GRP1_DESC_UPDATED).then().statusCode(200)
+                .body("name", equalTo(GRP1))
+                .body("description", equalTo(GRP1_DESC_UPDATED));
+    }
+
+    @Test
+    public void test072ListGroupsOfOrganisation() {
+        listGroups().then().statusCode(200)
+                .body("", hasSize(2));
+    }
+
+    @Test
+    public void test073ListGroupsOfUser() {
+        listGroups(userId1, userId2).then().statusCode(200)
+                .body("", hasSize(0));
+    }
+
+    @Test
+    public void test074AddGroupToUser() {
+        addRoleToUser(userId1, userId2, groupId1).then().statusCode(201)
+                .body("roles", hasSize(9));
+        listGroups(userId1, userId2).then().statusCode(200)
+                .body("", hasSize(1));
+    }
+
+    @Test
+    public void test081AddForbiddenOrg() {
+        addForbiddenOrg("gisaia.com").then().statusCode(201)
+                .body("name", equalTo("gisaia.com"));
+    }
+
+    @Test
+    public void test082ListForbiddenOrg() {
+        getForbiddenOrgs().then().statusCode(200)
+                .body("", hasSize(1))
+                .body("[0].name", equalTo("gisaia.com"));
+    }
+
+    @Test
+    public void test083CreateForbiddenOrg() {
+        createOrganisationWithName("gisaia.com").then().statusCode(400);
+    }
+
+    @Test
+    public void test084DeleteFromForbiddenOrg() {
+        deleteForbiddenOrg("gisaia.com").then().statusCode(202);
+    }
+
+    @Test
+    public void test085CreateOrgWithName() {
+        String oid = createOrganisationWithName("gisaia.com").then().statusCode(201)
+                .extract().jsonPath().get("id");
+        deleteOrganisation("admin", oid, "gisaia.com").then().statusCode(202);
+    }
+
+    @Test
+    public void test091CreateApiKey() {
+        ValidatableResponse json = createApiKey(userId1, "apikey1", fooRoleId1, 1).then().statusCode(201);
+        apiKeyUUID = json.extract().jsonPath().get("id");
+        apiKeyId = json.extract().jsonPath().get("keyId");
+        apiKeySecret = json.extract().jsonPath().get("keySecret");
+    }
+
+    @Test
+    public void test092UseApiKeyForAuthorizedEndpoint() {
+        given()
+                .header(ARLAS_API_KEY_ID, apiKeyId)
+                .header(ARLAS_API_KEY_SECRET, apiKeySecret)
+                .header(ARLAS_ORG_FILTER, ORG)
+                .contentType("application/json")
+                .get(arlasAppPath.concat("organisations"))
+                .then().statusCode(200)
+                .body("", hasSize(2)); // owner org + foo.com
+    }
+
+    @Test
+    public void test093UseApiKeyForUnauthorizedEndpoint() {
+        given()
+                .header(ARLAS_API_KEY_ID, apiKeyId)
+                .header(ARLAS_API_KEY_SECRET, apiKeySecret)
+                .header(ARLAS_ORG_FILTER, ORG)
+                .contentType("application/json")
+                .delete(arlasAppPath.concat("organisations/xxx"))
+                .then().statusCode(403);
+    }
+
+    @Test
+    public void test094DeleteApiKey() {
+        deleteApiKey(userId1, apiKeyUUID).then().statusCode(202);
+    }
+
+    // TODO: needs collections to be existing in ARLAS server to test these
+//    @Test
+//    public void test100CreateColumnFilter() {
+//        cfId = createColumnFilter().then().statusCode(201)
+//                .extract().jsonPath().get("id");
+//    }
+//
+//    @Test
+//    public void test101GetColumnFilter() {
+//        getColumnFilter(cfId).then().statusCode(200)
+//                .body("", hasSize(2))
+//                .body("[0]", is(oneOf("collection1","collection2")))
+//                .body("[1]", is(oneOf("collection1","collection2")));
+//    }
+//
+//    @Test
+//    public void test102UpdateColumnFilter() {
+//        updateColumnFilter(cfId).then().statusCode(200)
+//                .body("", hasSize(1))
+//                .body("[0]", is("collection1"));
+//    }
+
+    @Test
     public void test900DeleteUserFromRole() {
         getUser(userId2, userId2).then().statusCode(200)
-                .body("roles", hasSize(9)); // 2 created
-        deleteUserFromRole(userId1, userId2, fooRoleId2).then().statusCode(202);
+                .body("roles", hasSize(9)); // 2 added: fooRole1 and fooGroup1
+        deleteUserFromRole(userId1, userId2, fooRoleId1).then().statusCode(202);
         getUser(userId2, userId2).then().statusCode(200)
                 .body("roles", hasSize(8));
     }
@@ -272,6 +466,4 @@ public class AuthITUser extends AuthEndpoints {
         deleteUser(userId1, userId1).then().statusCode(202);
         deleteUser(userId2, userId2).then().statusCode(202);
     }
-
-
 }

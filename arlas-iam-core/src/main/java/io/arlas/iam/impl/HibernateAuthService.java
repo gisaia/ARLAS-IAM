@@ -322,7 +322,7 @@ public class HibernateAuthService implements AuthService {
     @Override
     public String createPermissionToken(String subject, String orgFilter, String issuer, Date iat)
             throws ArlasException {
-        LOGGER.info("Getting permission token with orgFilter="+orgFilter);
+        LOGGER.debug("Getting permission token with orgFilter="+orgFilter);
         return tokenManager.createPermissionToken(subject, issuer, iat,
                 listPermissions(UUID.fromString(subject), orgFilter),
                 listRoles(UUID.fromString(subject), orgFilter));
@@ -348,8 +348,10 @@ public class HibernateAuthService implements AuthService {
         if (user.is(ownerId) || isAdmin(user)) {
             var org = organisationDao.readOrganisation(orgId).orElseThrow(() -> new NotFoundException("Organisation not found."));
             var secret = KeyGenerators.string().generateKey();
+            Set<Role> userRoles = userDao.readUser(ownerId).orElseThrow(NotFoundException::new).getRoles();
             Set<Role> roles = roleIds.stream()
                     .map(id -> roleDao.readRole(UUID.fromString(id)).orElseThrow())
+                    .filter(userRoles::contains) // ensure we keep only roles belonging to ApiKey owner
                     .collect(Collectors.toSet());
             ApiKey apiKey = new ApiKey(name,
                     KeyGenerators.string().generateKey(),
@@ -360,7 +362,10 @@ public class HibernateAuthService implements AuthService {
                     roles);
             apiKeyDao.createApiKey(apiKey);
             roles.forEach(r -> { r.addApiKeys(apiKey); roleDao.createOrUpdateRole(r); });
-            return new ApiKey(name, apiKey.getKeyId(), secret, apiKey.getTtlInDays(), user, org, apiKey.getRoles());
+            // we return a new key in order to display the non encoded secret to the user
+            ApiKey returnedKey = new ApiKey(name, apiKey.getKeyId(), secret, apiKey.getTtlInDays(), user, org, apiKey.getRoles());
+            returnedKey.setId(apiKey.getId());
+            return returnedKey;
         } else {
             throw new NotAllowedException("Only owner or admin can create this key.");
         }

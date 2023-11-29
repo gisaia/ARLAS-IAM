@@ -29,12 +29,10 @@ cd ${SCRIPT_PATH}/../..
 
 function start_stack() {
   mkdir -p /tmp/iam
-  export ARLAS_IAM_DATADIR="/tmp/iam"
   export ARLAS_IAM_PRIVATE_ORG=true
   export ARLAS_IAM_VERIFY_EMAIL=false
-  export ARLAS_AUTH_PUBLIC_URIS=".*"
   ./scripts/docker-clean.sh
-  ./scripts/docker-run.sh --build
+  ./scripts/docker-run.sh --build --smtp4dev
 }
 
 function test_rest_server() {
@@ -47,7 +45,6 @@ function test_rest_server() {
         -e ARLAS_IAM_HOST="arlas-iam-server" \
         -e ARLAS_IAM_PREFIX="arlas_iam_server" \
         -e ARLAS_IAM_APP_PATH=${ARLAS_IAM_APP_PATH} \
-        -e ARLAS_IAM_DATADIR="/tmp/iam" \
         --network arlasiam_default \
         maven:3.8.5-openjdk-17 \
         mvn -Dit.test=AuthITUser verify -DskipTests=false -DfailIfNoTests=false
