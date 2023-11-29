@@ -389,7 +389,6 @@ public class AuthITUser extends AuthEndpoints {
         given()
                 .header(ARLAS_API_KEY_ID, apiKeyId)
                 .header(ARLAS_API_KEY_SECRET, apiKeySecret)
-                .header(ARLAS_ORG_FILTER, ORG)
                 .contentType("application/json")
                 .get(arlasAppPath.concat("organisations"))
                 .then().statusCode(200)
@@ -401,7 +400,6 @@ public class AuthITUser extends AuthEndpoints {
         given()
                 .header(ARLAS_API_KEY_ID, apiKeyId)
                 .header(ARLAS_API_KEY_SECRET, apiKeySecret)
-                .header(ARLAS_ORG_FILTER, ORG)
                 .contentType("application/json")
                 .delete(arlasAppPath.concat("organisations/xxx"))
                 .then().statusCode(403);

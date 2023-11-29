@@ -126,6 +126,14 @@ public class ApiKey {
         this.ttlInDays = ttlInDays;
     }
 
+    public Organisation getOrg() {
+        return org;
+    }
+
+    public void setOrg(Organisation org) {
+        this.org = org;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
