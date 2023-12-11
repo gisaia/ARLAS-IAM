@@ -4,7 +4,7 @@ import io.arlas.iam.model.Role;
 
 import java.util.UUID;
 
-public class RoleData implements Comparable {
+public class RoleData implements Comparable<RoleData> {
     public UUID id;
     public String name;
 
@@ -28,7 +28,7 @@ public class RoleData implements Comparable {
     }
 
     @Override
-    public int compareTo(Object o) {
-        return name.compareTo(((RoleData) o).name);
+    public int compareTo(RoleData o) {
+        return name.compareTo(o.name);
     }
 }

@@ -20,7 +20,7 @@ public interface AuthService {
     LoginSession refresh(String authHeader, String refreshToken, String issuer) throws ArlasException;
     String createPermissionToken(String subject, String orgFilter, String issuer, Date iat) throws ArlasException;
     String createPermissionToken(String keyId, String keySecret, String issuer) throws ArlasException;
-    String createPermissionToken(HttpHeaders headers) throws ArlasException;
+    String createPermissionToken(HttpHeaders headers, String orgFilter) throws ArlasException;
 
     User createUser(String email, String locale, String timezone) throws InvalidEmailException, AlreadyExistsException, SendEmailException;
     User verifyUser(UUID userId, String verifyToken, String password) throws AlreadyVerifiedException, NonMatchingPasswordException, InvalidTokenException, SendEmailException, NotFoundException;
