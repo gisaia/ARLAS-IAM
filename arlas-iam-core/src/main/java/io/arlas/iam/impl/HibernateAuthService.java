@@ -193,7 +193,7 @@ public class HibernateAuthService implements AuthService {
             String orgName = r.getOrganisation().map(Organisation::getName).orElse(NO_ORG);
             // if no orgFilter, we only keep the roles associated to "no org"
             if ((orgFilter == null && orgName.equals(NO_ORG))
-                    || (orgFilter != null && orgName.equals(orgFilter))) {
+                    || orgName.equals(orgFilter)) {
                 List<String> roleList = Optional.ofNullable(orgRoles.get(orgName)).orElseGet(ArrayList::new);
                 roleList.add(r.getName());
                 orgRoles.put(orgName, roleList);
@@ -345,17 +345,16 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public String createPermissionToken(HttpHeaders headers) throws ArlasException {
+    public String createPermissionToken(HttpHeaders headers, String orgFilter) throws ArlasException {
         String keyIdHeader = headers.getHeaderString(ARLAS_API_KEY_ID);
         String keySecretHeader = headers.getHeaderString(ARLAS_API_KEY_SECRET);
         String authHeader = headers.getHeaderString(HttpHeaders.AUTHORIZATION);
-        List<String> orgFilter = headers.getRequestHeader(ARLAS_ORG_FILTER);
         if (keyIdHeader != null && keySecretHeader != null) {
             return createPermissionToken(keyIdHeader, keySecretHeader, ARLAS_API_KEY);
         } else {
-            DecodedJWT accessToken = verifyToken(authHeader);
+            DecodedJWT accessToken = verifyToken(authHeader.substring(7));
             return createPermissionToken(accessToken.getSubject(),
-                    orgFilter == null ? null : orgFilter.get(0),
+                    orgFilter,
                     accessToken.getIssuer(),
                     new Date());
         }
@@ -817,7 +816,7 @@ public class HibernateAuthService implements AuthService {
             String orgName = r.getOrganisation().map(Organisation::getName).orElse(NO_ORG);
             // if no orgFilter, we only keep the permissions associated to "no org"
             if ((orgFilter == null && orgName.equals(NO_ORG))
-                    || (orgFilter != null && orgName.equals(orgFilter))) {
+                    || orgName.equals(orgFilter)) {
                 permissions.addAll(r.getPermissions());
             }
         });
