@@ -36,18 +36,18 @@ public class AuthITUser extends AuthEndpoints {
     @Test
     public void test010Login() {
         JsonPath json = login(USER1).then().statusCode(200).extract().jsonPath();
-        token1 = json.get("accessToken");
-        refreshToken1 = json.get("refreshToken.value");
+        token1 = json.get("access_token");
+        refreshToken1 = json.get("refresh_token.value");
         token2 = login(USER2).then().statusCode(200)
-                .extract().jsonPath().get("accessToken");
+                .extract().jsonPath().get("access_token");
         tokenAdmin = login(ADMIN, ADMIN_PASSWORD).then().statusCode(200)
-                .extract().jsonPath().get("accessToken");
+                .extract().jsonPath().get("access_token");
     }
 
     @Test
     public void test011RefreshToken() {
         token1 = refreshToken(userId1, refreshToken1).then().statusCode(200)
-                .extract().jsonPath().get("accessToken");
+                .extract().jsonPath().get("access_token");
     }
 
     @Test
@@ -68,7 +68,7 @@ public class AuthITUser extends AuthEndpoints {
         logout(USER1).then().statusCode(200);
 
         token1 = login(USER1, "newsecret").then().statusCode(200)
-                .extract().jsonPath().get("accessToken");
+                .extract().jsonPath().get("access_token");
 
     }
 
@@ -88,8 +88,8 @@ public class AuthITUser extends AuthEndpoints {
 //        getUser(userId1).then().statusCode(401);
 //
 //        JsonPath json = login(USER1).then().statusCode(200).extract().jsonPath();
-//        token1 = json.get("accessToken");
-//        refreshToken1 = json.get("refreshToken.value");
+//        token1 = json.get("access_token");
+//        refreshToken1 = json.get("refresh_token.value");
 //    }
 
     @Test
