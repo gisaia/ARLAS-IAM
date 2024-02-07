@@ -1,10 +1,13 @@
 package io.arlas.iam.rest.model.output;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.arlas.iam.model.LoginSession;
 import io.arlas.iam.model.RefreshToken;
 
 public class LoginData {
+    @JsonProperty("access_token")
     public String accessToken; // JWT
+    @JsonProperty("refresh_token")
     public RefreshToken refreshToken;
     public UserData user;
 
