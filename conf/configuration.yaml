@@ -53,7 +53,7 @@ arlas_auth:
   refresh_token_ttl: ${ARLAS_REFRESH_TOKEN_TTL:-600000}
   # Verify token time to live in millisecond
   verify_token_ttl: ${ARLAS_VERIFY_TOKEN_TTL:-86400000}
-  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,session/.*:PUT,users:POST,users/.*:POST,organisations/check:GET}]
+  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,session/refresh:PUT,users:POST,users/.*:POST,organisations/check:GET}]
   header_user: ${ARLAS_HEADER_USER:-arlas-user}
   header_group: ${ARLAS_HEADER_GROUP:-arlas-groups}
   anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}

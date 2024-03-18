@@ -10,10 +10,7 @@ import io.arlas.commons.rest.utils.ServerConstants;
 import io.arlas.filter.core.IdentityParam;
 import io.arlas.iam.core.AuthService;
 import io.arlas.iam.exceptions.*;
-import io.arlas.iam.model.ApiKey;
-import io.arlas.iam.model.ForbiddenOrganisation;
-import io.arlas.iam.model.OrganisationMember;
-import io.arlas.iam.model.User;
+import io.arlas.iam.model.*;
 import io.arlas.iam.rest.model.input.*;
 import io.arlas.iam.rest.model.output.*;
 import io.arlas.iam.util.ArlasAuthServerConfiguration;
@@ -56,10 +53,12 @@ public class IAMRestService {
 
     protected final AuthService authService;
     private final ArlasAuthConfiguration configuration;
+    private final long refreshTokenTtl;
 
     public IAMRestService(AuthService authService, ArlasAuthServerConfiguration configuration) {
         this.authService = authService;
         this.configuration = configuration.arlasAuthConfiguration;
+        this.refreshTokenTtl = configuration.arlasAuthConfiguration.refreshTokenTTL / 1000L;
     }
 
     private void logUAM(HttpServletRequest request, HttpHeaders headers, String action, String log) {
@@ -144,9 +143,16 @@ public class IAMRestService {
             @ApiParam(name = "loginDef", required = true)
             @NotNull @Valid LoginDef loginDef
     ) throws ArlasException {
-        LoginData loginData = new LoginData(authService.login(loginDef.email, loginDef.password, uriInfo.getBaseUri().getHost()));
+        LoginSession loginSession = authService.login(loginDef.email, loginDef.password, uriInfo.getBaseUri().getHost());
+        LoginData loginData = new LoginData(loginSession);
+        String refreshTokenCookieValue = String.format(
+                "refresh_token=%s; Path=/session/refresh; Max-Age=%s; Secure; HttpOnly; SameSite=Strict",
+                new RefreshTokenCookie(loginSession.refreshToken).getCookieValue(),
+                refreshTokenTtl);
         Response response = Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(loginData)
+                // setting manually as we can't use the NewCookie object because it doesn't accept SameSite attribute before jax-rs version 3.1
+                .header("Set-Cookie", refreshTokenCookieValue)
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
         MDC.put(USER_ID, loginData.user.id.toString());
@@ -178,12 +184,13 @@ public class IAMRestService {
         logUAM(request, headers,  "session", "user-logout");
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity("Session deleted.")
+                .header("Set-Cookie", "refresh_token=; Max-Age=0")
                 .type(MediaType.TEXT_PLAIN_TYPE)
                 .build();
     }
 
     @Timed
-    @Path("session/{refreshToken}")
+    @Path("session/refresh")
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
@@ -201,13 +208,16 @@ public class IAMRestService {
     public Response refresh(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "refreshToken", required = true)
-            @PathParam(value = "refreshToken") String refreshToken
+            @CookieParam("refresh_token") Cookie refreshToken
     ) throws ArlasException {
+        if (refreshToken == null) {
+            throw new InvalidTokenException("Missing refresh token in cookie");
+        }
+        RefreshTokenCookie rt = new RefreshTokenCookie(refreshToken.getValue());
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity(new LoginData(authService.refresh(headers.getHeaderString(HttpHeaders.AUTHORIZATION), refreshToken, uriInfo.getBaseUri().getHost())))
+                .entity(new LoginData(authService.refresh(rt.userId, rt.refreshToken, uriInfo.getBaseUri().getHost())))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
