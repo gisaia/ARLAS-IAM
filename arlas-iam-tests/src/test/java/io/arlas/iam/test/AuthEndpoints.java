@@ -91,12 +91,11 @@ public class AuthEndpoints {
                 .post(arlasAppPath.concat("session"));
     }
 
-    protected Response refreshToken(String userId, String refreshToken) {
+    protected Response refreshToken(String refreshToken) {
         return given()
-                .header(AUTH_HEADER, getToken(userId))
+                .cookie("refresh_token", refreshToken)
                 .contentType("application/json")
-                .pathParam("refreshToken", refreshToken)
-                .put(arlasAppPath.concat("session/{refreshToken}"));
+                .put(arlasAppPath.concat("session/refresh"));
     }
 
     protected Response logout(String userId) {

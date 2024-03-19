@@ -297,19 +297,8 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public LoginSession refresh(String authHeader, String refreshToken, String issuer) throws ArlasException {
-        if (authHeader == null || !authHeader.toLowerCase().startsWith("bearer ")) {
-            throw new InvalidTokenException("Invalid access token: " + authHeader);
-        }
-        User user;
-        try {
-            String accessToken = authHeader.substring(7);
-            DecodedJWT t = JWT.decode(accessToken);
-            user = readUser(UUID.fromString(t.getSubject()), true);
-        } catch (JWTDecodeException e) {
-            throw new InvalidTokenException("Invalid access token: " + authHeader, e);
-        }
-
+    public LoginSession refresh(String userId, String refreshToken, String issuer) throws ArlasException {
+        var user = readUser(UUID.fromString(userId), true);
         RefreshToken token = tokenDao.read(refreshToken).orElseThrow(() -> new InvalidTokenException("Invalid refresh token."));
         if (user.is(token.getUserId()) && token.getExpiryDate() >= System.currentTimeMillis() / 1000) {
             LoginSession ls = tokenManager.getLoginSession(user, issuer, new Date());
