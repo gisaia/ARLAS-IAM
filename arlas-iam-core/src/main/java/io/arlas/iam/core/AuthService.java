@@ -17,7 +17,7 @@ public interface AuthService {
     LoginSession login(String email, String password, String issuer) throws ArlasException;
     DecodedJWT verifyToken(String token);
     void logout(UUID userId);
-    LoginSession refresh(String authHeader, String refreshToken, String issuer) throws ArlasException;
+    LoginSession refresh(String userId, String refreshToken, String issuer) throws ArlasException;
     String createPermissionToken(String subject, String orgFilter, String issuer, Date iat) throws ArlasException;
     String createPermissionToken(String keyId, String keySecret, String issuer) throws ArlasException;
     String createPermissionToken(HttpHeaders headers, String orgFilter) throws ArlasException;

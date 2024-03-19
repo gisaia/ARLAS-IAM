@@ -1,6 +1,8 @@
 package io.arlas.iam.test;
 
 import io.restassured.path.json.JsonPath;
+import io.restassured.response.ExtractableResponse;
+import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -35,9 +37,10 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test010Login() {
-        JsonPath json = login(USER1).then().statusCode(200).extract().jsonPath();
+        ExtractableResponse<Response> response = login(USER1).then().statusCode(200).extract();
+        JsonPath json = response.jsonPath();
         token1 = json.get("access_token");
-        refreshToken1 = json.get("refresh_token.value");
+        refreshToken1 = response.cookie("refresh_token");
         token2 = login(USER2).then().statusCode(200)
                 .extract().jsonPath().get("access_token");
         tokenAdmin = login(ADMIN, ADMIN_PASSWORD).then().statusCode(200)
@@ -46,7 +49,7 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test011RefreshToken() {
-        token1 = refreshToken(userId1, refreshToken1).then().statusCode(200)
+        token1 = refreshToken(refreshToken1).then().statusCode(200)
                 .extract().jsonPath().get("access_token");
     }
 
@@ -66,6 +69,8 @@ public class AuthITUser extends AuthEndpoints {
                 .body("email", equalTo(USER1));
 
         logout(USER1).then().statusCode(200);
+
+        refreshToken(refreshToken1).then().statusCode(401);
 
         token1 = login(USER1, "newsecret").then().statusCode(200)
                 .extract().jsonPath().get("access_token");
