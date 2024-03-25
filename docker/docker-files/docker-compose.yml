@@ -78,9 +78,14 @@ services:
     #      - JDK_JAVA_OPTIONS=-javaagent:/opt/app/elastic-apm-agent.jar
     ports:
       - "9997:9997"
+    healthcheck:
+      test: ["CMD","java","HttpHealthcheck.java","http://localhost:9997/admin/healthcheck"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
 
   arlas-server:
-    image: gisaia/arlas-server:24.0.4-SNAPSHOT
+    image: gisaia/arlas-server:24.1.2
     container_name: arlas-server
     labels:
       co.elastic.logs/enabled: true
@@ -120,6 +125,11 @@ services:
     #      - JDK_JAVA_OPTIONS=-javaagent:/opt/app/elastic-apm-agent.jar
     ports:
       - "9999:9999"
+    healthcheck:
+      test: ["CMD","java","HttpHealthcheck.java","http://localhost:9999/admin/healthcheck"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
 
 volumes:
   arlas-iam-db:
