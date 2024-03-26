@@ -4,10 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import io.arlas.filter.config.TechnicalRoles;
 import io.dropwizard.jackson.JsonSnakeCase;
-import org.hibernate.annotations.Type;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.*;
 
 @Entity
@@ -29,11 +28,13 @@ public class Role {
     @Column
     private String description;
 
-    @Type(type = "org.hibernate.type.NumericBooleanType")
+    @Basic
+    @Convert(converter = org.hibernate.type.NumericBooleanConverter.class)
     @Column(name="is_system")
     private boolean isSystem = false; // system roles are shared among all organisations
 
-    @Type(type = "org.hibernate.type.NumericBooleanType")
+    @Basic
+    @Convert(converter = org.hibernate.type.NumericBooleanConverter.class)
     @Column(name="is_technical")
     private boolean isTechnical = false; // technical roles
 

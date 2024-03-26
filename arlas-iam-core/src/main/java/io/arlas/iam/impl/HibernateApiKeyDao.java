@@ -31,6 +31,6 @@ public class HibernateApiKeyDao extends AbstractDAO<ApiKey> implements ApiKeyDao
 
     @Override
     public void deleteApiKey(ApiKey apiKey) {
-        currentSession().delete(apiKey);
+        currentSession().remove(apiKey);
     }
 }

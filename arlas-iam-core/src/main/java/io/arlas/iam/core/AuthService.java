@@ -6,8 +6,8 @@ import io.arlas.commons.exceptions.NotAllowedException;
 import io.arlas.commons.exceptions.NotFoundException;
 import io.arlas.iam.exceptions.*;
 import io.arlas.iam.model.*;
+import jakarta.ws.rs.core.HttpHeaders;
 
-import javax.ws.rs.core.HttpHeaders;
 import java.util.*;
 
 public interface AuthService {

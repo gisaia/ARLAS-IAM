@@ -1,9 +1,9 @@
 package io.arlas.iam.impl;
 
+import io.arlas.iam.core.UserDao;
 import io.arlas.iam.model.Organisation;
 import io.arlas.iam.model.OrganisationMember;
 import io.arlas.iam.model.User;
-import io.arlas.iam.core.UserDao;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
@@ -20,13 +20,12 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
 
     @Override
     public List<User> listUsers() {
-        return currentSession().createQuery("SELECT u FROM User u", User.class).getResultList();
+        return query("SELECT u FROM User u").getResultList();
     }
 
     @Override
     public List<User> listUsers(String domain) {
-        return currentSession()
-                .createQuery("SELECT u FROM User u WHERE u.email like :email", User.class)
+        return query("SELECT u FROM User u WHERE u.email like :email")
                 .setParameter("email", "%" + (domain.startsWith("@") ? domain : "@" + domain))
                 .getResultList();
     }
@@ -53,7 +52,7 @@ public class HibernateUserDao extends AbstractDAO<User> implements UserDao {
 
     @Override
     public User deleteUser(User user) {
-        currentSession().delete(user);
+        currentSession().remove(user);
         return user;
     }
 

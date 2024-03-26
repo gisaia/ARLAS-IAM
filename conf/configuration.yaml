@@ -34,9 +34,12 @@ logging:
 
 swagger: # Configuration of SWAGGER for generating documentation and APIs
   resourcePackage: io.arlas.iam.rest.service # The java package to process for extracting the APIs
-  # temporary patch for bug https://github.com/smoketurner/dropwizard-swagger/issues/206
-  # to be removed when version of dropwizard.swagger.version is upgraded
-  customJavascript: ${ARLAS_IAM_CUSTOM_JS:-/arlas_iam_server/swagger-static/custom-request-interceptor.js}
+  # not supported in 3.0.0-1 but PR existing and merged
+  servers:
+  - url: ${ARLAS_IAM_PREFIX:-/arlas_iam_server}
+    description: "Backend server from client browser"
+  - url: http://arlas-persistence-server{ARLAS_IAM_PREFIX:-/arlas_iam_server}
+    description: "Backend server from docker network"
 
 arlas_cors:
   enabled: ${ARLAS_CORS_ENABLED:-true}
@@ -53,7 +56,7 @@ arlas_auth:
   refresh_token_ttl: ${ARLAS_REFRESH_TOKEN_TTL:-600000}
   # Verify token time to live in millisecond
   verify_token_ttl: ${ARLAS_VERIFY_TOKEN_TTL:-86400000}
-  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,session/refresh:PUT,users:POST,users/.*:POST,organisations/check:GET}]
+  public_uris: [${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,openapi.*,session:POST,session/refresh:PUT,users:POST,users/.*:POST,organisations/check:GET}]
   header_user: ${ARLAS_HEADER_USER:-arlas-user}
   header_group: ${ARLAS_HEADER_GROUP:-arlas-groups}
   anonymous_value: ${ARLAS_ANONYMOUS_VALUE:-anonymous}
@@ -119,5 +122,5 @@ smtp:
 arlas_cache_factory_class: ${ARLAS_IAM_CACHE_FACTORY_CLASS:-io.arlas.commons.cache.NoCacheFactory}
 arlas-cache-timeout: ${ARLAS_CACHE_TIMEOUT:-60}
 
-# Arlas server url
-arlas_server_base_path: ${ARLAS_SERVER_URL:-http://localhost:9999/}
+# Arlas server url (there must be no slash at the end)
+arlas_server_base_path: ${ARLAS_SERVER_URL:-http://localhost:9999}

@@ -2,7 +2,7 @@ package io.arlas.iam.exceptions;
 
 import io.arlas.commons.exceptions.ArlasException;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 public class AlreadyVerifiedException extends ArlasException {
     private static final long serialVersionUID = 1L;

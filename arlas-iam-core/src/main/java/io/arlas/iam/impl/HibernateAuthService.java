@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
-import javax.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.HttpHeaders;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -69,6 +69,7 @@ public class HibernateAuthService implements AuthService {
         this.tokenManager = new TokenManager(factory, conf.arlasAuthConfiguration);
         this.verifyEmail = conf.verifyEmail;
         this.createPrivateOrg = conf.createPrivateOrg;
+        LOGGER.info("***** createPrivateOrg="+createPrivateOrg);
         this.verifyTokenTtl = conf.arlasAuthConfiguration.verifyTokenTTL;
         this.apiKeyMaxTtl = conf.apiKeyMaxTtl;
         this.initConf = conf.arlasAuthConfiguration.initConfiguration;
@@ -244,6 +245,7 @@ public class HibernateAuthService implements AuthService {
                     sendActivationEmail(user, verifyToken);
                 } else if (this.createPrivateOrg) {
                     try {
+                        LOGGER.info("***** createUser+createOrganisation=");
                         createOrganisation(user, getUserOrgName(user));
                     } catch (AlreadyExistsException | NotOwnerException | ForbiddenOrganisationNameException ignored) {
                     }

@@ -15,36 +15,56 @@ import io.arlas.iam.rest.model.input.*;
 import io.arlas.iam.rest.model.output.*;
 import io.arlas.iam.util.ArlasAuthServerConfiguration;
 import io.dropwizard.hibernate.UnitOfWork;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.info.Contact;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.info.License;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import io.swagger.v3.oas.annotations.servers.Server;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static io.arlas.commons.rest.utils.ServerConstants.ARLAS_ORG_FILTER;
 import static io.arlas.filter.impl.AbstractPolicyEnforcer.*;
 
 @Path("/")
-@Api(value = "/")
-@SwaggerDefinition(
-        info = @Info(contact = @Contact(email = "contact@gisaia.com", name = "Gisaia", url = "http://www.gisaia.com/"),
-                title = "ARLAS IAM API",
+@OpenAPIDefinition(
+        info = @Info(
+                title = "ARLAS IAM APIs",
                 description = "IAM REST services",
                 license = @License(name = "Proprietary"),
+                contact = @Contact(email = "contact@gisaia.com", name = "Gisaia", url = "http://www.gisaia.com/"),
                 version = "API_VERSION"),
-        schemes = { SwaggerDefinition.Scheme.HTTP, SwaggerDefinition.Scheme.HTTPS },
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "JWT", name = "Authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
+        servers = {
+                @Server(url = "/arlas_iam_server", description = "default server")
+        }
 )
+@SecurityScheme(
+        name = "JWT",
+        type = io.swagger.v3.oas.annotations.enums.SecuritySchemeType.HTTP,
+        scheme = "bearer",
+        bearerFormat = "JWT"
+)
+
 public class IAMRestService {
     private final Logger LOGGER = LoggerFactory.getLogger(IAMRestService.class);
     public static final String UTF8JSON = MediaType.APPLICATION_JSON + ";charset=utf-8";
@@ -98,15 +118,19 @@ public class IAMRestService {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Validate authentication to another URI",
-            produces = MediaType.TEXT_PLAIN,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Validate authentication to another URI"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class),
-            @ApiResponse(code = 401, message = "Unauthenticated", response = Error.class),
-            @ApiResponse(code = 403, message = "Forbidden", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response forwardAuth(
@@ -125,22 +149,24 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
-            value = "User login",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            summary = "User login"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Session created.", response = LoginData.class),
-            @ApiResponse(code = 404, message = "Login failed", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Session created.",
+                    content = @Content(schema = @Schema(implementation = LoginData.class))),
+            @ApiResponse(responseCode = "404", description = "Login failed",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response login(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "loginDef", required = true)
+            @Parameter(name = "loginDef", required = true)
             @NotNull @Valid LoginDef loginDef
     ) throws ArlasException {
         LoginSession loginSession = authService.login(loginDef.email, loginDef.password, uriInfo.getBaseUri().getHost());
@@ -165,14 +191,17 @@ public class IAMRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Delete session",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Delete session"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Session deleted.", response = String.class),
-            @ApiResponse(code = 404, message = "Login failed", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Session deleted.",
+                    content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "404", description = "Login failed",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response logout(
@@ -194,15 +223,18 @@ public class IAMRestService {
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
-            value = "Refresh access token",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            summary = "Refresh access token"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Session refreshed.", response = LoginData.class),
-            @ApiResponse(code = 401, message = "Invalid token.", response = Error.class),
-            @ApiResponse(code = 404, message = "Login failed.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Session refreshed.",
+                    content = @Content(schema = @Schema(implementation = LoginData.class))),
+            @ApiResponse(responseCode = "401", description = "Invalid token.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "Login failed.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response refresh(
@@ -234,14 +266,17 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Create an API Key",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Create an API Key"
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = ApiKey.class),
-            @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = ApiKey.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response createApiKey(
@@ -249,13 +284,13 @@ public class IAMRestService {
             @Context HttpHeaders headers,
             @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "uid", required = true)
+            @Parameter(name = "uid", required = true)
             @PathParam(value = "uid") String uid,
 
-            @ApiParam(name = "apiKeyDef", required = true)
+            @Parameter(name = "apiKeyDef", required = true)
             @NotNull @Valid ApiKeyDef keyDef
     ) throws NotFoundException, NotAllowedException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
@@ -271,14 +306,17 @@ public class IAMRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Delete an API Key",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Delete an API Key"
     )
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = String.class),
-            @ApiResponse(code = 400, message = "Non matching passwords.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "400", description = "Non matching passwords.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response deleteApiKey(
@@ -286,13 +324,13 @@ public class IAMRestService {
             @Context HttpHeaders headers,
             @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "uid", required = true)
+            @Parameter(name = "uid", required = true)
             @PathParam(value = "uid") String uid,
 
-            @ApiParam(name = "kid", required = true)
+            @Parameter(name = "kid", required = true)
             @PathParam(value = "kid") String kid
     ) throws NotFoundException, NotAllowedException {
         authService.deleteApiKey(getUser(headers), UUID.fromString(uid), UUID.fromString(oid), UUID.fromString(kid));
@@ -309,22 +347,24 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
-            value = "Create a user",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            summary = "Create a user"
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = UserData.class),
-            @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = UserData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response createUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "userDef", required = true)
+            @Parameter(name = "userDef", required = true)
             @NotNull @Valid NewUserDef userDef
     ) throws AlreadyExistsException, InvalidEmailException, SendEmailException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
@@ -340,22 +380,24 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
-            value = "Request a password modification if forgotten (send email with link).",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            summary = "Request a password modification if forgotten (send email with link)."
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class),
-            @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response askPasswordReset(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "email", required = true)
+            @Parameter(name = "email", required = true)
             @NotNull @Valid String email
     ) throws SendEmailException {
         authService.askPasswordReset(email);
@@ -371,30 +413,34 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
-            value = "Reset user password (through link received by email)",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            summary = "Reset user password (through link received by email)"
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = UserData.class),
-            @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
-            @ApiResponse(code = 412, message = "Verification token expired. A new one is sent.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = UserData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "User not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "412", description = "Verification token expired. A new one is sent.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response resetUserPassword(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "id", required = true)
+            @Parameter(name = "id", required = true)
             @PathParam(value = "id") String id,
 
-            @ApiParam(name = "token", required = true)
+            @Parameter(name = "token", required = true)
             @PathParam(value = "token") String token,
 
-            @ApiParam(name = "password", required = true)
+            @Parameter(name = "password", required = true)
             @NotNull @Valid String password
     ) throws SendEmailException, NotFoundException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
@@ -410,30 +456,34 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(
-            value = "Verify a user (through link received by email)",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            summary = "Verify a user (through link received by email)"
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = UserData.class),
-            @ApiResponse(code = 400, message = "Bad request.", response = Error.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
-            @ApiResponse(code = 412, message = "Verification token expired. A new one is sent.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = UserData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "User not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "412", description = "Verification token expired. A new one is sent.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response verifyUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "id", required = true)
+            @Parameter(name = "id", required = true)
             @PathParam(value = "id") String id,
 
-            @ApiParam(name = "token", required = true)
+            @Parameter(name = "token", required = true)
             @PathParam(value = "token") String token,
 
-            @ApiParam(name = "password", required = true)
+            @Parameter(name = "password", required = true)
             @NotNull @Valid String password
     ) throws NonMatchingPasswordException, AlreadyVerifiedException, InvalidTokenException, SendEmailException, NotFoundException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
@@ -449,21 +499,24 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Read a user",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Read a user"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = UserData.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = UserData.class))),
+            @ApiResponse(responseCode = "404", description = "User not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response readUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "id", required = true)
+            @Parameter(name = "id", required = true)
             @PathParam(value = "id") String id
     ) throws NotFoundException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -477,22 +530,25 @@ public class IAMRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Delete the logged in user",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Delete the logged in user"
     )
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = String.class),
-            @ApiResponse(code = 400, message = "Non matching passwords.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "400", description = "Non matching passwords.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response deleteUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "id", required = true)
+            @Parameter(name = "id", required = true)
             @PathParam(value = "id") String id
     ) throws NotFoundException, NotAllowedException {
         checkLoggedInUser(headers, id);
@@ -510,27 +566,31 @@ public class IAMRestService {
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Update the logged in user",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Update the logged in user"
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = UserData.class),
-            @ApiResponse(code = 400, message = "Non matching passwords.", response = Error.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = UserData.class))),
+            @ApiResponse(responseCode = "400", description = "Non matching passwords.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "User not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response updateUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
 
-            @ApiParam(name = "id", required = true)
+            @Parameter(name = "id", required = true)
             @PathParam(value = "id") String id,
 
-            @ApiParam(name = "updateDef", required = true)
+            @Parameter(name = "updateDef", required = true)
             @NotNull @Valid UpdateUserDef updateDef
 
     ) throws NotFoundException, NonMatchingPasswordException {
@@ -548,15 +608,19 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Create an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Create an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = OrgData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = OrgData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "User not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response createOrganisation(
@@ -577,23 +641,27 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Create an organisation with a name. Only for IAM admin.",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Create an organisation with a name. Only for IAM admin."
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = OrgData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = OrgData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "User not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response createOrganisationWithName(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "name", required = true)
+            @Parameter(name = "name", required = true)
             @PathParam(value = "name") String name
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenOrganisationNameException {
         OrgData data = new OrgData(authService.createOrganisation(getUser(headers), name));
@@ -609,23 +677,27 @@ public class IAMRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Delete an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Delete an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = String.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "Organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response deleteOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid
     ) throws NotFoundException, NotOwnerException, ForbiddenActionException {
         authService.deleteOrganisation(getUser(headers), UUID.fromString(oid));
@@ -641,14 +713,17 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Check if user's organisation exists",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Check if user's organisation exists"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = OrgExists.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = OrgExists.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response checkOrganisation(
@@ -666,14 +741,17 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List organisations of the logged in user",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List organisations of the logged in user"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = UserOrgData.class, responseContainer = "List"),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = UserOrgData.class)))),
+            @ApiResponse(responseCode = "404", description = "User not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getOrganisations(
@@ -692,24 +770,27 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List users of an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List users of an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = MemberData.class, responseContainer = "List"),
-            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = MemberData.class)))),
+            @ApiResponse(responseCode = "404", description = "Organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getUsers(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "rname")
+            @Parameter(name = "rname")
             @QueryParam(value = "rname") String rname
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -728,21 +809,24 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List users of same domain than the organisation but not invited yet.",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List users of same domain than the organisation but not invited yet."
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class, responseContainer = "List"),
-            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = String.class)))),
+            @ApiResponse(responseCode = "404", description = "Organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getEmails(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -756,24 +840,27 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Get a user of an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Get a user of an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = MemberData.class),
-            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = MemberData.class))),
+            @ApiResponse(responseCode = "404", description = "Organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getUser(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "uid", required = true)
+            @Parameter(name = "uid", required = true)
             @PathParam(value = "uid") String uid
     ) throws NotFoundException, NotOwnerException {
         Optional<OrganisationMember> u = authService.listOrganisationUsers(getUser(headers), UUID.fromString(oid), null)
@@ -795,26 +882,30 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Add a user to an organisation. User account will be created if needed.",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Add a user to an organisation. User account will be created if needed."
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = OrgData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = OrgData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "Organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response addUserToOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "user", required = true)
+            @Parameter(name = "user", required = true)
             @NotNull @Valid OrgUserDef user
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException, SendEmailException, InvalidEmailException, NotAllowedException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
@@ -830,26 +921,30 @@ public class IAMRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Remove a user from an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Remove a user from an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = OrgData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = OrgData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "User or organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response removeUserFromOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "uid", required = true)
+            @Parameter(name = "uid", required = true)
             @PathParam(value = "uid") String uid
     ) throws NotFoundException, NotOwnerException, NotAllowedException {
         Response response = Response.accepted(uriInfo.getRequestUriBuilder().build())
@@ -867,22 +962,25 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Add a name to the forbidden organisations list.",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Add a name to the forbidden organisations list."
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation.", response = ForbiddenOrganisation.class),
-            @ApiResponse(code = 400, message = "Not allowed.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation.",
+                    content = @Content(schema = @Schema(implementation = ForbiddenOrganisation.class))),
+            @ApiResponse(responseCode = "400", description = "Not allowed.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response addForbiddenOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "forbiddenOrganisation", required = true)
+            @Parameter(name = "forbiddenOrganisation", required = true)
             @NotNull @Valid ForbiddenOrganisation forbiddenOrganisation
     ) throws AlreadyExistsException, NotFoundException, NotAllowedException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
@@ -898,23 +996,27 @@ public class IAMRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Remove a name from the forbidden organisations list.",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Remove a name from the forbidden organisations list."
     )
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation.", response = String.class),
-            @ApiResponse(code = 400, message = "Not allowed.", response = Error.class),
-            @ApiResponse(code = 404, message = "Name not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Successful operation.",
+                    content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "400", description = "Not allowed.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "Name not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response removeNameFromForbiddenOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "name", required = true)
+            @Parameter(name = "name", required = true)
             @PathParam(value = "name") String name
     ) throws NotFoundException, NotAllowedException {
         authService.removeForbiddenOrganisation(getUser(headers), name);
@@ -930,14 +1032,17 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List forbidden organisations.",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List forbidden organisations."
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = ForbiddenOrganisation.class, responseContainer = "List"),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ForbiddenOrganisation.class)))),
+            @ApiResponse(responseCode = "404", description = "User not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response listForbiddenOrganisations(
@@ -955,21 +1060,24 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List collections of an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List collections of an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class, responseContainer = "List"),
-            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = String.class)))),
+            @ApiResponse(responseCode = "404", description = "Organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getOrganisationCollections(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -986,26 +1094,30 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Add a role to an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Add a role to an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = RoleData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = RoleData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "Organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response addRoleToOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "roleDef", required = true)
+            @Parameter(name = "roleDef", required = true)
             @NotNull @Valid RoleDef roleDef
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
@@ -1021,29 +1133,33 @@ public class IAMRestService {
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Update a role in an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Update a role in an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = RoleData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "Organisation or role not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = RoleData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "Organisation or role not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response updateRoleInOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "rid", required = true)
+            @Parameter(name = "rid", required = true)
             @PathParam(value = "rid") String rid,
 
-            @ApiParam(name = "roleDef", required = true)
+            @Parameter(name = "roleDef", required = true)
             @NotNull @Valid RoleDef roleDef
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException {
         Response response = Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -1059,21 +1175,24 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List roles of an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List roles of an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = RoleData.class, responseContainer = "List"),
-            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = RoleData.class)))),
+            @ApiResponse(responseCode = "404", description = "Organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getRolesOfOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -1091,25 +1210,29 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List roles of a user within an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List roles of a user within an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = RoleData.class, responseContainer = "List"),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = RoleData.class)))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "User or organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getRoles(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "uid", required = true)
+            @Parameter(name = "uid", required = true)
             @PathParam(value = "uid") String uid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -1123,28 +1246,32 @@ public class IAMRestService {
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Modify roles of a user within an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Modify roles of a user within an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = UserData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = UserData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "User or organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response putRoles(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "uid", required = true)
+            @Parameter(name = "uid", required = true)
             @PathParam(value = "uid") String uid,
 
-            @ApiParam(name = "ridList", required = true)
+            @Parameter(name = "ridList", required = true)
             @NotNull @Valid UpdateListDef ridList
 
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, NotAllowedException, ForbiddenActionException {
@@ -1159,29 +1286,33 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Add a role to a user in an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Add a role to a user in an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = UserData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = UserData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "User or organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response addRoleToUserInOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "uid", required = true)
+            @Parameter(name = "uid", required = true)
             @PathParam(value = "uid") String uid,
 
-            @ApiParam(name = "rid", required = true)
+            @Parameter(name = "rid", required = true)
             @PathParam(value = "rid") String rid
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
@@ -1197,29 +1328,33 @@ public class IAMRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Remove a role from a user from an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Remove a role from a user from an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = UserData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = UserData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "User or organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response removeRoleFromUserInOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "uid", required = true)
+            @Parameter(name = "uid", required = true)
             @PathParam(value = "uid") String uid,
 
-            @ApiParam(name = "rid", required = true)
+            @Parameter(name = "rid", required = true)
             @PathParam(value = "rid") String rid
     ) throws NotFoundException, NotOwnerException, NotAllowedException, ForbiddenActionException {
         Response response = Response.accepted(uriInfo.getRequestUriBuilder().build())
@@ -1237,26 +1372,30 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Add a group to an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Add a group to an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = RoleData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = RoleData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "Organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response addGroupToOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "roleDef", required = true)
+            @Parameter(name = "roleDef", required = true)
             @NotNull @Valid RoleDef groupDef
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
@@ -1272,29 +1411,33 @@ public class IAMRestService {
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Update a role's group in an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Update a role's group in an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = RoleData.class),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "Organisation or role not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = RoleData.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "Organisation or role not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response updateGroupInOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "rid", required = true)
+            @Parameter(name = "rid", required = true)
             @PathParam(value = "rid") String rid,
 
-            @ApiParam(name = "roleDef", required = true)
+            @Parameter(name = "roleDef", required = true)
             @NotNull @Valid RoleDef roleDef
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException {
         Response response = Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -1310,21 +1453,24 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List groups of an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List groups of an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = RoleData.class, responseContainer = "List"),
-            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = RoleData.class)))),
+            @ApiResponse(responseCode = "404", description = "Organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getGroupsOfOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -1338,25 +1484,29 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List groups of a user within an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List groups of a user within an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = RoleData.class, responseContainer = "List"),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = RoleData.class)))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "User or organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getGroups(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "uid", required = true)
+            @Parameter(name = "uid", required = true)
             @PathParam(value = "uid") String uid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -1372,25 +1522,29 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List permissions of a user within an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List permissions of a user within an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = PermissionData.class, responseContainer = "List"),
-            @ApiResponse(code = 400, message = "Bad request", response = Error.class),
-            @ApiResponse(code = 404, message = "User or organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PermissionData.class)))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "User or organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getPermissions(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "uid", required = true)
+            @Parameter(name = "uid", required = true)
             @PathParam(value = "uid") String uid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -1406,22 +1560,25 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List permissions of an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List permissions of an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = PermissionData.class, responseContainer = "List"),
-            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PermissionData.class)))),
+            @ApiResponse(responseCode = "404", description = "Organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getPermissionsOfOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -1435,25 +1592,28 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Add a permission",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Add a permission"
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = PermissionData.class),
-            @ApiResponse(code = 400, message = "Permission already exists.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = PermissionData.class))),
+            @ApiResponse(responseCode = "400", description = "Permission already exists.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response addPermission(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "permission", required = true)
+            @Parameter(name = "permission", required = true)
             @NotNull @Valid PermissionDef permission
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
@@ -1469,24 +1629,27 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List collections of a column filter of an organisation",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List collections of a column filter of an organisation"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class, responseContainer = "List"),
-            @ApiResponse(code = 404, message = "Organisation not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = String.class)))),
+            @ApiResponse(responseCode = "404", description = "Organisation not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getCollectionsOfColumnFiltersInOrganisation(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "pid", required = true)
+            @Parameter(name = "pid", required = true)
             @PathParam(value = "pid") String pid
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -1500,25 +1663,28 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Add column filter permission for the given collections.",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Add column filter permission for the given collections."
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = PermissionData.class),
-            @ApiResponse(code = 400, message = "Permission already exists.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = PermissionData.class))),
+            @ApiResponse(responseCode = "400", description = "Permission already exists.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response addColumnFilterPermission(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "collections", required = true)
+            @Parameter(name = "collections", required = true)
             @NotNull @Valid List<String> collections
     ) throws ArlasException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
@@ -1535,29 +1701,33 @@ public class IAMRestService {
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Update a permission",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Update a permission"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = PermissionData.class),
-            @ApiResponse(code = 400, message = "Permission already exists.", response = Error.class),
-            @ApiResponse(code = 404, message = "Organisation or permission not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = PermissionData.class))),
+            @ApiResponse(responseCode = "400", description = "Permission already exists.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "Organisation or permission not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response updatePermission(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "pid", required = true)
+            @Parameter(name = "pid", required = true)
             @PathParam(value = "pid") String pid,
 
-            @ApiParam(name = "permission", required = true)
+            @Parameter(name = "permission", required = true)
             @NotNull @Valid PermissionDef permission
     ) throws NotFoundException, NotOwnerException, AlreadyExistsException {
         Response response = Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -1573,29 +1743,33 @@ public class IAMRestService {
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Update a column filter permission.",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Update a column filter permission."
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = PermissionData.class),
-            @ApiResponse(code = 400, message = "Permission already exists.", response = Error.class),
-            @ApiResponse(code = 404, message = "Organisation or permission not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = PermissionData.class))),
+            @ApiResponse(responseCode = "400", description = "Permission already exists.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "Organisation or permission not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response updateColumnFilterPermission(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "pid", required = true)
+            @Parameter(name = "pid", required = true)
             @PathParam(value = "pid") String pid,
 
-            @ApiParam(name = "collections", required = true)
+            @Parameter(name = "collections", required = true)
             @NotNull @Valid List<String> collections
     ) throws ArlasException {
         Response response = Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -1613,23 +1787,25 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "List permissions of a role",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "List permissions of a role"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = PermissionData.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PermissionData.class)))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response listPermissionOfRole(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "rid", required = true)
+            @Parameter(name = "rid", required = true)
             @PathParam(value = "rid") String rid
     ) throws NotFoundException, NotOwnerException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
@@ -1646,27 +1822,29 @@ public class IAMRestService {
     @PUT
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Update permissions of a role",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Update permissions of a role"
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = RoleData.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = RoleData.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response updatePermissionOfRole(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "rid", required = true)
+            @Parameter(name = "rid", required = true)
             @PathParam(value = "rid") String rid,
 
-            @ApiParam(name = "pidList", required = true)
+            @Parameter(name = "pidList", required = true)
             @NotNull @Valid UpdateListDef pidList
 
     ) throws NotFoundException, NotOwnerException {
@@ -1683,27 +1861,29 @@ public class IAMRestService {
     @POST
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Add a permission to a role",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Add a permission to a role"
     )
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Successful operation", response = RoleData.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = RoleData.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response addPermissionToRole(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "rid", required = true)
+            @Parameter(name = "rid", required = true)
             @PathParam(value = "rid") String rid,
 
-            @ApiParam(name = "pid", required = true)
+            @Parameter(name = "pid", required = true)
             @PathParam(value = "pid") String pid
     ) throws NotFoundException, NotOwnerException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
@@ -1719,28 +1899,31 @@ public class IAMRestService {
     @DELETE
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Remove a permission from a role",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Remove a permission from a role"
     )
-    @ApiResponses(value = {@ApiResponse(code = 202, message = "Successful operation", response = RoleData.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = RoleData.class))),
+            @ApiResponse(responseCode = "404", description = "User not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork
     public Response removePermissionFromRole(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
-            @Context HttpServletRequest request,	
+            @Context HttpServletRequest request,
 
-            @ApiParam(name = "oid", required = true)
+            @Parameter(name = "oid", required = true)
             @PathParam(value = "oid") String oid,
 
-            @ApiParam(name = "rid", required = true)
+            @Parameter(name = "rid", required = true)
             @PathParam(value = "rid") String rid,
 
-            @ApiParam(name = "pid", required = true)
+            @Parameter(name = "pid", required = true)
             @PathParam(value = "pid") String pid
     ) throws NotFoundException, NotOwnerException {
         Response response = Response.accepted(uriInfo.getRequestUriBuilder().build())
@@ -1756,21 +1939,24 @@ public class IAMRestService {
     @GET
     @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
-    @ApiOperation(authorizations = @Authorization("JWT"),
-            value = "Get permissions for a user given access token",
-            produces = UTF8JSON,
-            consumes = UTF8JSON
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Get permissions for a user given access token"
     )
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful operation", response = String.class),
-            @ApiResponse(code = 404, message = "User not found.", response = Error.class),
-            @ApiResponse(code = 500, message = "Arlas Error.", response = Error.class)})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "404", description = "User not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
     public Response getPermissionToken(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
 
-            @ApiParam(name = ServerConstants.ARLAS_ORG_FILTER)
+            @Parameter(name = ServerConstants.ARLAS_ORG_FILTER)
             @QueryParam(value = ServerConstants.ARLAS_ORG_FILTER) String orgFilter
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())

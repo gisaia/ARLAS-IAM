@@ -1,12 +1,12 @@
 package io.arlas.iam.server;
 
 import io.arlas.iam.core.AuthService;
-import io.arlas.iam.rest.service.IAMRestService;
 import io.arlas.iam.rest.AbstractServer;
-import io.arlas.iam.util.InitDatabaseTask;
+import io.arlas.iam.rest.service.IAMRestService;
 import io.arlas.iam.util.ArlasAuthServerConfiguration;
+import io.arlas.iam.util.InitDatabaseTask;
+import io.dropwizard.core.setup.Environment;
 import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
-import io.dropwizard.setup.Environment;
 
 public class ArlasIamServer extends AbstractServer {
 
