@@ -8,10 +8,15 @@ services:
       POSTGRES_PASSWORD: ${ARLAS_IAM_HIBERNATE_PASSWORD:-iAMs00perSecrEET}
       POSTGRES_DB: arlas_iam
       POSTGRES_HOST_AUTH_METHOD: trust
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     volumes:
       - arlas-iam-db:/var/lib/postgresql/data
+    healthcheck:
+      test: "pg_isready -d arlas_iam"
+      interval: 10s
+      timeout: 3s
+      retries: 30
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -22,17 +27,21 @@ services:
       PGADMIN_DEFAULT_PASSWORD: secret
       PGADMIN_LISTEN_PORT: 80
     ports:
-      - "8080:80"
+      - "8080:80" # !EXPOSE!
     volumes:
       - arlas-iam-pg-conf:/pgadmin4/servers.json
       - arlas-iam-pg:/var/lib/pgadmin
 
   arlas-iam-server:
+    depends_on:
+      db:
+        condition: service_healthy
     build:
       context: ../..
       dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-package-only}
     image: docker.cloudsmith.io/gisaia/private/arlas-iam-server:${ARLAS_IAM_SERVER_VERSION:-latest}
     container_name: arlas-iam-server
+    restart: always
     labels:
       co.elastic.logs/enabled: true
       co.elastic.logs/json.keys_under_root: true
@@ -77,7 +86,7 @@ services:
     #      - ELASTIC_APM_USE_JAXRS_PATH_AS_TRANSACTION_NAME=true
     #      - JDK_JAVA_OPTIONS=-javaagent:/opt/app/elastic-apm-agent.jar
     ports:
-      - "9997:9997"
+      - "9997:9997" # !EXPOSE!
     healthcheck:
       test: ["CMD","java","HttpHealthcheck.java","http://localhost:9997/admin/healthcheck"]
       interval: 5s
@@ -85,8 +94,12 @@ services:
       retries: 3
 
   arlas-server:
+    depends_on:
+      arlas-iam-server:
+        condition: service_healthy
     image: gisaia/arlas-server:24.1.2
     container_name: arlas-server
+    restart: always
     labels:
       co.elastic.logs/enabled: true
       co.elastic.logs/json.keys_under_root: true
@@ -124,7 +137,7 @@ services:
     #      - ELASTIC_APM_USE_JAXRS_PATH_AS_TRANSACTION_NAME=true
     #      - JDK_JAVA_OPTIONS=-javaagent:/opt/app/elastic-apm-agent.jar
     ports:
-      - "9999:9999"
+      - "9999:9999" # !EXPOSE!
     healthcheck:
       test: ["CMD","java","HttpHealthcheck.java","http://localhost:9999/admin/healthcheck"]
       interval: 5s
