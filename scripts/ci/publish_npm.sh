@@ -21,7 +21,7 @@ docker run --rm \
   --mount dst=/input/api.json,src="${PROJECT_ROOT_DIRECTORY}/tmp/openapi.json",type=bind,ro \
   --mount dst=/output,src="${PROJECT_ROOT_DIRECTORY}/tmp/typescript-fetch",type=bind \
 gisaia/swagger-codegen-3.0.42 \
-      -l typescript-fetch --additional-properties modelPropertyNaming=snake_case
+      -l typescript-fetch --additional-properties modelPropertyNaming=original
 
 echo "=> Build Typescript API "${RELEASE_VERSION}
 cd ${PROJECT_ROOT_DIRECTORY}/tmp/typescript-fetch/
