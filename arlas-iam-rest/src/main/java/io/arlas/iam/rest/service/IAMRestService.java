@@ -14,6 +14,7 @@ import io.arlas.iam.model.*;
 import io.arlas.iam.rest.model.input.*;
 import io.arlas.iam.rest.model.output.*;
 import io.arlas.iam.util.ArlasAuthServerConfiguration;
+import io.arlas.iam.util.ArlasMessage;
 import io.dropwizard.hibernate.UnitOfWork;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -116,7 +117,7 @@ public class IAMRestService {
     @Timed
     @Path("auth")
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(UTF8JSON)
     @Consumes(UTF8JSON)
     @Operation(
             security = @SecurityRequirement(name = "JWT"),
@@ -137,8 +138,8 @@ public class IAMRestService {
             @Context UriInfo uriInfo
     ) {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity("ok")
-                .type(MediaType.TEXT_PLAIN_TYPE)
+                .entity(new ArlasMessage("ok"))
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -214,7 +215,7 @@ public class IAMRestService {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity("Session deleted.")
                 .header("Set-Cookie", "refresh_token=; Max-Age=0")
-                .type(MediaType.TEXT_PLAIN_TYPE)
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -336,8 +337,8 @@ public class IAMRestService {
         authService.deleteApiKey(getUser(headers), UUID.fromString(uid), UUID.fromString(oid), UUID.fromString(kid));
         logUAM(request, headers,  "users", String.format("delete-api-key (id=%s)", kid));
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
-                .entity("Api key deleted.")
-                .type(MediaType.TEXT_PLAIN_TYPE)
+                .entity(new ArlasMessage("Api key deleted."))
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
 
     }
@@ -403,8 +404,8 @@ public class IAMRestService {
         authService.askPasswordReset(email);
         logUAM(request, headers,  "users", "ask-password-reset");
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity("ok")
-                .type(MediaType.TEXT_PLAIN)
+                .entity(new ArlasMessage("ok"))
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -555,8 +556,8 @@ public class IAMRestService {
         authService.deleteUser(UUID.fromString(id));
         logUAM(request, headers,  "users", "delete-user-account");
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
-                .entity("User deleted.")
-                .type(MediaType.TEXT_PLAIN_TYPE)
+                .entity(new ArlasMessage("User deleted."))
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
 
     }
@@ -703,8 +704,8 @@ public class IAMRestService {
         authService.deleteOrganisation(getUser(headers), UUID.fromString(oid));
         logUAM(request, headers,  oid, "organisations", "delete-organisation");
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
-                .entity("organisation deleted")
-                .type(MediaType.TEXT_PLAIN_TYPE)
+                .entity(new ArlasMessage("organisation deleted"))
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -1022,8 +1023,8 @@ public class IAMRestService {
         authService.removeForbiddenOrganisation(getUser(headers), name);
         logUAM(request, headers,  "stoplist", String.format("remove-forbidden-name (name=%s)", name));
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
-                .entity("ok")
-                .type(MediaType.TEXT_PLAIN)
+                .entity(new ArlasMessage("ok"))
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
@@ -1961,7 +1962,7 @@ public class IAMRestService {
     ) throws ArlasException {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(authService.createPermissionToken(headers, orgFilter))
-                .type(MediaType.TEXT_PLAIN_TYPE)
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
 
