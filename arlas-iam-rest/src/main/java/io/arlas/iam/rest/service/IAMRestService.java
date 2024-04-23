@@ -125,7 +125,7 @@ public class IAMRestService {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successful operation",
-                    content = @Content(schema = @Schema(implementation = String.class))),
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
             @ApiResponse(responseCode = "401", description = "Unauthenticated",
                     content = @Content(schema = @Schema(implementation = Error.class))),
             @ApiResponse(responseCode = "403", description = "Forbidden",
@@ -198,7 +198,7 @@ public class IAMRestService {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Session deleted.",
-                    content = @Content(schema = @Schema(implementation = String.class))),
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
             @ApiResponse(responseCode = "404", description = "Login failed",
                     content = @Content(schema = @Schema(implementation = Error.class))),
             @ApiResponse(responseCode = "500", description = "Arlas Error.",
@@ -213,7 +213,7 @@ public class IAMRestService {
         authService.logout(getUser(headers).getId());
         logUAM(request, headers,  "session", "user-logout");
         return Response.ok(uriInfo.getRequestUriBuilder().build())
-                .entity("Session deleted.")
+                .entity(new ArlasMessage("Session deleted."))
                 .header("Set-Cookie", "refresh_token=; Max-Age=0")
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
@@ -313,7 +313,7 @@ public class IAMRestService {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = "Successful operation",
-                    content = @Content(schema = @Schema(implementation = String.class))),
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
             @ApiResponse(responseCode = "400", description = "Non matching passwords.",
                     content = @Content(schema = @Schema(implementation = Error.class))),
             @ApiResponse(responseCode = "500", description = "Arlas Error.",
@@ -386,7 +386,7 @@ public class IAMRestService {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successful operation",
-                    content = @Content(schema = @Schema(implementation = String.class))),
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
             @ApiResponse(responseCode = "400", description = "Bad request.",
                     content = @Content(schema = @Schema(implementation = Error.class))),
             @ApiResponse(responseCode = "500", description = "Arlas Error.",
@@ -537,7 +537,7 @@ public class IAMRestService {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = "Successful operation",
-                    content = @Content(schema = @Schema(implementation = String.class))),
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
             @ApiResponse(responseCode = "400", description = "Non matching passwords.",
                     content = @Content(schema = @Schema(implementation = Error.class))),
             @ApiResponse(responseCode = "500", description = "Arlas Error.",
@@ -684,7 +684,7 @@ public class IAMRestService {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = "Successful operation",
-                    content = @Content(schema = @Schema(implementation = String.class))),
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
             @ApiResponse(responseCode = "400", description = "Bad request",
                     content = @Content(schema = @Schema(implementation = Error.class))),
             @ApiResponse(responseCode = "404", description = "Organisation not found.",
@@ -1003,7 +1003,7 @@ public class IAMRestService {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = "Successful operation.",
-                    content = @Content(schema = @Schema(implementation = String.class))),
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
             @ApiResponse(responseCode = "400", description = "Not allowed.",
                     content = @Content(schema = @Schema(implementation = Error.class))),
             @ApiResponse(responseCode = "404", description = "Name not found.",
