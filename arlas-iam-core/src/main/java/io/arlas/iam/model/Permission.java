@@ -23,7 +23,7 @@ public class Permission {
     private UUID id;
 
     @NotNull
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String value;
 
     @Column
