@@ -1,14 +1,13 @@
 package io.arlas.iam.impl;
 
+import io.arlas.iam.core.OrganisationMemberDao;
 import io.arlas.iam.model.Organisation;
 import io.arlas.iam.model.OrganisationMember;
 import io.arlas.iam.model.User;
-import io.arlas.iam.core.OrganisationMemberDao;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
 import java.util.Optional;
-import java.util.Set;
 
 public class HibernateOrganisationMemberDao extends AbstractDAO<OrganisationMember> implements OrganisationMemberDao {
     public HibernateOrganisationMemberDao(SessionFactory sessionFactory) {
@@ -33,7 +32,7 @@ public class HibernateOrganisationMemberDao extends AbstractDAO<OrganisationMemb
         Optional<OrganisationMember> omToRemove = organisation.getMembers().stream()
                 .filter(om -> om.getUser().is(user.getId())).findFirst();
         omToRemove.ifPresent(om -> {
-            currentSession().delete(om);
+            currentSession().remove(om);
             organisation.removeMember(om);
 
         });

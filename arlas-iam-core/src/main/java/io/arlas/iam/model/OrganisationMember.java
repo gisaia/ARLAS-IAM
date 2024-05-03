@@ -2,12 +2,7 @@ package io.arlas.iam.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.dropwizard.jackson.JsonSnakeCase;
-import org.hibernate.annotations.Type;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "organisationMember")
@@ -18,11 +13,13 @@ public class OrganisationMember {
     @JsonIgnore
     private OrganisationMemberPk pk;
 
-    @Type(type = "org.hibernate.type.NumericBooleanType")
+    @Basic
+    @Convert(converter = org.hibernate.type.NumericBooleanConverter.class)
     @Column(name="is_owner")
     private boolean isOwner;
 
-    @Type(type = "org.hibernate.type.NumericBooleanType")
+    @Basic
+    @Convert(converter = org.hibernate.type.NumericBooleanConverter.class)
     @Column(name="is_admin")
     private boolean isAdmin = false;
 

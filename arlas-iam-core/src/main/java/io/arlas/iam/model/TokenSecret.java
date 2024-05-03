@@ -2,7 +2,7 @@ package io.arlas.iam.model;
 
 import io.dropwizard.jackson.JsonSnakeCase;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;

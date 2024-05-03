@@ -1,7 +1,7 @@
 package io.arlas.iam.impl;
 
-import io.arlas.iam.model.RefreshToken;
 import io.arlas.iam.core.RefreshTokenDao;
+import io.arlas.iam.model.RefreshToken;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
@@ -31,7 +31,7 @@ public class HibernateRefreshTokenDao extends AbstractDAO<RefreshToken> implemen
 
     @Override
     public void delete(RefreshToken token) {
-        currentSession().delete(token);
+        currentSession().remove(token);
         currentSession().flush();
     }
 }

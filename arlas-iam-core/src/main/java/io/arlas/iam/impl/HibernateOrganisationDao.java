@@ -32,7 +32,7 @@ public class HibernateOrganisationDao extends AbstractDAO<Organisation> implemen
 
     @Override
     public void deleteOrganisation(Organisation organisation) {
-        currentSession().delete(organisation);
+        currentSession().remove(organisation);
     }
 
     @Override
@@ -42,6 +42,6 @@ public class HibernateOrganisationDao extends AbstractDAO<Organisation> implemen
 
     @Override
     public Set<Organisation> listOrganisations() {
-        return Set.copyOf(currentSession().createQuery("SELECT o FROM Organisation o", Organisation.class).getResultList());
+        return Set.copyOf(query("SELECT o FROM Organisation o").getResultList());
     }
 }

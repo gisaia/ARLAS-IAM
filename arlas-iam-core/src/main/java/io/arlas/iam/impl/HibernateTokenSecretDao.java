@@ -1,7 +1,7 @@
 package io.arlas.iam.impl;
 
-import io.arlas.iam.model.TokenSecret;
 import io.arlas.iam.core.TokenSecretDao;
+import io.arlas.iam.model.TokenSecret;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
@@ -15,12 +15,12 @@ public class HibernateTokenSecretDao extends AbstractDAO<TokenSecret> implements
     @Override
     public TokenSecret createSecret(TokenSecret secret) {
         // we only want one secret, so we remove the previous one
-        currentSession().createQuery("delete TokenSecret").executeUpdate();
+        currentSession().createMutationQuery("delete TokenSecret").executeUpdate();
         return persist(secret);
     }
 
     @Override
     public Optional<TokenSecret> readSecret() {
-        return list(currentSession().createQuery("from TokenSecret")).stream().findFirst();
+        return query("from TokenSecret").getResultStream().findFirst();
     }
 }

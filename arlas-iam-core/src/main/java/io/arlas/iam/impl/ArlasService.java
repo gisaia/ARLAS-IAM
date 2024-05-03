@@ -5,10 +5,9 @@ import io.arlas.client.ApiException;
 import io.arlas.client.api.CollectionsApi;
 import io.arlas.client.model.CollectionReference;
 import io.arlas.commons.rest.utils.ServerConstants;
-import io.arlas.filter.core.PolicyEnforcer;
 import io.arlas.iam.util.ArlasAuthServerConfiguration;
+import jakarta.ws.rs.core.HttpHeaders;
 
-import javax.ws.rs.core.HttpHeaders;
 import java.util.List;
 
 public class ArlasService {

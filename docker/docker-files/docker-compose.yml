@@ -54,7 +54,6 @@ services:
       - ARLAS_IAM_PREFIX="${ARLAS_IAM_PREFIX:-/arlas_iam_server}"
       - ARLAS_IAM_APP_PATH="${ARLAS_IAM_APP_PATH:-/}"
       - ARLAS_ANONYMOUS_VALUE="${ARLAS_ANONYMOUS_VALUE:-anonymous}"
-      - ARLAS_AUTH_PUBLIC_URIS=${ARLAS_AUTH_PUBLIC_URIS:-swagger,swagger.*,session:POST,session/refresh:PUT,users:POST,users/.*:POST}
       - ARLAS_IAM_PRIVATE_ORG="${ARLAS_IAM_PRIVATE_ORG:-false}"
       - ARLAS_IAM_HIBERNATE_URL="${ARLAS_IAM_HIBERNATE_URL:-jdbc:postgresql://db:5432/arlas_iam}"
       - ARLAS_IAM_HIBERNATE_USER="${ARLAS_IAM_HIBERNATE_USER:-pg-user}"
@@ -73,7 +72,7 @@ services:
       - ARLAS_CACHE_TIMEOUT="${ARLAS_CACHE_TIMEOUT:-5}"
       - ARLAS_IAM_LOGGING_LEVEL="${ARLAS_IAM_LOGGING_LEVEL:-INFO}"
       - ARLAS_IAM_LOGGING_CONSOLE_LEVEL="${ARLAS_IAM_LOGGING_CONSOLE_LEVEL:-INFO}"
-      - ARLAS_SERVER_URL="${ARLAS_SERVER_URL:-http://arlas-server:9999/arlas/}"
+      - ARLAS_SERVER_URL="${ARLAS_SERVER_URL:-http://arlas-server:9999/arlas}"
       - ARLAS_ACCESS_TOKEN_TTL="${ARLAS_ACCESS_TOKEN_TTL:-600000}"
     #      - ELASTIC_APM_LOG_ECS_REFORMATTING=OVERRIDE
     #      - ELASTIC_APM_LOG_ECS_FORMATTER_ALLOW_LIST=*
@@ -97,7 +96,7 @@ services:
     depends_on:
       arlas-iam-server:
         condition: service_healthy
-    image: gisaia/arlas-server:24.1.2
+    image: gisaia/arlas-server:25.0.0-beta.4
     container_name: arlas-server
     restart: always
     labels:

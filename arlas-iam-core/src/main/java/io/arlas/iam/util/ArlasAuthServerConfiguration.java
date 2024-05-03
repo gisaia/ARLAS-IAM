@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.arlas.commons.config.ArlasConfiguration;
 import io.dropwizard.db.DataSourceFactory;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 public class ArlasAuthServerConfiguration extends ArlasConfiguration {
     @Valid
