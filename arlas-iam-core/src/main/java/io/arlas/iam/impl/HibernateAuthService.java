@@ -216,6 +216,7 @@ public class HibernateAuthService implements AuthService {
             admin.setLocale(initConf.locale);
             admin.setTimezone(initConf.timezone);
             admin.setVerified(true);
+            admin.setActive(true);
             admin = userDao.createUser(admin);
             admin.setRoles(importDefaultAdminRole(admin));
         } else {
@@ -265,7 +266,7 @@ public class HibernateAuthService implements AuthService {
     @Override
     public User readUser(UUID userId, boolean checkActiveVerified) throws NotFoundException {
         Optional<User> user = readUser(userId);
-        if (user.isPresent() && user.get().isVerified() && user.get().isActive()) {
+        if (user.isPresent() && user.get().isVerified() && (!checkActiveVerified || user.get().isActive())) {
             return user.get();
         } else {
             throw new NotFoundException("User not found.");
@@ -393,14 +394,29 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public User updateUser(User user, String oldPassword, String newPassword)
+    public User updateUser(User user, String oldPassword, String newPassword, String firstName, String lastName, String locale, String timezone)
             throws NonMatchingPasswordException {
-        if (matches(oldPassword, user.getPassword())) {
-            user.setPassword(encode(newPassword));
-            return userDao.updateUser(user);
-        } else {
-            throw new NonMatchingPasswordException("Old password does not match.");
+        if (oldPassword != null && newPassword != null) {
+            if (matches(oldPassword, user.getPassword())) {
+                user.setPassword(encode(newPassword));
+            } else {
+                throw new NonMatchingPasswordException("Old password does not match.");
+            }
         }
+        if (firstName != null && !firstName.equals(user.getFirstName())) {
+            user.setFirstName(firstName);
+        }
+        if (lastName != null && !lastName.equals(user.getLastName())) {
+            user.setLastName(lastName);
+        }
+        if (locale != null && !locale.equals(user.getLocale())) {
+            user.setLocale(locale);
+        }
+        if (timezone != null && !timezone.equals(user.getTimezone())) {
+            user.setTimezone(timezone);
+        }
+
+        return userDao.updateUser(user);
     }
 
     @Override

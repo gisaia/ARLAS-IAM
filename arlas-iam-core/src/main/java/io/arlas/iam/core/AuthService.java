@@ -28,7 +28,7 @@ public interface AuthService {
     User resetUserPassword(UUID userId, String resetToken, String password) throws SendEmailException, NotFoundException;
 
     Optional<User> readUser(UUID userId);
-    User updateUser(User user, String oldPassword, String newPassword) throws NonMatchingPasswordException;
+    User updateUser(User user, String oldPassword, String newPassword, String firstName, String lastName, String locale, String timezone) throws NonMatchingPasswordException;
     void deleteUser(UUID userId) throws NotAllowedException;
 
     Optional<User> activateUser(UUID userId);

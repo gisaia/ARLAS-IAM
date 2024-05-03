@@ -527,6 +527,72 @@ public class IAMRestService {
     }
 
     @Timed
+    @Path("users/{id}/activate")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Activate the given user"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
+
+    @UnitOfWork
+    public Response activateUser(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+            @Context HttpServletRequest request,
+
+            @Parameter(name = "id", required = true)
+            @PathParam(value = "id") String id
+    ) {
+        authService.activateUser(UUID.fromString(id));
+        logUAM(request, headers,  "users", "activate-user-account");
+        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+                .entity(new ArlasMessage("User activated."))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+
+    }
+
+    @Timed
+    @Path("users/{id}/deactivate")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Deactivate the given user"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
+
+    @UnitOfWork
+    public Response deactivateUser(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+            @Context HttpServletRequest request,
+
+            @Parameter(name = "id", required = true)
+            @PathParam(value = "id") String id
+    ) throws NotAllowedException {
+        authService.deactivateUser(UUID.fromString(id));
+        logUAM(request, headers,  "users", "deactivate-user-account");
+        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+                .entity(new ArlasMessage("User deactivated."))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+
+    }
+
+    @Timed
     @Path("users/{id}")
     @DELETE
     @Produces(UTF8JSON)
@@ -538,8 +604,6 @@ public class IAMRestService {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = "Successful operation",
                     content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
-            @ApiResponse(responseCode = "400", description = "Non matching passwords.",
-                    content = @Content(schema = @Schema(implementation = Error.class))),
             @ApiResponse(responseCode = "500", description = "Arlas Error.",
                     content = @Content(schema = @Schema(implementation = Error.class)))})
 
@@ -569,7 +633,7 @@ public class IAMRestService {
     @Consumes(UTF8JSON)
     @Operation(
             security = @SecurityRequirement(name = "JWT"),
-            summary = "Update the logged in user"
+            summary = "Update the given user (absent attribute - null - are not updated)."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Successful operation",
@@ -592,14 +656,14 @@ public class IAMRestService {
             @PathParam(value = "id") String id,
 
             @Parameter(name = "updateDef", required = true)
-            @NotNull @Valid UpdateUserDef updateDef
+            @NotNull @Valid UpdateUserDef ud
 
     ) throws NotFoundException, NonMatchingPasswordException {
         Response response = Response.created(uriInfo.getRequestUriBuilder().build())
-                .entity(new UserData(authService.updateUser(getUser(headers, id), updateDef.oldPassword, updateDef.newPassword)))
+                .entity(new UserData(authService.updateUser(getUser(headers, id, false), ud.oldPassword, ud.newPassword, ud.firstName, ud.lastName, ud.locale, ud.timezone)))
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
-        logUAM(request, headers,  "users", "change-password");
+        logUAM(request, headers,  "users", "update-user");
         return response;
     }
 
@@ -1979,7 +2043,11 @@ public class IAMRestService {
     }
 
     protected User getUser(HttpHeaders headers, String id) throws NotFoundException {
-        checkLoggedInUser(headers, id);
+        return getUser(headers, id, true);
+    }
+
+    protected User getUser(HttpHeaders headers, String id, boolean checkSame) throws NotFoundException {
+        if (checkSame) { checkLoggedInUser(headers, id); }
         return getUser(headers);
     }
 
