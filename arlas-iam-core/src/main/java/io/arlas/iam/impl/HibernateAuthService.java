@@ -1,7 +1,5 @@
 package io.arlas.iam.impl;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.arlas.client.ApiException;
 import io.arlas.commons.exceptions.ArlasException;
