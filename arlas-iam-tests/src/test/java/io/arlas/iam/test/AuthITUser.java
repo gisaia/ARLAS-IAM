@@ -65,7 +65,7 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test015ChangePassword() {
-        changePassword(userId1, "secret", "newsecret").then().statusCode(201)
+        changePassword(userId1, userId1, "secret", "newsecret").then().statusCode(201)
                 .body("email", equalTo(USER1));
 
         logout(USER1).then().statusCode(200);
@@ -79,12 +79,17 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test016ChangeWrongPassword() {
-        changePassword(userId1, "othersecret", "newsecret").then().statusCode(400);
+        changePassword(userId1, userId1, "othersecret", "newsecret").then().statusCode(400);
     }
 
     @Test
-    public void test017ChangePasswordOtherUser() {
-        updateUser(userId2, "password2", "newpassword2").then().statusCode(404);
+    public void test018UpdateUser() {
+        updateUser(userId1, "John", "Doe", "fr_FR", "Europe/London").then().statusCode(201)
+                .body("firstName", equalTo("John"))
+                .body("lastName", equalTo("Doe"))
+                .body("locale", equalTo("fr_FR"))
+                .body("timezone", equalTo("Europe/London"))
+        ;
     }
 
 //    @Test
@@ -465,7 +470,17 @@ public class AuthITUser extends AuthEndpoints {
     }
 
     @Test
-    public void test904DeleteUserSelf() {
+    public void test904DeactivateUser() {
+        deactivateUser(userId1, userId2).then().statusCode(202);
+    }
+
+    @Test
+    public void test905ActivateUser() {
+        activateUser(userId1, userId2).then().statusCode(202);
+    }
+
+    @Test
+    public void test906DeleteUserSelf() {
         deleteUser(userId1, userId1).then().statusCode(202);
         deleteUser(userId2, userId2).then().statusCode(202);
     }

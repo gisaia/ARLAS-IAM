@@ -105,14 +105,25 @@ public class AuthEndpoints {
                 .delete(arlasAppPath.concat("session"));
     }
 
-    protected Response changePassword(String userId, String oldPassword, String password) {
+    protected Response changePassword(String actingId, String userId, String oldPassword, String password) {
         return given()
-                .header(AUTH_HEADER, getToken(userId))
+                .header(AUTH_HEADER, getToken(actingId))
                 .contentType("application/json")
                 .pathParam("id", userId)
                 .body(String.format("""
                         {"oldPassword": "%s", "newPassword": "%s"}
                         """, oldPassword, password))
+                .put(arlasAppPath.concat("users/{id}"));
+    }
+
+    protected Response updateUser(String userId, String firstName, String lastName, String locale, String timezone) {
+        return given()
+                .header(AUTH_HEADER, getToken(userId))
+                .contentType("application/json")
+                .pathParam("id", userId)
+                .body(String.format("""
+                        {"firstName": "%s", "lastName": "%s", "locale": "%s", "timezone": "%s"}
+                        """, firstName, lastName, locale, timezone))
                 .put(arlasAppPath.concat("users/{id}"));
     }
 
@@ -138,15 +149,20 @@ public class AuthEndpoints {
                 .get(arlasAppPath.concat("users/{id}"));
     }
 
-    protected Response updateUser(String id, String p1, String p2) {
+    protected Response deactivateUser(String actingId, String targetId) {
         return given()
-                .header(AUTH_HEADER, getToken(userId1))
-                .pathParam("id", id)
-                .body(String.format("""
-                        {"oldPassword":"%s","newPassword":"%s"}
-                        """, p1, p2))
+                .header(AUTH_HEADER, getToken(actingId))
+                .pathParam("id", targetId)
                 .contentType("application/json")
-                .put(arlasAppPath.concat("users/{id}"));
+                .post(arlasAppPath.concat("users/{id}/deactivate"));
+    }
+
+    protected Response activateUser(String actingId, String targetId) {
+        return given()
+                .header(AUTH_HEADER, getToken(actingId))
+                .pathParam("id", targetId)
+                .contentType("application/json")
+                .post(arlasAppPath.concat("users/{id}/activate"));
     }
 
     protected Response deleteUser(String actingId, String targetId) {
