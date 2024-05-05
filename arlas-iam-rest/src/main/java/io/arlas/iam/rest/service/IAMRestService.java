@@ -1514,6 +1514,46 @@ public class IAMRestService {
     }
 
     @Timed
+    @Path("organisations/{oid}/groups/{rid}")
+    @DELETE
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Delete a group from an organisation"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "404", description = "Organisation or role not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
+
+    @UnitOfWork
+    public Response deleteGroupInOrganisation(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+            @Context HttpServletRequest request,
+
+            @Parameter(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @Parameter(name = "rid", required = true)
+            @PathParam(value = "rid") String rid
+
+    ) throws NotFoundException, NotOwnerException, NotAllowedException {
+        authService.deleteGroup(getUser(headers), UUID.fromString(oid), UUID.fromString(rid));
+        logUAM(request, headers,  oid, "organisations", String.format("delete-group (rid=%s)", rid));
+        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+                .entity(new ArlasMessage("Group deleted."))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
+    }
+
+    @Timed
     @Path("organisations/{oid}/groups")
     @GET
     @Produces(UTF8JSON)
@@ -1801,6 +1841,44 @@ public class IAMRestService {
                 .build();
         logUAM(request, headers,  oid, "organisations", String.format("update-permission (pid=%s, new-value=%s)", pid, permission.value));
         return response;
+    }
+
+    @Timed
+    @Path("organisations/{oid}/permissions/{pid}")
+    @DELETE
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Delete a permission"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
+            @ApiResponse(responseCode = "404", description = "Organisation or permission not found.",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
+
+    @UnitOfWork
+    public Response deletePermission(
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+            @Context HttpServletRequest request,
+
+            @Parameter(name = "oid", required = true)
+            @PathParam(value = "oid") String oid,
+
+            @Parameter(name = "pid", required = true)
+            @PathParam(value = "pid") String pid
+
+    ) throws NotFoundException, NotOwnerException, NotAllowedException {
+        authService.deletePermission(getUser(headers), UUID.fromString(oid), UUID.fromString(pid));
+        logUAM(request, headers,  oid, "organisations", String.format("delete-permission (pid=%s)", pid));
+        return Response.accepted(uriInfo.getRequestUriBuilder().build())
+                .entity(new ArlasMessage("Permission deleted."))
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .build();
     }
 
     @Timed

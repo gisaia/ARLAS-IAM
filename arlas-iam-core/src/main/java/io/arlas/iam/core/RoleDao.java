@@ -23,4 +23,6 @@ public interface RoleDao {
     Role removePermissionFromRole(Permission permission, Role role);
 
     List<Role> getSystemRoles();
+
+    void deleteRole(Role role);
 }

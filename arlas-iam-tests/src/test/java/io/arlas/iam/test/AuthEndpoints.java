@@ -48,6 +48,7 @@ public class AuthEndpoints {
     protected static String token2;
     protected static String tokenAdmin;
     protected static String groupId1;
+    protected static String groupPublicId;
     protected static String apiKeyUUID;
     protected static String apiKeyId;
     protected static String apiKeySecret;
@@ -357,6 +358,16 @@ public class AuthEndpoints {
                 .get(arlasAppPath.concat("organisations/{oid}/users/{uid}/groups"));
     }
 
+    protected Response deleteGroup(String groupId) {
+        return given()
+                .header(AUTH_HEADER, getToken(userId1))
+                .header(ARLAS_ORG_FILTER, ORG)
+                .pathParam("oid", orgId)
+                .pathParam("rid", groupId)
+                .contentType("application/json")
+                .delete(arlasAppPath.concat("organisations/{oid}/groups/{rid}"));
+    }
+
     protected Response listGroups() {
         return given()
                 .header(AUTH_HEADER, getToken(userId1))
@@ -443,6 +454,16 @@ public class AuthEndpoints {
                         """, pvalue, pdesc))
                 .contentType("application/json")
                 .put(arlasAppPath.concat("organisations/{oid}/permissions/{pid}"));
+    }
+
+    protected Response deletePermission(String actingId, String pid) {
+        return given()
+                .header(AUTH_HEADER, getToken(actingId))
+                .header(ARLAS_ORG_FILTER, ORG)
+                .pathParam("oid", orgId)
+                .pathParam("pid", pid)
+                .contentType("application/json")
+                .delete(arlasAppPath.concat("organisations/{oid}/permissions/{pid}"));
     }
 
     protected Response addPermissionToRole(String actingId, String rid, String pid) {

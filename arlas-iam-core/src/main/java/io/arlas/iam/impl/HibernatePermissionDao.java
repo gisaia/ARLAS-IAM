@@ -14,4 +14,9 @@ public class HibernatePermissionDao extends AbstractDAO<Permission> implements P
     public Permission createOrUpdatePermission(Permission permission) {
         return persist(permission);
     }
+
+    @Override
+    public void deletePermission(Permission permission) {
+        currentSession().remove(permission);
+    }
 }
