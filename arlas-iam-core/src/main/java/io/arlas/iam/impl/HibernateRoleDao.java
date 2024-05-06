@@ -61,4 +61,10 @@ public class HibernateRoleDao extends AbstractDAO<Role> implements RoleDao {
                 .setParameter("system", Boolean.TRUE)
                 .list();
     }
+
+    @Override
+    public void deleteRole(Role role) {
+        currentSession().remove(role);
+    }
+
 }

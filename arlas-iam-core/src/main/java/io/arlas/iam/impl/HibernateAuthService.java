@@ -731,6 +731,18 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
+    public void deleteGroup(User owner, UUID orgId, UUID roleId) throws NotFoundException, NotOwnerException, NotAllowedException {
+        var org = getOrganisation(owner, orgId);
+        var group = getRole(org, roleId);
+        if (group.isTechnical()) {
+            throw new NotAllowedException("Group is technical and cannot be deleted.");
+        } else {
+            roleDao.deleteRole(group);
+            // cascade deletion is set, so it is also removed from associated users
+        }
+    }
+
+    @Override
     public List<Role> listGroups(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
         return listRoles(owner, orgId).stream().filter(Role::isGroup).toList();
     }
@@ -905,6 +917,18 @@ public class HibernateAuthService implements AuthService {
         checkServerCollections(owner, orgId, collections, token);
         String value = ArlasClaims.getHeaderColumnFilter(collections);
         return updatePermission(owner, orgId, permissionId, value, String.join(" ", collections));
+    }
+
+    @Override
+    public void deletePermission(User owner, UUID orgId, UUID permissionId) throws NotFoundException, NotAllowedException, NotOwnerException {
+        var org = getOrganisation(owner, orgId);
+        var permission = getPermission(org, permissionId);
+        if (permission.getRoles().stream().anyMatch(Role::isTechnical)) {
+            throw new NotAllowedException("Permission of a technical role/group cannot be deleted.");
+        } else {
+            permissionDao.deletePermission(permission);
+            // cascade deletion is set, so it is also removed associated from roles/groups
+        }
     }
 
     @Override
