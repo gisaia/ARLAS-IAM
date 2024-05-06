@@ -25,11 +25,11 @@ public class HibernateForbiddenOrganisationDao extends AbstractDAO<ForbiddenOrga
 
     @Override
     public List<ForbiddenOrganisation> listNames() {
-        return currentSession().createQuery("SELECT u FROM ForbiddenOrganisation u", ForbiddenOrganisation.class).getResultList();
+        return query("SELECT u FROM ForbiddenOrganisation u").getResultList();
     }
 
     @Override
     public void removeName(ForbiddenOrganisation name) {
-        currentSession().delete(name);
+        currentSession().remove(name);
     }
 }

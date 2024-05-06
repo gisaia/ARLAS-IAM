@@ -6,8 +6,8 @@ import io.arlas.commons.exceptions.NotAllowedException;
 import io.arlas.commons.exceptions.NotFoundException;
 import io.arlas.iam.exceptions.*;
 import io.arlas.iam.model.*;
+import jakarta.ws.rs.core.HttpHeaders;
 
-import javax.ws.rs.core.HttpHeaders;
 import java.util.*;
 
 public interface AuthService {
@@ -28,7 +28,7 @@ public interface AuthService {
     User resetUserPassword(UUID userId, String resetToken, String password) throws SendEmailException, NotFoundException;
 
     Optional<User> readUser(UUID userId);
-    User updateUser(User user, String oldPassword, String newPassword) throws NonMatchingPasswordException;
+    User updateUser(User user, String oldPassword, String newPassword, String firstName, String lastName, String locale, String timezone) throws NonMatchingPasswordException;
     void deleteUser(UUID userId) throws NotAllowedException;
 
     Optional<User> activateUser(UUID userId);
@@ -57,6 +57,7 @@ public interface AuthService {
 
     Role createGroup(User owner, String name, String description, UUID orgId) throws AlreadyExistsException, NotFoundException, NotOwnerException;
     Role updateGroup(User owner, String name, String description, UUID orgId, UUID roleId) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException;
+    void deleteGroup(User owner, UUID orgId, UUID roleId) throws NotFoundException, NotOwnerException, NotAllowedException;
     List<Role> listGroups(User owner, UUID orgId) throws NotFoundException, NotOwnerException;
     List<Role> listGroups(User owner, UUID orgId, UUID userId) throws NotFoundException, NotOwnerException;
 
@@ -69,6 +70,7 @@ public interface AuthService {
     Permission createColumnFilter(User user, UUID fromString, List<String> collections, String token) throws ArlasException;
     Permission updatePermission(User owner, UUID orgId, UUID permissionId, String value, String description) throws NotOwnerException, NotFoundException, AlreadyExistsException;
     Permission updateColumnFilter(User owner, UUID orgId, UUID permissionId, List<String> collections, String token) throws ArlasException;
+    void deletePermission(User owner, UUID orgId, UUID permissionId) throws NotFoundException, NotAllowedException, NotOwnerException;
     Set<Permission> listPermissions(User owner, UUID orgId) throws NotOwnerException, NotFoundException;
     List<String> getCollectionsOfColumnFilter(User owner, UUID orgId, UUID permissionId, String token) throws ArlasException;
     Set<Permission> listPermissions(User owner, UUID orgId, UUID userId) throws NotOwnerException, NotFoundException;

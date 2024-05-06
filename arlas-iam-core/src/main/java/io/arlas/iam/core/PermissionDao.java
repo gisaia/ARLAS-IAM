@@ -5,4 +5,6 @@ import io.arlas.iam.model.Permission;
 public interface PermissionDao {
 
     Permission createOrUpdatePermission(Permission permission);
+
+    void deletePermission(Permission permission);
 }

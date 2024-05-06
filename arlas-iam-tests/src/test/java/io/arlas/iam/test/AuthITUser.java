@@ -65,7 +65,7 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test015ChangePassword() {
-        changePassword(userId1, "secret", "newsecret").then().statusCode(201)
+        changePassword(userId1, userId1, "secret", "newsecret").then().statusCode(201)
                 .body("email", equalTo(USER1));
 
         logout(USER1).then().statusCode(200);
@@ -79,12 +79,17 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test016ChangeWrongPassword() {
-        changePassword(userId1, "othersecret", "newsecret").then().statusCode(400);
+        changePassword(userId1, userId1, "othersecret", "newsecret").then().statusCode(400);
     }
 
     @Test
-    public void test017ChangePasswordOtherUser() {
-        updateUser(userId2, "password2", "newpassword2").then().statusCode(404);
+    public void test018UpdateUser() {
+        updateUser(userId1, "John", "Doe", "fr_FR", "Europe/London").then().statusCode(201)
+                .body("firstName", equalTo("John"))
+                .body("lastName", equalTo("Doe"))
+                .body("locale", equalTo("fr_FR"))
+                .body("timezone", equalTo("Europe/London"))
+        ;
     }
 
 //    @Test
@@ -128,6 +133,8 @@ public class AuthITUser extends AuthEndpoints {
         getUser(userId1).then().statusCode(200)
                 .body("organisations", hasSize(2))
                 .body("organisations[1].name", equalTo(ORG));
+
+        groupPublicId = listGroups().then().extract().jsonPath().get("[0].id");
     }
 
     @Test
@@ -317,6 +324,20 @@ public class AuthITUser extends AuthEndpoints {
     }
 
     @Test
+    public void test068DeletePermission() {
+        String pid = addPermission(userId1, "pdelete", "permission to be deleted").then().statusCode(201)
+                .body("value", equalTo("pdelete"))
+                .body("description", equalTo("permission to be deleted"))
+                .extract().jsonPath().get("id");
+        addPermissionToRole(userId1, fooRoleId1, pid).then().statusCode(201);
+        listPermissionsOfRole(userId1, fooRoleId1).then().statusCode(200)
+                .body("", hasSize(2));
+        deletePermission(userId1, pid).then().statusCode(202);
+        listPermissionsOfRole(userId1, fooRoleId1).then().statusCode(200)
+                .body("", hasSize(1));
+    }
+
+    @Test
     public void test070AddGroup() {
         groupId1 = addGroup(userId1, GRP1, GRP1_DESC).then().statusCode(201)
                 .body("name", equalTo(GRP1))
@@ -349,6 +370,26 @@ public class AuthITUser extends AuthEndpoints {
                 .body("roles", hasSize(9));
         listGroups(userId1, userId2).then().statusCode(200)
                 .body("", hasSize(1));
+    }
+
+    @Test
+    public void test075DeleteGroup() {
+        String gid = addGroup(userId1, "gdelete", "group to be deleted").then().statusCode(201)
+                .body("name", equalTo("gdelete"))
+                .body("description", equalTo("group to be deleted"))
+                .extract().jsonPath().get("id");
+        addRoleToUser(userId1, userId2, gid).then().statusCode(201)
+                .body("roles", hasSize(10));
+        listGroups(userId1, userId2).then().statusCode(200)
+                .body("", hasSize(2));
+        deleteGroup(gid).then().statusCode(202);
+        listGroups(userId1, userId2).then().statusCode(200)
+                .body("", hasSize(1));
+    }
+
+    @Test
+    public void test075DeleteTechnicalGroup() {
+        deleteGroup(groupPublicId).then().statusCode(400);
     }
 
     @Test
@@ -465,7 +506,17 @@ public class AuthITUser extends AuthEndpoints {
     }
 
     @Test
-    public void test904DeleteUserSelf() {
+    public void test904DeactivateUser() {
+        deactivateUser(userId1, userId2).then().statusCode(202);
+    }
+
+    @Test
+    public void test905ActivateUser() {
+        activateUser(userId1, userId2).then().statusCode(202);
+    }
+
+    @Test
+    public void test906DeleteUserSelf() {
         deleteUser(userId1, userId1).then().statusCode(202);
         deleteUser(userId2, userId2).then().statusCode(202);
     }

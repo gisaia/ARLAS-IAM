@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
-import javax.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.HttpHeaders;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -215,6 +215,7 @@ public class HibernateAuthService implements AuthService {
             admin.setLocale(initConf.locale);
             admin.setTimezone(initConf.timezone);
             admin.setVerified(true);
+            admin.setActive(true);
             admin = userDao.createUser(admin);
             admin.setRoles(importDefaultAdminRole(admin));
         } else {
@@ -263,7 +264,7 @@ public class HibernateAuthService implements AuthService {
     @Override
     public User readUser(UUID userId, boolean checkActiveVerified) throws NotFoundException {
         Optional<User> user = readUser(userId);
-        if (user.isPresent() && user.get().isVerified() && user.get().isActive()) {
+        if (user.isPresent() && user.get().isVerified() && (!checkActiveVerified || user.get().isActive())) {
             return user.get();
         } else {
             throw new NotFoundException("User not found.");
@@ -391,14 +392,29 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public User updateUser(User user, String oldPassword, String newPassword)
+    public User updateUser(User user, String oldPassword, String newPassword, String firstName, String lastName, String locale, String timezone)
             throws NonMatchingPasswordException {
-        if (matches(oldPassword, user.getPassword())) {
-            user.setPassword(encode(newPassword));
-            return userDao.updateUser(user);
-        } else {
-            throw new NonMatchingPasswordException("Old password does not match.");
+        if (oldPassword != null && newPassword != null) {
+            if (matches(oldPassword, user.getPassword())) {
+                user.setPassword(encode(newPassword));
+            } else {
+                throw new NonMatchingPasswordException("Old password does not match.");
+            }
         }
+        if (firstName != null && !firstName.equals(user.getFirstName())) {
+            user.setFirstName(firstName);
+        }
+        if (lastName != null && !lastName.equals(user.getLastName())) {
+            user.setLastName(lastName);
+        }
+        if (locale != null && !locale.equals(user.getLocale())) {
+            user.setLocale(locale);
+        }
+        if (timezone != null && !timezone.equals(user.getTimezone())) {
+            user.setTimezone(timezone);
+        }
+
+        return userDao.updateUser(user);
     }
 
     @Override
@@ -713,6 +729,18 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
+    public void deleteGroup(User owner, UUID orgId, UUID roleId) throws NotFoundException, NotOwnerException, NotAllowedException {
+        var org = getOrganisation(owner, orgId);
+        var group = getRole(org, roleId);
+        if (group.isTechnical()) {
+            throw new NotAllowedException("Group is technical and cannot be deleted.");
+        } else {
+            roleDao.deleteRole(group);
+            // cascade deletion is set, so it is also removed from associated users
+        }
+    }
+
+    @Override
     public List<Role> listGroups(User owner, UUID orgId) throws NotOwnerException, NotFoundException {
         return listRoles(owner, orgId).stream().filter(Role::isGroup).toList();
     }
@@ -887,6 +915,18 @@ public class HibernateAuthService implements AuthService {
         checkServerCollections(owner, orgId, collections, token);
         String value = ArlasClaims.getHeaderColumnFilter(collections);
         return updatePermission(owner, orgId, permissionId, value, String.join(" ", collections));
+    }
+
+    @Override
+    public void deletePermission(User owner, UUID orgId, UUID permissionId) throws NotFoundException, NotAllowedException, NotOwnerException {
+        var org = getOrganisation(owner, orgId);
+        var permission = getPermission(org, permissionId);
+        if (permission.getRoles().stream().anyMatch(Role::isTechnical)) {
+            throw new NotAllowedException("Permission of a technical role/group cannot be deleted.");
+        } else {
+            permissionDao.deletePermission(permission);
+            // cascade deletion is set, so it is also removed associated from roles/groups
+        }
     }
 
     @Override

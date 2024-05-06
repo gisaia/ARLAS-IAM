@@ -5,7 +5,7 @@
     <parent>
         <artifactId>arlas-iam-parent</artifactId>
         <groupId>io.arlas.iam</groupId>
-        <version>24.1.1-rc.3</version>
+        <version>25.0.0-rc.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -34,18 +34,6 @@
                     <artifactId>jakarta.activation-api</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>${snake.yaml.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
 
         <dependency>

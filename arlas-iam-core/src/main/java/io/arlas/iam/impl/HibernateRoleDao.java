@@ -1,9 +1,9 @@
 package io.arlas.iam.impl;
 
+import io.arlas.iam.core.RoleDao;
 import io.arlas.iam.model.Permission;
 import io.arlas.iam.model.Role;
 import io.arlas.iam.model.User;
-import io.arlas.iam.core.RoleDao;
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 
@@ -56,9 +56,15 @@ public class HibernateRoleDao extends AbstractDAO<Role> implements RoleDao {
 
     @Override
     public List<Role> getSystemRoles() {
-        return currentSession().createQuery("SELECT r FROM Role r WHERE r.isSystem = :system", Role.class)
+        return query("SELECT r FROM Role r WHERE r.isSystem = :system")
                 .setCacheable(true)
                 .setParameter("system", Boolean.TRUE)
                 .list();
     }
+
+    @Override
+    public void deleteRole(Role role) {
+        currentSession().remove(role);
+    }
+
 }
