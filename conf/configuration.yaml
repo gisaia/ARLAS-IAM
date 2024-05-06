@@ -38,7 +38,7 @@ swagger: # Configuration of SWAGGER for generating documentation and APIs
   servers:
   - url: ${ARLAS_IAM_PREFIX:-/arlas_iam_server}
     description: "Backend server from client browser"
-  - url: http://arlas-persistence-server{ARLAS_IAM_PREFIX:-/arlas_iam_server}
+  - url: http://arlas-iam-server{ARLAS_IAM_PREFIX:-/arlas_iam_server}
     description: "Backend server from docker network"
 
 arlas_cors:
