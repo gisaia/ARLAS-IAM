@@ -7,6 +7,7 @@ import io.dropwizard.jackson.JsonSnakeCase;
 import org.hibernate.annotations.NaturalId;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -61,7 +62,7 @@ public class User {
     @OneToMany(mappedBy = "pk.user", cascade= CascadeType.REMOVE)
     private Set<OrganisationMember> organisations = new HashSet<>();
 
-    @ManyToMany(mappedBy="users", cascade= CascadeType.REMOVE)
+    @ManyToMany(mappedBy="users")
     private Set<Role> roles = new HashSet<>();
 
     @OneToMany(mappedBy="owner", cascade = CascadeType.REMOVE)
@@ -71,6 +72,13 @@ public class User {
 
     public User(String email) {
         this.email = email;
+    }
+
+    @PreRemove
+    private void removeRoleAssociations() {
+        for (Role role : this.roles) {
+            role.getUsers().remove(this);
+        }
     }
 
     public UUID getId() {

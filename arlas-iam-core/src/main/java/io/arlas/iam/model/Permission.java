@@ -28,7 +28,7 @@ public class Permission {
     @Column
     private String description;
 
-    @ManyToMany()
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "RolePermission",
             joinColumns = @JoinColumn(name = "id_permission"),
             inverseJoinColumns = @JoinColumn(name = "id_role"))
@@ -82,6 +82,16 @@ public class Permission {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    public void removeRole(Role role) {
+        this.roles.remove(role);
+        role.getPermissions().remove(this);
+    }
+
+    public void addRole(Role role) {
+        this.roles.add(role);
+        role.getPermissions().add(this);
     }
 
     public Organisation getOrganisation() {

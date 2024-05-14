@@ -418,11 +418,15 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public void deleteUser(UUID userId) throws NotAllowedException {
-        if (isAdmin(userId)) {
+    public void deleteUser(UUID actingId, UUID targetId) throws NotAllowedException {
+        if (isAdmin(targetId)) {
             throw new NotAllowedException("Admin cannot be removed from database.");
         }
-        readUser(userId).ifPresent(userDao::deleteUser);
+        if (isAdmin(actingId) || actingId.equals(targetId)) {
+            readUser(targetId).ifPresent(userDao::deleteUser);
+        } else {
+            throw new NotAllowedException("User can only be removed by admin or self.");
+        }
         // TODO: delete user resources (organisation, collections...)
     }
 
@@ -798,6 +802,8 @@ public class HibernateAuthService implements AuthService {
         member.setOwner(newRoles.stream()
                 .map(r -> roleDao.readRole(UUID.fromString(r)).orElseThrow().getName())
                 .anyMatch(n -> n.equals(ROLE_ARLAS_OWNER)));
+
+        userDao.updateUser(user); // update updateDate of user
 
         return getUser(org, userId);
     }

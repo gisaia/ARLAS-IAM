@@ -502,7 +502,7 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test903DeleteUserNotSelf() {
-        deleteUser(userId1, userId2).then().statusCode(404);
+        deleteUser(userId1, userId2).then().statusCode(400);
     }
 
     @Test

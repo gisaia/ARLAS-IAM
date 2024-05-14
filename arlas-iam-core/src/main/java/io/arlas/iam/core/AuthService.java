@@ -29,7 +29,7 @@ public interface AuthService {
 
     Optional<User> readUser(UUID userId);
     User updateUser(User user, String oldPassword, String newPassword, String firstName, String lastName, String locale, String timezone) throws NonMatchingPasswordException;
-    void deleteUser(UUID userId) throws NotAllowedException;
+    void deleteUser(UUID actingId, UUID targetId) throws NotAllowedException;
 
     Optional<User> activateUser(UUID userId);
     Optional<User> deactivateUser(UUID userId) throws NotAllowedException;

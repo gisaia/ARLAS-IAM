@@ -47,7 +47,7 @@ public class ApiKey {
     @JoinColumn(name = "id_org")
     private Organisation org;
 
-    @ManyToMany(mappedBy="apiKeys", cascade= CascadeType.REMOVE)
+    @ManyToMany(mappedBy="apiKeys")
     private Set<Role> roles = new HashSet<>();
 
     public ApiKey() {}
@@ -60,6 +60,13 @@ public class ApiKey {
         this.owner = owner;
         this.org = org;
         this.roles = roles;
+    }
+
+    @PreRemove
+    private void removeRoleAssociations() {
+        for (Role role : this.roles) {
+            role.getApiKeys().remove(this);
+        }
     }
 
     public UUID getId() {
