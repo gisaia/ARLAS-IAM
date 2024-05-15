@@ -42,19 +42,19 @@ public class Role {
     @JoinColumn(name = "id_organisation")
     private Organisation organisation;
 
-    @ManyToMany()
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "UserRole",
             joinColumns = @JoinColumn(name = "id_role"),
             inverseJoinColumns = @JoinColumn(name = "id_user"))
     private Set<User> users = new HashSet<>();
 
-    @ManyToMany()
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "ApiKeyRole",
             joinColumns = @JoinColumn(name = "id_role"),
             inverseJoinColumns = @JoinColumn(name = "id_apikey"))
     private Set<ApiKey> apiKeys = new HashSet<>();
 
-    @ManyToMany(mappedBy="roles", cascade= CascadeType.REMOVE)
+    @ManyToMany(mappedBy="roles")
     private Set<Permission> permissions = new HashSet<>();
 
     private Role() {}
@@ -72,6 +72,13 @@ public class Role {
     public Role(String name, boolean isSystem) {
         this.name = name;
         this.isSystem = isSystem;
+    }
+
+    @PreRemove
+    private void removePermissionAssociations() {
+        for (Permission permission : this.permissions) {
+            permission.getRoles().remove(this);
+        }
     }
 
     public UUID getId() {
@@ -142,6 +149,16 @@ public class Role {
         return this;
     }
 
+    public void removeUser(User user) {
+        this.users.remove(user);
+        user.getRoles().remove(this);
+    }
+
+    public void addUser(User user) {
+        this.users.add(user);
+        user.getRoles().add(this);
+    }
+
     public Set<ApiKey> getApiKeys() {
         return apiKeys;
     }
@@ -149,8 +166,15 @@ public class Role {
     public void setApiKeys(Set<ApiKey> apiKeys) {
         this.apiKeys = apiKeys;
     }
+
+    public void removeApiKey(ApiKey apiKey) {
+        this.apiKeys.remove(apiKey);
+        apiKey.getRoles().remove(this);
+    }
+
     public void addApiKeys(ApiKey apiKey) {
         this.apiKeys.add(apiKey);
+        apiKey.getRoles().add(this);
     }
 
     public Set<Permission> getPermissions() {

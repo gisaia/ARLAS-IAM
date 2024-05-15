@@ -599,7 +599,7 @@ public class IAMRestService {
     @Consumes(UTF8JSON)
     @Operation(
             security = @SecurityRequirement(name = "JWT"),
-            summary = "Delete the logged in user"
+            summary = "Delete the given user"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = "Successful operation",
@@ -616,8 +616,7 @@ public class IAMRestService {
             @Parameter(name = "id", required = true)
             @PathParam(value = "id") String id
     ) throws NotFoundException, NotAllowedException {
-        checkLoggedInUser(headers, id);
-        authService.deleteUser(UUID.fromString(id));
+        authService.deleteUser(getUser(headers).getId(), UUID.fromString(id));
         logUAM(request, headers,  "users", "delete-user-account");
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new ArlasMessage("User deleted."))
