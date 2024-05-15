@@ -326,7 +326,7 @@ public class AuthEndpoints {
                 .delete(arlasAppPath.concat("organisations/{oid}/users/{uid}/roles/{rid}"));
     }
 
-    protected Response listUsers(String userId, String rname) {
+    protected Response listUsersOfOrganisation(String userId, String rname) {
         RequestSpecification req = given()
                 .header(AUTH_HEADER, getToken(userId))
                 .header(ARLAS_ORG_FILTER, ORG)

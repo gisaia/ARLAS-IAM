@@ -5,7 +5,7 @@
     <parent>
         <artifactId>arlas-iam-parent</artifactId>
         <groupId>io.arlas.iam</groupId>
-        <version>25.0.0-rc.2</version>
+        <version>25.0.0-rc.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -21,7 +21,7 @@
         <dependency>
             <groupId>io.arlas.iam</groupId>
             <artifactId>arlas-iam-core</artifactId>
-            <version>25.0.0-rc.2</version>
+            <version>25.0.0-rc.3</version>
             <exclusions>
                 <exclusion>
                     <artifactId>jakarta.servlet-api</artifactId>

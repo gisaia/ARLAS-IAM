@@ -29,13 +29,13 @@ public class Organisation {
     @Column(name="display_name")
     private String displayName;
 
-    @OneToMany(mappedBy = "pk.org", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "pk.org", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<OrganisationMember> members = new HashSet<>();
 
-    @OneToMany(mappedBy="organisation", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy="organisation", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<Permission> permissions = new HashSet<>();
 
-    @OneToMany(mappedBy="organisation", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy="organisation", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<Role> roles = new HashSet<>();
 
     private Organisation() {}

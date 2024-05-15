@@ -170,7 +170,7 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test040ListUsers() {
-        listUsers(userId1, null).then().statusCode(200)
+        listUsersOfOrganisation(userId1, null).then().statusCode(200)
                 .body("", hasSize(1))
                 .body("[0].member.email", is(USER1));
     }
@@ -180,7 +180,7 @@ public class AuthITUser extends AuthEndpoints {
         addUserToOrganisation(userId1, USER2).then().statusCode(201);
         getUser(userId2, userId2).then().statusCode(200)
                 .body("organisations", hasSize(2));
-        listUsers(userId1, null).then().statusCode(200)
+        listUsersOfOrganisation(userId1, null).then().statusCode(200)
                 .body("", hasSize(2));
     }
 
@@ -229,7 +229,7 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test054ListUsersWithRole() {
-        listUsers(userId1, ROLE1).then().statusCode(200)
+        listUsersOfOrganisation(userId1, ROLE1).then().statusCode(200)
                 .body("", hasSize(1))
                 .body("[0].member.email", is(USER2));
     }
@@ -454,6 +454,8 @@ public class AuthITUser extends AuthEndpoints {
     @Test
     public void test094DeleteApiKey() {
         deleteApiKey(userId1, apiKeyUUID).then().statusCode(202);
+        // check that associated role is not removed:
+        listPermissionsOfRole(userId1, fooRoleId1).then().statusCode(200);
     }
 
     // TODO: needs collections to be existing in ARLAS server to test these
@@ -485,6 +487,8 @@ public class AuthITUser extends AuthEndpoints {
         deleteUserFromRole(userId1, userId2, fooRoleId1).then().statusCode(202);
         getUser(userId2, userId2).then().statusCode(200)
                 .body("roles", hasSize(8));
+        // check that associated role is not removed:
+        listPermissionsOfRole(userId1, fooRoleId1).then().statusCode(200);
     }
 
     @Test
@@ -492,32 +496,50 @@ public class AuthITUser extends AuthEndpoints {
         deleteUserFromOrganisation(userId1, userId2).then().statusCode(202);
         getUser(userId2, userId2).then().statusCode(200)
                 .body("organisations", hasSize(1));
+        // check that org is not deleted
+        listOrgRoles().then().statusCode(200);
+        // check that user is not deleted
+        getUser(userId2, userId2).then().statusCode(200);
     }
 
     @Test
-    public void test902DeleteOrganisationAsOwner() {
+    public void test902DeactivateUser() {
+        deactivateUser(userId1, userId2).then().statusCode(202);
+    }
+
+    @Test
+    public void test903ActivateUser() {
+        activateUser(userId1, userId2).then().statusCode(202);
+    }
+
+    @Test
+    public void test904DeleteUserNotSelf() {
+        deleteUser(userId1, userId2).then().statusCode(400);
+    }
+
+    @Test
+    public void test905DeleteUserSelf() {
+        addUserToOrganisation(userId1, USER2).then().statusCode(201);
+        listUsersOfOrganisation(userId1, null).then().statusCode(200)
+                .body("", hasSize(2));
+        deleteUser(userId2, userId2).then().statusCode(202);
+        // check that org is not deleted
+        listUsersOfOrganisation(userId1, null).then().statusCode(200)
+                .body("", hasSize(1));
+        // check that roles are not deleted
+        listOrgRoles().then().statusCode(200)
+                .body("", hasSize(6));
+
+    }
+
+    @Test
+    public void test906DeleteOrganisationAsOwner() {
         deleteOrganisation(userId1).then().statusCode(202);
         getUser(userId1).then().statusCode(200).body("organisations", hasSize(1));
     }
 
     @Test
-    public void test903DeleteUserNotSelf() {
-        deleteUser(userId1, userId2).then().statusCode(404);
-    }
-
-    @Test
-    public void test904DeactivateUser() {
-        deactivateUser(userId1, userId2).then().statusCode(202);
-    }
-
-    @Test
-    public void test905ActivateUser() {
-        activateUser(userId1, userId2).then().statusCode(202);
-    }
-
-    @Test
-    public void test906DeleteUserSelf() {
+    public void test907DeleteUserSelf() {
         deleteUser(userId1, userId1).then().statusCode(202);
-        deleteUser(userId2, userId2).then().statusCode(202);
     }
 }
