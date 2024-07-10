@@ -63,7 +63,7 @@ arlas_auth:
   claim_roles: ${ARLAS_CLAIM_ROLES:-http://arlas.io/roles}
   claim_permissions: ${ARLAS_CLAIM_PERMISSIONS:-http://arlas.io/permissions}
   init:
-    admin: ${ARLAS_AUTH_INIT_ADMIN:-auth.arlas.cloud@gisaia.com}
+    admin: ${ARLAS_AUTH_INIT_ADMIN:-tech@gisaia.com}
     password: ${ARLAS_AUTH_INIT_PASSWORD:-admin}
     timezone: ${ARLAS_AUTH_INIT_TIMEZONE:-Europe/Paris}
     locale: ${ARLAS_AUTH_INIT_LOCALE:-en}
