@@ -560,6 +560,9 @@ public class HibernateAuthService implements AuthService {
             }
             try {
                 addUserToOrganisation(user, user, organisation, userDefaultRoles, true);
+                if (!isAdmin(user)) {
+                    addUserToOrganisation(user, getAdmin(), organisation, userDefaultRoles, true);
+                }
             } catch (NotAllowedException | ForbiddenActionException | NotFoundException e) {
                 LOGGER.warn("Cannot add user to org.", e);
             }

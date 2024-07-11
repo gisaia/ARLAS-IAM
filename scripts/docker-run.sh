@@ -46,7 +46,7 @@ docker run --rm \
 echo "arlas-iam-server:${ARLAS_IAM_SERVER_VERSION}"
 
 echo "===> start ARLAS IAM stack"
-docker-compose -f ${DOCKER_COMPOSE} ${SMTP4DEV} --project-name arlasiam up -d ${BUILD_OPTS}
+docker compose -f ${DOCKER_COMPOSE} ${SMTP4DEV} --project-name arlasiam up -d ${BUILD_OPTS}
 
 echo "===> wait for arlas-iam-server up and running"
 docker run --network arlasiam_default --rm busybox sh -c 'i=1; until nc -w 2 arlas-iam-server 9997; do if [ $i -lt 30 ]; then sleep 1; else break; fi; i=$(($i + 1)); done'

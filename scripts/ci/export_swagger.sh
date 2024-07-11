@@ -54,4 +54,4 @@ i=1; until curl -XGET http://${DOCKER_IP}:9997/arlas_iam_server/openapi.json -o 
 i=1; until curl -XGET http://${DOCKER_IP}:9997/arlas_iam_server/openapi.yaml -o ${PROJECT_ROOT_DIRECTORY}/tmp/openapi.yaml; do if [ $i -lt 60 ]; then sleep 1; else break; fi; i=$(($i + 1)); done
 
 echo "=> Stop arlas-iam-server stack"
-docker-compose -f ${DOCKER_COMPOSE} --project-name arlasiam down -v
+docker compose -f ${DOCKER_COMPOSE} --project-name arlasiam down -v

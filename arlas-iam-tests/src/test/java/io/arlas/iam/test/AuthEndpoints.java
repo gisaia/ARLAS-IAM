@@ -12,7 +12,7 @@ public class AuthEndpoints {
     protected static final String ARLAS_API_KEY_ID = "arlas-api-key-id";
     protected static final String ARLAS_API_KEY_SECRET = "arlas-api-key-secret";
     protected static final String AUTH_HEADER = "authorization";
-    protected static final String ADMIN = "auth.arlas.cloud@gisaia.com";
+    protected static final String ADMIN = "tech@gisaia.com";
     protected static final String ADMIN_PASSWORD = "admin";
     protected static final String ARLAS_ORG_FILTER = "arlas-org-filter";
     protected static final String USER1 = "u1@foo.com";
