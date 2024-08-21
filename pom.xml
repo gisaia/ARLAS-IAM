@@ -36,7 +36,7 @@
         <maven.compiler.version>3.10.1</maven.compiler.version>
         <maven.shade.version>3.2.4</maven.shade.version>
 
-        <arlas.version>25.0.0</arlas.version>
+        <arlas.version>26.0.0</arlas.version>
         <dropwizard.version>4.0.7</dropwizard.version>
         <!-- required until we move to jakarta namespace:update with dropwizard 6: -->
         <servlet-api.version>5.0.2</servlet-api.version>
