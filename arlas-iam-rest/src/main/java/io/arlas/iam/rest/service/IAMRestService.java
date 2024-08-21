@@ -214,7 +214,7 @@ public class IAMRestService {
         logUAM(request, headers,  "session", "user-logout");
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new ArlasMessage("Session deleted."))
-                .header("Set-Cookie", "refresh_token=; Max-Age=0")
+                .header("Set-Cookie", "refresh_token=deleted; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/;")
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .build();
     }
