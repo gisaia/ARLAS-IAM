@@ -31,7 +31,9 @@ public class HibernateRefreshTokenDao extends AbstractDAO<RefreshToken> implemen
 
     @Override
     public void delete(RefreshToken token) {
-        currentSession().remove(token);
-        currentSession().flush();
+        if (token != null && read(token.getValue()).isPresent()) {
+            currentSession().remove(token);
+            currentSession().flush();
+        }
     }
 }
