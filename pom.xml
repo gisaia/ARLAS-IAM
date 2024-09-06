@@ -16,17 +16,6 @@
     <packaging>pom</packaging>
     <name>ARLAS IAM parent</name>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>io.arlas.iam.parent</id>
-            <url>https://maven.cloudsmith.io/gisaia/private/</url>
-        </snapshotRepository>
-        <repository>
-            <id>io.arlas.iam.parent</id>
-            <url>https://maven.cloudsmith.io/gisaia/private/</url>
-        </repository>
-    </distributionManagement>
-
     <properties>
         <!-- PROJECT-->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

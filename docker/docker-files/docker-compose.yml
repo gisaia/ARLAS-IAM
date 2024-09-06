@@ -39,7 +39,7 @@ services:
     build:
       context: ../..
       dockerfile: ${DOCKERFILE:-docker/docker-files/Dockerfile-package-only}
-    image: docker.cloudsmith.io/gisaia/private/arlas-iam-server:${ARLAS_IAM_SERVER_VERSION:-latest}
+    image: gisaia/arlas-iam-server:${ARLAS_IAM_SERVER_VERSION:-latest}
     container_name: arlas-iam-server
     restart: always
     labels:
