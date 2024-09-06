@@ -30,8 +30,6 @@ jobs:
         # secrets are defined here : https://github.com/organizations/gisaia/settings/secrets/actions
         DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USER }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
-        DOCKER_CLOUDSMITH_USERNAME: ${{ secrets.CLOUDSMITH_USER }}
-        DOCKER_CLOUDSMITH_PASSWORD: ${{ secrets.CLOUDSMITH_API_KEY }}
         RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
       run: bash scripts/ci/publish_docker.sh $RELEASE_VERSION
   publish-npm:
