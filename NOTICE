@@ -1,0 +1,24 @@
+
+ARLAS-IAM
+Copyright 2017 and onwards Gisaïa
+
+
+ARLAS-IAM embeds the following components and their dependencies :
+
++ DROPWIZARD
+    - Dropwizard            (Apache License Version 2.0 - http://www.dropwizard.io/)
+
++ POSTGRESQL
+    - PostgreSQL            (PostgreSQL License - https://www.postgresql.org/about/licence/)
+
++ TOOLS
+    - Spring Security       (Apache License Version 2.0 - https://github.com/spring-projects/spring-security)
+    - Jakarta Mail          (Eclipse Public License v2.0 & GNU General Public License v2 with Classpath Exception - https://jakartaee.github.io/mail-api/)
+
++ TESTS
+    - Rest-assured          (Apache License Version 2.0 - https://github.com/rest-assured/rest-assured)
+    - JUnit                 (Eclipse Public License v 1.0 - https://junit.org/junit4/)
+    - Hamcrest              (BSD License - http://hamcrest.org/)
+
++ LOGS
+    - log4j                 (Apache License Version 2.0 - https://github.com/apache/log4j)
