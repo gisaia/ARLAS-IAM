@@ -22,6 +22,7 @@ package io.arlas.iam.rest.service;
 import com.codahale.metrics.annotation.Timed;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.exceptions.ArlasException;
+import io.arlas.commons.exceptions.InvalidParameterException;
 import io.arlas.commons.exceptions.NotAllowedException;
 import io.arlas.commons.exceptions.NotFoundException;
 import io.arlas.commons.rest.response.Error;
@@ -52,6 +53,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import org.slf4j.Logger;
@@ -743,10 +745,12 @@ public class IAMRestService {
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers,
             @Context HttpServletRequest request,
-
             @Parameter(name = "name", required = true)
             @PathParam(value = "name") String name
-    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenOrganisationNameException {
+    ) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenOrganisationNameException, InvalidParameterException {
+        if(name.contains("@")){
+            throw new InvalidParameterException("An organisation name must not contain the @ character");
+        }
         OrgData data = new OrgData(authService.createOrganisation(getUser(headers), name));
         logUAM(request, headers,  data.id.toString(), "organisations", String.format("create-custom-organisation (name=%s)", name));
         return Response.created(uriInfo.getRequestUriBuilder().build())
