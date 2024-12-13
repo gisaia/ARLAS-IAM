@@ -20,16 +20,12 @@ docker run --rm \
   -e USER_ID="$(id -u)" \
   --mount dst=/input/api.json,src="${PROJECT_ROOT_DIRECTORY}/tmp/openapi.json",type=bind,ro \
   --mount dst=/output,src="${PROJECT_ROOT_DIRECTORY}/tmp/typescript-fetch",type=bind \
-gisaia/swagger-codegen-3.0.42 \
-      -l typescript-fetch --additional-properties modelPropertyNaming=original
+  gisaia/swagger-codegen-3.0.42 \
+  -l typescript-fetch --additional-properties modelPropertyNaming=original
 
 echo "=> Build Typescript API "${RELEASE_VERSION}
 cd ${PROJECT_ROOT_DIRECTORY}/tmp/typescript-fetch/
-# monkey patch to fix a swagger codegen bug : https://github.com/swagger-api/swagger-codegen/issues/6403
-mv api.ts api.ts.bkp
-sed  '/import \* as url from "url";/a \
-url\.URLSearchParams = URLSearchParams;' api.ts.bkp >> api.ts
-rm -f api.ts.bkp
+
 cp ${PROJECT_ROOT_DIRECTORY}/conf/npm/package-build.json package.json
 cp ${PROJECT_ROOT_DIRECTORY}/conf/npm/tsconfig-build.json .
 npm version --no-git-tag-version ${RELEASE_VERSION}
