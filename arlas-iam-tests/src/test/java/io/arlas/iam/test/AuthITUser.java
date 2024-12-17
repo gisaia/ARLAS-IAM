@@ -523,12 +523,12 @@ public class AuthITUser extends AuthEndpoints {
 
     @Test
     public void test902DeactivateUser() {
-        deactivateUser(userId1, userId2).then().statusCode(202);
+        deactivateUser("admin", userId2).then().statusCode(202);
     }
 
     @Test
     public void test903ActivateUser() {
-        activateUser(userId1, userId2).then().statusCode(202);
+        activateUser("admin", userId2).then().statusCode(202);
     }
 
     @Test
