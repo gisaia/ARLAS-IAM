@@ -570,8 +570,8 @@ public class IAMRestService {
 
             @Parameter(name = "id", required = true)
             @PathParam(value = "id") String id
-    ) {
-        authService.activateUser(UUID.fromString(id));
+            ) throws NotAllowedException, NotFoundException {
+                authService.activateUser(getUser(headers).getId(), UUID.fromString(id));
         logUAM(request, headers,  "users", "activate-user-account");
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new ArlasMessage("User activated."))
@@ -603,8 +603,8 @@ public class IAMRestService {
 
             @Parameter(name = "id", required = true)
             @PathParam(value = "id") String id
-    ) throws NotAllowedException {
-        authService.deactivateUser(UUID.fromString(id));
+    ) throws NotAllowedException, NotFoundException {
+        authService.deactivateUser(getUser(headers).getId(), UUID.fromString(id));
         logUAM(request, headers,  "users", "deactivate-user-account");
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new ArlasMessage("User deactivated."))
