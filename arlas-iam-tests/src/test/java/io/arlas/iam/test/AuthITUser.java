@@ -527,6 +527,16 @@ public class AuthITUser extends AuthEndpoints {
     }
 
     @Test
+    public void test908DeactivateUser() {
+        deactivateUser(userId1, userId2).then().statusCode(greaterThan(299));
+    }
+
+    @Test
+    public void test908DeactivateUser() {
+        activateUser(userId1, userId2).then().statusCode(greaterThan(299));
+    }
+
+    @Test
     public void test903ActivateUser() {
         activateUser("admin", userId2).then().statusCode(202);
     }
