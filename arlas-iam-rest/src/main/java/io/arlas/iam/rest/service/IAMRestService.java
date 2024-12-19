@@ -56,6 +56,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
+import jakarta.ws.rs.core.Response.StatusType;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -267,7 +269,7 @@ public class IAMRestService {
             @CookieParam("refresh_token") Cookie refreshToken
     ) throws ArlasException {
         if (refreshToken == null) {
-            throw new InvalidTokenException("Missing refresh token in cookie");
+                return Response.status(401, "Missing refresh token in cookie").build();
         }
         RefreshTokenCookie rt = new RefreshTokenCookie(refreshToken.getValue());
         LoginSession loginSession = authService.refresh(rt.userId, rt.refreshToken, uriInfo.getBaseUri().getHost());
@@ -570,8 +572,8 @@ public class IAMRestService {
 
             @Parameter(name = "id", required = true)
             @PathParam(value = "id") String id
-    ) {
-        authService.activateUser(UUID.fromString(id));
+            ) throws NotAllowedException, NotFoundException {
+                authService.activateUser(getUser(headers).getId(), UUID.fromString(id));
         logUAM(request, headers,  "users", "activate-user-account");
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new ArlasMessage("User activated."))
@@ -603,8 +605,8 @@ public class IAMRestService {
 
             @Parameter(name = "id", required = true)
             @PathParam(value = "id") String id
-    ) throws NotAllowedException {
-        authService.deactivateUser(UUID.fromString(id));
+    ) throws NotAllowedException, NotFoundException {
+        authService.deactivateUser(getUser(headers).getId(), UUID.fromString(id));
         logUAM(request, headers,  "users", "deactivate-user-account");
         return Response.accepted(uriInfo.getRequestUriBuilder().build())
                 .entity(new ArlasMessage("User deactivated."))

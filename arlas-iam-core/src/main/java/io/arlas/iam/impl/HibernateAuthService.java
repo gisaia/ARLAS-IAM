@@ -450,7 +450,10 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Optional<User> activateUser(UUID userId) {
+    public Optional<User> activateUser(UUID actingId, UUID userId) throws NotAllowedException {
+        if (!isAdmin(actingId)) {
+            throw new NotAllowedException("Admin only can deactivate a user.");
+        }
         Optional<User> user = readUser(userId);
         user.ifPresent(u -> {
             u.setActive(true);
@@ -460,7 +463,10 @@ public class HibernateAuthService implements AuthService {
     }
 
     @Override
-    public Optional<User> deactivateUser(UUID userId) throws NotAllowedException {
+    public Optional<User> deactivateUser(UUID actingId, UUID userId) throws NotAllowedException {
+        if (!isAdmin(actingId)) {
+            throw new NotAllowedException("Admin only can deactivate a user.");
+        }
         if (isAdmin(userId)) {
             throw new NotAllowedException("Admin cannot be deactivated.");
         }
