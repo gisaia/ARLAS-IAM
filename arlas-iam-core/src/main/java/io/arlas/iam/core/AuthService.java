@@ -50,8 +50,8 @@ public interface AuthService {
     User updateUser(User user, String oldPassword, String newPassword, String firstName, String lastName, String locale, String timezone) throws NonMatchingPasswordException;
     void deleteUser(UUID actingId, UUID targetId) throws NotAllowedException;
 
-    Optional<User> activateUser(UUID userId);
-    Optional<User> deactivateUser(UUID userId) throws NotAllowedException;
+    Optional<User> activateUser(UUID actingId, UUID userId) throws NotAllowedException;
+    Optional<User> deactivateUser(UUID actingId, UUID userId) throws NotAllowedException;
 
     ApiKey createApiKey(User user, UUID ownerId, UUID oid, String name, int ttlInDays, Set<String> roleIds) throws NotAllowedException, NotFoundException;
     void deleteApiKey(User user, UUID ownerId, UUID oid, UUID apiKeyId) throws NotFoundException, NotAllowedException;
