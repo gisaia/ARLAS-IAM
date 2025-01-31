@@ -63,6 +63,8 @@ jobs:
         NPM_EMAIL: ${{ secrets.NPM_EMAIL }}
         RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
         NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+        GOOGLE_CHAT_RELEASE_CHANEL: ${{ secrets.GOOGLE_CHAT_RELEASE_CHANEL }}
       run: |
         bash scripts/ci/export_swagger.sh $RELEASE_VERSION
         bash scripts/ci/publish_npm.sh $RELEASE_VERSION
+        bash scripts/ci/send_message.sh $RELEASE_VERSION
