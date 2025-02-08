@@ -208,12 +208,18 @@ public class HibernateAuthService implements AuthService {
         // (the empty key is for cross org roles such as "role/iam/admin")
         roles.forEach(r -> {
             String orgName = r.getOrganisation().map(Organisation::getName).orElse(NO_ORG);
-            // if no orgFilter, we only keep the roles associated to "no org"
-            if ((orgFilter == null && orgName.equals(NO_ORG))
-                    || orgName.equals(orgFilter)) {
+            // if no orgFilter, we  keep all the roles
+            if(orgFilter == null){
                 List<String> roleList = Optional.ofNullable(orgRoles.get(orgName)).orElseGet(ArrayList::new);
                 roleList.add(r.getName());
                 orgRoles.put(orgName, roleList);
+            }else{
+                // if  orgFilter, we add only the roles of the org or no org
+                if(orgName.equals(orgFilter) || orgName.equals(NO_ORG)){
+                    List<String> roleList = Optional.ofNullable(orgRoles.get(orgName)).orElseGet(ArrayList::new);
+                    roleList.add(r.getName());
+                    orgRoles.put(orgName, roleList);
+                }
             }
         });
         // manually add "group/public" which is given to everybody
@@ -863,10 +869,14 @@ public class HibernateAuthService implements AuthService {
         Set<Permission> permissions = new HashSet<>();
         roles.forEach(r -> {
             String orgName = r.getOrganisation().map(Organisation::getName).orElse(NO_ORG);
-            // if no orgFilter, we only keep the permissions associated to "no org"
-            if ((orgFilter == null && orgName.equals(NO_ORG))
-                    || orgName.equals(orgFilter)) {
+            // if no orgFilter, we add all the permissions
+            if(orgFilter == null){
                 permissions.addAll(r.getPermissions());
+            }else{
+                // if  orgFilter, we add only the permissions of the org or no org
+                if(orgName.equals(orgFilter) || orgName.equals(NO_ORG)){
+                    permissions.addAll(r.getPermissions());
+                }
             }
         });
 
