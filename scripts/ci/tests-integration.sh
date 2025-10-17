@@ -47,7 +47,7 @@ function test_rest_server() {
         -e ARLAS_IAM_APP_PATH=${ARLAS_IAM_APP_PATH} \
         --network arlasiam_default \
         maven:3.8.5-openjdk-17 \
-        mvn -Dit.test=AuthITUser verify -DskipTests=false -DfailIfNoTests=false
+        mvn -Dit.test=AuthITUser,JwksTokenValidationTest verify -DskipTests=false -DfailIfNoTests=false
 }
 
 test_rest_server

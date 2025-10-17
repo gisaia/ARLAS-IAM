@@ -20,6 +20,9 @@
 package io.arlas.iam.rest.service;
 
 import com.codahale.metrics.annotation.Timed;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
 import io.arlas.commons.config.ArlasAuthConfiguration;
 import io.arlas.commons.exceptions.ArlasException;
 import io.arlas.commons.exceptions.InvalidParameterException;
@@ -53,19 +56,15 @@ import io.swagger.v3.oas.annotations.servers.Server;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
-import jakarta.ws.rs.core.Response.StatusType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.security.interfaces.RSAPublicKey;
+import java.util.*;
 
 import static io.arlas.commons.rest.utils.ServerConstants.ARLAS_ORG_FILTER;
 import static io.arlas.filter.impl.AbstractPolicyEnforcer.*;
@@ -134,6 +133,32 @@ public class IAMRestService {
         MDC.put(EVENT_ACTION, action);
         LOGGER.info(log);
         MDC.clear();
+    }
+
+    // --------------- JWKS public key ---------------------
+    @Timed
+    @Path(".well-known/jwks.json")
+    @GET
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @Operation(
+            summary = "Retrieve public keys for JWT validation"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
+
+    @UnitOfWork(readOnly = true)
+    public Response jwks() {
+            RSAPublicKey pk = authService.getPublicKey() ;
+            RSAKey jwk = new RSAKey.Builder(pk)
+                    .keyUse(com.nimbusds.jose.jwk.KeyUse.SIGNATURE)
+                    .algorithm(JWSAlgorithm.RS256)
+                    .build();
+            Map<String,Object> json = new JWKSet(jwk).toJSONObject();
+            return Response.ok(json).build();
     }
 
     // --------------- Forward auth ---------------------

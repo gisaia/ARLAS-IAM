@@ -70,7 +70,6 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
                     Permission.class,
                     Role.class,
                     User.class,
-                    TokenSecret.class,
                     RefreshToken.class,
                     ApiKey.class) {
                 @Override

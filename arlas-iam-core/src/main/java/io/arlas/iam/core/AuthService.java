@@ -27,6 +27,7 @@ import io.arlas.iam.exceptions.*;
 import io.arlas.iam.model.*;
 import jakarta.ws.rs.core.HttpHeaders;
 
+import java.security.interfaces.RSAPublicKey;
 import java.util.*;
 
 public interface AuthService {
@@ -34,7 +35,7 @@ public interface AuthService {
     User readUser(UUID userId, boolean checkActiveVerified) throws NotFoundException;
 
     LoginSession login(String email, String password, String issuer) throws ArlasException;
-    DecodedJWT verifyToken(String token);
+    DecodedJWT verifyToken(String token) throws ArlasException;
     void logout(UUID userId);
     LoginSession refresh(String userId, String refreshToken, String issuer) throws ArlasException;
     String createPermissionToken(String subject, String orgFilter, String issuer, Date iat) throws ArlasException;
@@ -104,4 +105,5 @@ public interface AuthService {
     List<ForbiddenOrganisation> listForbiddenOrganisation(User user) throws NotAllowedException;
     void removeForbiddenOrganisation(User user, String name) throws NotAllowedException, NotFoundException;
 
+    RSAPublicKey getPublicKey();
 }

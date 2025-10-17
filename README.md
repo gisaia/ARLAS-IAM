@@ -23,6 +23,57 @@ ARLAS IAM manipulates the following concepts:
 
 ARLAS IAM also manages the user authentication with a login/password.
 
+
+## Getting started
+
+
+
+### 🔐 ARLAS-IAM SSL Keystore Configuration
+
+ARLAS-IAM requires an **RSA PKCS#12 keystore** to start.
+
+You can generate a PKCS#12 keystore file using the provided script:
+
+```bash
+scripts/security/generate_pkcs12.sh
+````
+
+---
+
+### ⚠️ Security Notice
+
+* **Keep the keystore file and its password secure.**
+  Do **not** commit them to your version control system.
+
+* **Avoid using plaintext system properties** in production.
+  Use a **secret manager** or **protected environment variables** to manage sensitive values safely.
+
+---
+
+### ⚙️ JVM Configuration
+
+To configure the JVM with the keystore, add the following options at startup:
+
+```bash
+-Djavax.net.ssl.trustStore=/path/to/keystore.p12 \
+-Djavax.net.ssl.trustStorePassword=changeit \
+-Dtoken.keyAlias=changeit
+```
+
+You can include these options using the `JDK_JAVA_OPTIONS` environment variable:
+
+```bash
+JDK_JAVA_OPTIONS="-Xmx512m -XX:+ExitOnOutOfMemoryError \
+  -Djavax.net.ssl.trustStore=/path/to/keystore.p12 \
+  -Djavax.net.ssl.trustStorePassword=changeit \
+  -Dtoken.keyAlias=changeit"
+```
+
+> 💡 Replace `/path/to/keystore.p12`, `changeit`, and other placeholder values with your actual configuration values.
+
+---
+
+
 ## License 
 
 This project is licensed under the Apache License, Version 2.0 - see the LICENSE.txt file for details.
