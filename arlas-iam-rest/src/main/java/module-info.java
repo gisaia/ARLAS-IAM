@@ -23,6 +23,5 @@ module arlas.iam.rest {
     requires jersey.media.multipart;
     requires org.eclipse.jetty.servlets;
     requires org.slf4j;
-    requires keycloak.core;
     requires com.nimbusds.jose.jwt;
 }
