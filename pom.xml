@@ -41,6 +41,7 @@
         <junit.version>4.13.2</junit.version>
         <org.hamcrest.version>2.2</org.hamcrest.version>
         <io.rest-assured.version>5.4.0</io.rest-assured.version>
+        <nimbus-jose.version>10.5</nimbus-jose.version>
     </properties>
 
     <build>

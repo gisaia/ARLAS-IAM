@@ -13,11 +13,15 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>${nimbus-jose.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.eclipse.jetty.toolchain</groupId>
             <artifactId>jetty-jakarta-servlet-api</artifactId>
             <version>${servlet-api.version}</version>
         </dependency>
-
         <dependency>
             <groupId>io.arlas.iam</groupId>
             <artifactId>arlas-iam-core</artifactId>

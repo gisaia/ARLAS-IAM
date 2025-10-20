@@ -40,6 +40,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 
 import jakarta.ws.rs.core.HttpHeaders;
+
+import java.security.interfaces.RSAPublicKey;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -71,7 +73,7 @@ public class HibernateAuthService implements AuthService {
     private final List<String> systemRoles = Arrays.asList(ROLE_IAM_ADMIN, ROLE_ARLAS_IMPORTER);
 
 
-    public HibernateAuthService(SessionFactory factory, ArlasAuthServerConfiguration conf) {
+    public HibernateAuthService(SessionFactory factory, ArlasAuthServerConfiguration conf) throws ArlasException {
         this.arlasService = new ArlasService(conf);
         this.forbiddenOrganisationDao = new HibernateForbiddenOrganisationDao(factory);
         this.organisationDao = new HibernateOrganisationDao(factory);
@@ -1042,4 +1044,8 @@ public class HibernateAuthService implements AuthService {
         forbiddenOrganisationDao.removeName(forbiddenOrganisationDao.getName(name).orElseThrow(NotFoundException::new));
     }
 
+    @Override
+    public RSAPublicKey getPublicKey() {
+        return tokenManager.publicKey;
+    }
 }
