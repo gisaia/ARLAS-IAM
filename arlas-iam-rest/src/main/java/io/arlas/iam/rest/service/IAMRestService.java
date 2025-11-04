@@ -131,6 +131,7 @@ public class IAMRestService {
         MDC.put(CLIENT_ADDRESS, ip);
         MDC.put(CLIENT_IP, ip);
         MDC.put(EVENT_ACTION, action);
+        log = log.replaceAll("[\n\r]", "_");
         LOGGER.info(log);
         MDC.clear();
     }
@@ -155,6 +156,7 @@ public class IAMRestService {
             RSAPublicKey pk = authService.getPublicKey() ;
             RSAKey jwk = new RSAKey.Builder(pk)
                     .keyUse(com.nimbusds.jose.jwk.KeyUse.SIGNATURE)
+                    .keyID("arlas")
                     .algorithm(JWSAlgorithm.RS256)
                     .build();
             Map<String,Object> json = new JWKSet(jwk).toJSONObject();
