@@ -115,6 +115,7 @@ public class TokenManager {
         try {
             Date exp = new Date(iat.getTime() + this.accessTokenTTL);
             JWTCreator.Builder builder = JWT.create()
+                    .withKeyId("arlas")
                     .withIssuer(issuer)
                     .withSubject(subject)
                     .withIssuedAt(iat)
@@ -132,6 +133,7 @@ public class TokenManager {
             Date exp = new Date(iat.getTime() + this.accessTokenTTL);
             return JWT.create()
                     .withIssuer(issuer)
+                    .withKeyId("arlas")
                     .withSubject(subject.getId().toString())
                     .withIssuedAt(iat)
                     .withExpiresAt(exp)
