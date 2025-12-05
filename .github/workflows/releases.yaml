@@ -9,7 +9,7 @@ jobs:
   publish-docker:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4.1.4
+    - uses: actions/checkout@v4
     - name: Cache Maven # From https://github.com/actions/cache/blob/main/examples.md
       uses: actions/cache@v4
       with:
@@ -34,8 +34,11 @@ jobs:
       run: bash scripts/ci/publish_docker.sh $RELEASE_VERSION
   publish-npm:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
     steps:
-    - uses: actions/checkout@v4.1.4
+    - uses: actions/checkout@v4
     - name: Cache Maven # From https://github.com/actions/cache/blob/main/examples.md
       uses: actions/cache@v4
       with:
@@ -53,16 +56,16 @@ jobs:
       run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
     - uses: actions/setup-node@v4
       with:
-        node-version: 16
+        node-version: 20
         registry-url: 'https://registry.npmjs.org'
+    - name: Install latest npm version
+      run: npm install -g npm@latest
     - name: Publish NPM client
       env:
         # secrets are defined here : https://github.com/organizations/gisaia/settings/secrets/actions
         DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USER }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
-        NPM_EMAIL: ${{ secrets.NPM_EMAIL }}
         RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
         GOOGLE_CHAT_RELEASE_CHANEL: ${{ secrets.GOOGLE_CHAT_RELEASE_CHANEL }}
       run: |
         bash scripts/ci/export_swagger.sh $RELEASE_VERSION
