@@ -2,7 +2,11 @@
   "name": "arlas-iam-api",
   "version": "API_VERSION",
   "description": "IAM Arlas",
-  "author": "Gisaia",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gisaia/ARLAS-IAM.git"
+  },
+  "author": "gisaia",
   "main": "./index.js",
   "typings": "./index.d.ts",
   "keywords": [
