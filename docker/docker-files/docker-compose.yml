@@ -89,7 +89,7 @@ services:
     volumes:
       - ${PWD}/scripts/security/output/keystore.p12:/opt/app/arlas-iam.p12
     healthcheck:
-      test: ["CMD","java","HttpHealthcheck.java","http://localhost:9997/admin/healthcheck"]
+      test: ["CMD","java","HttpHealthcheck","http://localhost:9997/admin/healthcheck"]
       interval: 5s
       timeout: 10s
       retries: 3
