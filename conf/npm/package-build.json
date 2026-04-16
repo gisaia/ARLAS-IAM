@@ -13,7 +13,8 @@
     "url": "0.11.0"
   },
   "devDependencies": {
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "tsc-alias": "^1.8.16"
   },
   "overrides": {
     "isomorphic-fetch": {
