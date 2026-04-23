@@ -48,7 +48,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.arlas.commons.rest.utils.ServerConstants.*;
-import static io.arlas.filter.config.TechnicalRoles.*;
+import static io.arlas.filter.config.TechnicalRoles.ROLE_IAM_ADMIN;
+import static io.arlas.filter.config.TechnicalRoles.ROLE_ARLAS_IMPORTER;
+import static io.arlas.filter.config.TechnicalRoles.GROUP_PUBLIC;
+import static io.arlas.filter.config.TechnicalRoles.ROLE_ARLAS_OWNER;
 
 public class HibernateAuthService implements AuthService {
     private final Logger LOGGER = LoggerFactory.getLogger(HibernateAuthService.class);
@@ -69,7 +72,7 @@ public class HibernateAuthService implements AuthService {
     private final long verifyTokenTtl;
     private final long apiKeyMaxTtl;
     private final InitConfiguration initConf;
-
+    private final TechnicalRoles technicalRoles;
     private final List<String> systemRoles = Arrays.asList(ROLE_IAM_ADMIN, ROLE_ARLAS_IMPORTER);
 
 
@@ -91,6 +94,10 @@ public class HibernateAuthService implements AuthService {
         this.verifyTokenTtl = conf.arlasAuthConfiguration.verifyTokenTTL;
         this.apiKeyMaxTtl = conf.apiKeyMaxTtl;
         this.initConf = conf.arlasAuthConfiguration.initConfiguration;
+        String rolesPath = this.initConf.rolesPath;
+        this.technicalRoles = rolesPath != null && !rolesPath.isEmpty()
+                ? new TechnicalRoles(rolesPath)
+                : new TechnicalRoles();
     }
 
     // ------- private ------------
@@ -194,7 +201,7 @@ public class HibernateAuthService implements AuthService {
     }
 
     private Set<Role> importDefaultAdminRole(User admin) {
-        return TechnicalRoles.getTechnicalRolesList().stream()
+        return this.technicalRoles.getTechnicalRolesList().stream()
                 .filter(systemRoles::contains)
                 .map(s -> roleDao.createOrUpdateRole(new Role(s, true).setUsers(Set.of(admin)).setTechnical(true)))
                 .collect(Collectors.toSet());
@@ -576,7 +583,7 @@ public class HibernateAuthService implements AuthService {
                     "View all collections");
 
             // create default roles
-            var defaultGroup = createRole(organisation, TechnicalRoles.getDefaultGroup(name),
+            var defaultGroup = createRole(organisation, this.technicalRoles.getDefaultGroup(name),
                     "Default group for dashboard sharing.");
             defaultGroup.setTechnical(true);
             roleDao.createOrUpdateRole(defaultGroup);
@@ -584,7 +591,7 @@ public class HibernateAuthService implements AuthService {
 
             Set<String> userDefaultRoles = new HashSet<>();
             userDefaultRoles.add(defaultGroup.getId().toString());
-            Map<String, Map<String, List<String>>> technicalRoles = getTechnicalRolesPermissions();
+            Map<String, Map<String, List<String>>> technicalRoles = this.technicalRoles.getTechnicalRolesPermissions();
             for (String s : technicalRoles.keySet()) {
                 if (!systemRoles.contains(s) && !GROUP_PUBLIC.equals(s)) {
                     Role r = roleDao.createOrUpdateRole(new Role(s, technicalRoles.get(s).get("description").get(0), true).setOrganisation(organisation));
@@ -758,14 +765,14 @@ public class HibernateAuthService implements AuthService {
     public Role createGroup(User owner, String name, String description, UUID orgId)
             throws AlreadyExistsException, NotOwnerException, NotFoundException {
         var org = getOrganisation(owner, orgId);
-        Role group = createRole(org, TechnicalRoles.getNewDashboardGroupRole(org.getName(), name), description);
+        Role group = createRole(org, this.technicalRoles.getNewDashboardGroupRole(org.getName(), name), description);
         return group;
     }
 
     @Override
     public Role updateGroup(User owner, String name, String description, UUID orgId, UUID roleId) throws NotFoundException, NotOwnerException, AlreadyExistsException, ForbiddenActionException {
         var org = getOrganisation(owner, orgId);
-        return updateRole(owner, TechnicalRoles.getNewDashboardGroupRole(org.getName(), name), description, orgId, roleId);
+        return updateRole(owner, this.technicalRoles.getNewDashboardGroupRole(org.getName(), name), description, orgId, roleId);
     }
 
     @Override
@@ -853,7 +860,7 @@ public class HibernateAuthService implements AuthService {
         var org = getOrganisation(owner, orgId);
         var user = getUser(org, userId);
         var role = getRole(user, roleId).orElseThrow(() -> new NotFoundException("Role was not assigned to user."));
-        if (owner.is(userId) && role.getName().equals(TechnicalRoles.getDefaultGroup(org.getName()))) {
+        if (owner.is(userId) && role.getName().equals(this.technicalRoles.getDefaultGroup(org.getName()))) {
             throw new ForbiddenActionException("Owner cannot remove themselves from the default group of their organisation.");
         }
         if (owner.is(userId) && role.getName().equals(ROLE_ARLAS_OWNER)) {

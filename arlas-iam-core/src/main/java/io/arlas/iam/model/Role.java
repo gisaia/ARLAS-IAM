@@ -33,8 +33,10 @@ import java.util.*;
 @JsonSnakeCase
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property="id")
 public class Role {
-    private static final String GROUP_PREFIX = TechnicalRoles.getDefaultGroup("");
-
+    private static final String GROUP_PREFIX;
+    static {
+        GROUP_PREFIX = new TechnicalRoles().getDefaultGroup("");
+    }
     @Id
     @GeneratedValue
     @Column

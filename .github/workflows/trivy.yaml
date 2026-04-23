@@ -20,7 +20,7 @@ jobs:
         docker build -f docker/docker-files/Dockerfile -t docker.io/gisaia/arlas-iam-server:${{ github.sha }} .
 
     - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.35.0
       env:
         TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
         TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1

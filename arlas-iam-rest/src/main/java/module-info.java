@@ -21,7 +21,7 @@ module arlas.iam.rest {
     requires jakarta.ws.rs;
     requires jakarta.validation;
     requires jersey.media.multipart;
-    requires org.eclipse.jetty.servlets;
     requires org.slf4j;
     requires com.nimbusds.jose.jwt;
+    requires jakarta.servlet;
 }

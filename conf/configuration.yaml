@@ -14,7 +14,6 @@ server:
     port: ${ARLAS_IAM_PORT:-9997}
   maxThreads: ${ARLAS_IAM_MAX_THREADS:-1024}
   minThreads: ${ARLAS_IAM_MIN_THREADS:-8}
-  maxQueuedRequests: ${ARLAS_IAM_MAX_QUEUED_REQUESTS:-1024}
 
 logging:
   level: ${ARLAS_IAM_LOGGING_LEVEL:-INFO}
@@ -67,6 +66,8 @@ arlas_auth:
     password: ${ARLAS_AUTH_INIT_PASSWORD:-admin}
     timezone: ${ARLAS_AUTH_INIT_TIMEZONE:-Europe/Paris}
     locale: ${ARLAS_AUTH_INIT_LOCALE:-en}
+    resourcesPath: ${ARLAS_AUTH_INIT_RESOURCES_PATH:-}
+    rolesPath: ${ARLAS_AUTH_INIT_ROLES_PATH:-}
 
 # set this to "false" if you don't want new users to verify their email
 verify_email: ${ARLAS_IAM_VERIFY_EMAIL:-true}
