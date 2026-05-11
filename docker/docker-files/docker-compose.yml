@@ -74,16 +74,11 @@ services:
       - ARLAS_SERVER_URL="${ARLAS_SERVER_URL:-http://arlas-server:9999/arlas}"
       - ARLAS_ACCESS_TOKEN_TTL="${ARLAS_ACCESS_TOKEN_TTL:-600000}"
       - JDK_JAVA_OPTIONS=-Xmx512m -XX:+ExitOnOutOfMemoryError -Djavax.net.ssl.trustStore=/opt/app/arlas-iam.p12 -Djavax.net.ssl.trustStorePassword=test -Dtoken.keyAlias=arlas-iam
-    #      - ELASTIC_APM_LOG_ECS_REFORMATTING=OVERRIDE
-    #      - ELASTIC_APM_LOG_ECS_FORMATTER_ALLOW_LIST=*
-    #      - ELASTIC_APM_APPLICATION_PACKAGES=io.arlas
-    #      - ELASTIC_APM_ENVIRONMENT=dev.cloud.arlas.io
-    #      - ELASTIC_APM_TRANSACTION_IGNORE_USER_AGENTS=GoogleHC/*, kube-probe/*, curl*, GoogleStackdriverMonitoring*
-    #      - ELASTIC_APM_SECRET_TOKEN=YDaIBr3Pfm9k69xuZk
-    #      - ELASTIC_APM_SERVER_URLS=https://1b48d14497994c518cf959079ddcfd6d.apm.europe-west1.gcp.cloud.es.io
-    #      - ELASTIC_APM_SERVICE_NAME=arlas-server
-    #      - ELASTIC_APM_USE_JAXRS_PATH_AS_TRANSACTION_NAME=true
-    #      - JDK_JAVA_OPTIONS=-javaagent:/opt/app/elastic-apm-agent.jar
+      #- OTEL_SERVICE_NAME=arlas-iam-server
+      #- OTEL_RESOURCE_ATTRIBUTES=deployment.environment=dev.cloud.arlas.io
+      #- OTEL_EXPORTER_OTLP_ENDPOINT=**CHANGE_ME**
+      #- OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      #- JDK_JAVA_OPTIONS=-javaagent:/opt/app/opentelemetry-javaagent.jar
     ports:
       - "9997:9997" # !EXPOSE!
     volumes:
@@ -127,16 +122,11 @@ services:
     - ARLAS_LOGGING_LEVEL=DEBUG
     - ARLAS_LOGGING_CONSOLE_LEVEL=DEBUG
     - ARLAS_ELASTIC_INDEX=.iamtest_arlas
-    #      - ELASTIC_APM_LOG_ECS_REFORMATTING=OVERRIDE
-    #      - ELASTIC_APM_LOG_ECS_FORMATTER_ALLOW_LIST=*
-    #      - ELASTIC_APM_APPLICATION_PACKAGES=io.arlas
-    #      - ELASTIC_APM_ENVIRONMENT=dev.cloud.arlas.io
-    #      - ELASTIC_APM_TRANSACTION_IGNORE_USER_AGENTS=GoogleHC/*, kube-probe/*, curl*, GoogleStackdriverMonitoring*
-    #      - ELASTIC_APM_SECRET_TOKEN=YDaIBr3Pfm9k69xuZk
-    #      - ELASTIC_APM_SERVER_URLS=https://1b48d14497994c518cf959079ddcfd6d.apm.europe-west1.gcp.cloud.es.io
-    #      - ELASTIC_APM_SERVICE_NAME=arlas-server
-    #      - ELASTIC_APM_USE_JAXRS_PATH_AS_TRANSACTION_NAME=true
-    #      - JDK_JAVA_OPTIONS=-javaagent:/opt/app/elastic-apm-agent.jar
+    #- OTEL_SERVICE_NAME=arlas-server
+    #- OTEL_RESOURCE_ATTRIBUTES=deployment.environment=dev.cloud.arlas.io
+    #- OTEL_EXPORTER_OTLP_ENDPOINT=**CHANGE_ME**
+    #- OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+    #- JDK_JAVA_OPTIONS=-javaagent:/opt/app/opentelemetry-javaagent.jar
     ports:
       - "9999:9999" # !EXPOSE!
     healthcheck:
