@@ -24,4 +24,5 @@ module arlas.iam.rest {
     requires org.slf4j;
     requires com.nimbusds.jose.jwt;
     requires jakarta.servlet;
+    requires arlas.commons;
 }

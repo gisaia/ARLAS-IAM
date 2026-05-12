@@ -33,6 +33,7 @@ import io.arlas.commons.exceptions.JsonProcessingExceptionMapper;
 import io.arlas.commons.rest.utils.CORSUtil;
 import io.arlas.commons.rest.utils.InsensitiveCaseFilter;
 import io.arlas.commons.rest.utils.PrettyPrintFilter;
+import io.arlas.filter.config.TechnicalRoles;
 import io.arlas.iam.core.AuthService;
 import io.arlas.iam.impl.ArlasPolicyEnforcer;
 import io.arlas.iam.impl.HibernateAuthService;
@@ -117,6 +118,11 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
         ArlasPolicyEnforcer arlasPolicyEnforcer = new UnitOfWorkAwareProxyFactory(hibernate)
                 .create(ArlasPolicyEnforcer.class, new Class[]{ AuthService.class, ArlasAuthConfiguration.class, BaseCacheManager.class},
                         new Object[]{ this.authService, configuration.arlasAuthConfiguration, cacheFactory.getCacheManager() });
+        String rolesPath = configuration.arlasAuthConfiguration.initConfiguration.rolesPath;
+        TechnicalRoles technicalRoles = rolesPath != null && !rolesPath.isEmpty()
+                ? new TechnicalRoles(rolesPath)
+                : new TechnicalRoles();
+        arlasPolicyEnforcer.setTechnicalRoles(technicalRoles);
         environment.jersey().register(arlasPolicyEnforcer);
 
         //cors
