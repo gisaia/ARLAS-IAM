@@ -30,8 +30,10 @@ import io.arlas.commons.exceptions.ArlasExceptionMapper;
 import io.arlas.commons.exceptions.ConstraintViolationExceptionMapper;
 import io.arlas.commons.exceptions.IllegalArgumentExceptionMapper;
 import io.arlas.commons.exceptions.JsonProcessingExceptionMapper;
+import io.arlas.commons.rest.utils.CORSUtil;
 import io.arlas.commons.rest.utils.InsensitiveCaseFilter;
 import io.arlas.commons.rest.utils.PrettyPrintFilter;
+import io.arlas.filter.config.TechnicalRoles;
 import io.arlas.iam.core.AuthService;
 import io.arlas.iam.impl.ArlasPolicyEnforcer;
 import io.arlas.iam.impl.HibernateAuthService;
@@ -48,10 +50,7 @@ import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
-import jakarta.servlet.DispatcherType;
-import jakarta.servlet.FilterRegistration;
 import jakarta.ws.rs.core.HttpHeaders;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,39 +118,17 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
         ArlasPolicyEnforcer arlasPolicyEnforcer = new UnitOfWorkAwareProxyFactory(hibernate)
                 .create(ArlasPolicyEnforcer.class, new Class[]{ AuthService.class, ArlasAuthConfiguration.class, BaseCacheManager.class},
                         new Object[]{ this.authService, configuration.arlasAuthConfiguration, cacheFactory.getCacheManager() });
+        String rolesPath = configuration.arlasAuthConfiguration.initConfiguration.rolesPath;
+        TechnicalRoles technicalRoles = rolesPath != null && !rolesPath.isEmpty()
+                ? new TechnicalRoles(rolesPath)
+                : new TechnicalRoles();
+        arlasPolicyEnforcer.setTechnicalRoles(technicalRoles);
         environment.jersey().register(arlasPolicyEnforcer);
 
         //cors
-        if (configuration.arlasCorsConfiguration.enabled) {
-            configureCors(environment, configuration.arlasCorsConfiguration);
-        } else {
-            CrossOriginFilter filter = new CrossOriginFilter();
-            final FilterRegistration.Dynamic cors = environment.servlets().addFilter("CrossOriginFilter", filter);
-            // Expose always HttpHeaders.WWW_AUTHENTICATE to authenticate on client side a non public uri call
-            cors.setInitParameter(CrossOriginFilter.EXPOSED_HEADERS_PARAM, HttpHeaders.WWW_AUTHENTICATE);
-        }
-
+        CORSUtil.configureCors(environment, configuration.arlasCorsConfiguration);
         //filters
         environment.jersey().register(PrettyPrintFilter.class);
         environment.jersey().register(InsensitiveCaseFilter.class);
-    }
-
-    private void configureCors(Environment environment, ArlasCorsConfiguration configuration) {
-        CrossOriginFilter filter = new CrossOriginFilter();
-        final FilterRegistration.Dynamic cors = environment.servlets().addFilter("CrossOriginFilter", filter);
-        // Configure CORS parameters
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, configuration.allowedOrigins);
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, configuration.allowedHeaders);
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, configuration.allowedMethods);
-        cors.setInitParameter(CrossOriginFilter.ALLOW_CREDENTIALS_PARAM, String.valueOf(configuration.allowedCredentials));
-        String exposedHeader = configuration.exposedHeaders;
-        // Expose always HttpHeaders.WWW_AUTHENTICATE to authentify on client side a non public uri call
-        if (!configuration.exposedHeaders.contains(HttpHeaders.WWW_AUTHENTICATE)) {
-            exposedHeader = configuration.exposedHeaders.concat(",").concat(HttpHeaders.WWW_AUTHENTICATE);
-        }
-        cors.setInitParameter(CrossOriginFilter.EXPOSED_HEADERS_PARAM, exposedHeader);
-
-        // Add URL mapping
-        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
     }
 }

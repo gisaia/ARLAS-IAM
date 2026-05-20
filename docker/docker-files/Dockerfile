@@ -17,7 +17,7 @@ RUN mvn install \
 ###################
 # PACKAGING STAGE #
 ###################
-FROM gisaia/arlas-openjdk-17-distroless:20260414154841
+FROM gisaia/arlas-openjdk-17-dhi:20260505130838
 
 # application placed into /opt/app
 WORKDIR /opt/app
@@ -27,4 +27,4 @@ COPY --from=build /opt/build/arlas-iam-core/src/main/resources/templates/*.ftlh 
 EXPOSE 9997
 
 ENV JDK_JAVA_OPTIONS="-Xmx512m -XX:+ExitOnOutOfMemoryError"
-CMD ["arlas-iam-server.jar", "server", "/opt/app/configuration.yaml"]
+CMD ["java", "-jar", "/opt/app/arlas-iam-server.jar", "server", "/opt/app/configuration.yaml"]

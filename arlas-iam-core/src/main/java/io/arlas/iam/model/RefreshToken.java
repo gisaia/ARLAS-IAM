@@ -21,12 +21,15 @@ package io.arlas.iam.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.dropwizard.jackson.JsonSnakeCase;
+import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.NaturalId;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.type.descriptor.jdbc.UUIDJdbcType;
+
 import java.util.UUID;
 
 @Entity
@@ -36,6 +39,7 @@ public class RefreshToken {
     @Id
     @Column
     @JsonIgnore
+    @JdbcType(UUIDJdbcType.class)
     protected UUID userId;
 
     @NaturalId

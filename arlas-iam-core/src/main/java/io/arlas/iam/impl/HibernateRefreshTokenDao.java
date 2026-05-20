@@ -34,7 +34,7 @@ public class HibernateRefreshTokenDao extends AbstractDAO<RefreshToken> implemen
 
     @Override
     public Optional<RefreshToken> read(UUID userId) {
-        return Optional.ofNullable(get(userId));
+        return Optional.ofNullable(currentSession().get(RefreshToken.class, userId));
     }
 
     @Override
