@@ -73,7 +73,7 @@ services:
       - ARLAS_IAM_LOGGING_CONSOLE_LEVEL="${ARLAS_IAM_LOGGING_CONSOLE_LEVEL:-INFO}"
       - ARLAS_SERVER_URL="${ARLAS_SERVER_URL:-http://arlas-server:9999/arlas}"
       - ARLAS_ACCESS_TOKEN_TTL="${ARLAS_ACCESS_TOKEN_TTL:-600000}"
-      - JDK_JAVA_OPTIONS=-Xmx512m -XX:+ExitOnOutOfMemoryError -Djavax.net.ssl.trustStore=/opt/app/arlas-iam.p12 -Djavax.net.ssl.trustStorePassword=test -Dtoken.keyAlias=arlas-iam
+      - JDK_JAVA_OPTIONS=-Xmx512m -XX:+ExitOnOutOfMemoryError -Darlas.iam.trustStore=/opt/app/arlas-iam.p12 -Darlas.iam.trustStorePassword=test -Dtoken.keyAlias=arlas-iam
       #- OTEL_SERVICE_NAME=arlas-iam-server
       #- OTEL_RESOURCE_ATTRIBUTES=deployment.environment=dev.cloud.arlas.io
       #- OTEL_EXPORTER_OTLP_ENDPOINT=**CHANGE_ME**
