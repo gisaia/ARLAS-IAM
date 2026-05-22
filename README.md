@@ -55,8 +55,8 @@ scripts/security/generate_pkcs12.sh
 To configure the JVM with the keystore, add the following options at startup:
 
 ```bash
--Djavax.net.ssl.trustStore=/path/to/keystore.p12 \
--Djavax.net.ssl.trustStorePassword=changeit \
+-Darlas.iam.trustStore=/path/to/keystore.p12 \
+-Darlas.iam.trustStorePassword=changeit \
 -Dtoken.keyAlias=changeit
 ```
 
@@ -64,8 +64,8 @@ You can include these options using the `JDK_JAVA_OPTIONS` environment variable:
 
 ```bash
 JDK_JAVA_OPTIONS="-Xmx512m -XX:+ExitOnOutOfMemoryError \
-  -Djavax.net.ssl.trustStore=/path/to/keystore.p12 \
-  -Djavax.net.ssl.trustStorePassword=changeit \
+  -Darlas.iam.trustStore=/path/to/keystore.p12 \
+  -arlas.iam.trustStorePassword=changeit \
   -Dtoken.keyAlias=changeit"
 ```
 

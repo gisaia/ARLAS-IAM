@@ -61,18 +61,20 @@ public class TokenManager {
 
     private void initKeys() throws ArlasException {
             // try to load RSA keys from a PKCS12 keystore specified by system properties:
-            // - javax.net.ssl.trustStore
-            // - javax.net.ssl.trustStorePassword
+            // - arlas.iam.trustStore
+            // - arlas.iam.trustStorePassword
             // - token.keyAlias
             try {
-                String jksPath = System.getProperty("javax.net.ssl.trustStore");
-                String jksPass = System.getProperty("javax.net.ssl.trustStorePassword");
+                String jksPath = System.getProperty("arlas.iam.trustStore",
+                        System.getProperty("javax.net.ssl.trustStore"));
+                String jksPass = System.getProperty("arlas.iam.trustStorePassword",
+                        System.getProperty("javax.net.ssl.trustStorePassword"));
                 String alias = System.getProperty("token.keyAlias");
                 if(jksPath == null) {
-                    throw new ArlasException("TrustStore path is missing. Please check -Djavax.net.ssl.trustStore value.");
+                    throw new ArlasException("TrustStore path is missing. Please check -Darlas.iam.trustStore or -Djavax.net.ssl.trustStore value.");
                 }
                 if(jksPass == null) {
-                    throw new ArlasException("TrustStore password is missing. Please check -Djavax.net.ssl.trustStorePassword value.");
+                    throw new ArlasException("TrustStore password is missing. Please check -Darlas.iam.trustStorePassword or -Djavax.net.ssl.trustStorePassword value.");
                 }
                 if(alias == null) {
                     throw new ArlasException("Key alias is missing. Please check -Dtoken.keyAlias value.");
