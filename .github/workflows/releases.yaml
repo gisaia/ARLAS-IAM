@@ -59,7 +59,7 @@ jobs:
         node-version: 20
         registry-url: 'https://registry.npmjs.org'
     - name: Install latest npm version
-      run: npm install -g npm@latest
+      run: npm install -g npm@l10.8.2
     - name: Publish NPM client
       env:
         # secrets are defined here : https://github.com/organizations/gisaia/settings/secrets/actions
