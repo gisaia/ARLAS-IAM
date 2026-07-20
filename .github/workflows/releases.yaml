@@ -56,10 +56,10 @@ jobs:
       run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
     - uses: actions/setup-node@v4
       with:
-        node-version: 20
+        node-version: 24
         registry-url: 'https://registry.npmjs.org'
     - name: Install latest npm version
-      run: npm install -g npm@latest
+      run: npm install -g npm@11.5.1
     - name: Publish NPM client
       env:
         # secrets are defined here : https://github.com/organizations/gisaia/settings/secrets/actions
