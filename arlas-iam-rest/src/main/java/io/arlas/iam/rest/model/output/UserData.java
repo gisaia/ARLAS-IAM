@@ -19,6 +19,7 @@
 
 package io.arlas.iam.rest.model.output;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.arlas.iam.model.Organisation;
 import io.arlas.iam.model.User;
 
@@ -29,7 +30,9 @@ import java.util.List;
 import java.util.UUID;
 
 public class UserData implements Comparable {
+    @JsonProperty(value = "id", required = true)
     public UUID id;
+    @JsonProperty(value = "email", required = true)
     public String email;
     public String firstName;
     public String lastName;

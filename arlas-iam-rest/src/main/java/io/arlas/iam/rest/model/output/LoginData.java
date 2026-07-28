@@ -23,8 +23,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.arlas.iam.model.LoginSession;
 
 public class LoginData {
-    @JsonProperty("access_token")
+    @JsonProperty(value = "access_token", required = true)
     public String accessToken; // JWT
+    @JsonProperty(value = "user", required = true)
     public UserData user;
 
     public LoginData(LoginSession loginSession) {
