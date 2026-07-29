@@ -19,6 +19,7 @@
 
 package io.arlas.iam.rest.model.output;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.arlas.iam.model.Organisation;
 import io.arlas.iam.model.OrganisationMember;
 
@@ -26,8 +27,11 @@ import java.util.List;
 import java.util.UUID;
 
 public class OrgData implements Comparable {
+    @JsonProperty(value = "id", required = true)
     public UUID id;
+    @JsonProperty(value = "name", required = true)
     public String name;
+    @JsonProperty(value = "displayName", required = true)
     public String displayName;
     public List<MemberData> members;
 
