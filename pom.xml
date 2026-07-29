@@ -30,7 +30,7 @@
         <spring.security.version>6.2.2</spring.security.version>
         <jakartamail.version>2.0.1</jakartamail.version>
         <!-- JETTY SERVER  -->
-        <jetty-server.version>12.1.8</jetty-server.version>
+        <jetty-server.version>12.1.10</jetty-server.version>
         <!-- TESTS -->
         <junit.version>4.13.2</junit.version>
         <org.hamcrest.version>2.2</org.hamcrest.version>
