@@ -164,6 +164,7 @@ public class IAMRestService {
     }
 
     // --------------- Forward auth ---------------------
+
     @Timed
     @Path("auth")
     @GET
@@ -184,9 +185,39 @@ public class IAMRestService {
                     content = @Content(schema = @Schema(implementation = Error.class)))})
 
     @UnitOfWork(readOnly = true)
-    public Response forwardAuth(
+    public Response forwardAuthGet(
             @Context UriInfo uriInfo
     ) {
+        return okResponse(uriInfo);
+    }
+
+    @Timed
+    @Path("auth")
+    @POST
+    @Produces(UTF8JSON)
+    @Consumes(UTF8JSON)
+    @Operation(
+            security = @SecurityRequirement(name = "JWT"),
+            summary = "Validate authentication to another URI"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = ArlasMessage.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = Error.class))),
+            @ApiResponse(responseCode = "500", description = "Arlas Error.",
+                    content = @Content(schema = @Schema(implementation = Error.class)))})
+
+    @UnitOfWork(readOnly = true)
+    public Response forwardAuthPost(
+            @Context UriInfo uriInfo
+    ) {
+        return okResponse(uriInfo);
+    }
+
+    private Response okResponse(UriInfo uriInfo) {
         return Response.ok(uriInfo.getRequestUriBuilder().build())
                 .entity(new ArlasMessage("ok"))
                 .type(MediaType.APPLICATION_JSON_TYPE)
