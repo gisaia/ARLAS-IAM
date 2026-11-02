@@ -24,7 +24,7 @@
         <maven.failsafe.version>3.2.5</maven.failsafe.version>
         <maven.compiler.version>3.11.0</maven.compiler.version>
         <maven.shade.version>3.5.0</maven.shade.version>
-        <arlas.version>29.0.3</arlas.version>
+        <arlas.version>29.0.4</arlas.version>
         <dropwizard.version>5.0.1</dropwizard.version>
         <postgresql.version>42.7.10</postgresql.version>
         <spring.security.version>6.2.2</spring.security.version>
@@ -38,6 +38,8 @@
         <!-- JACKSON CORE -->
         <jackson.core.version>2.22.3</jackson.core.version>
         <nimbus-jose.version>10.5</nimbus-jose.version>
+        <guava.version>33.7.2-jre</guava.version>
+
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -61,6 +63,11 @@
                 <version>${jetty-server.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

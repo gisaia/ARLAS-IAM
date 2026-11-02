@@ -21,6 +21,7 @@ package io.arlas.iam.rest;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.arlas.commons.cache.BaseCacheManager;
 import io.arlas.commons.cache.CacheFactory;
 import io.arlas.commons.config.ArlasAuthConfiguration;
@@ -31,6 +32,7 @@ import io.arlas.commons.exceptions.ConstraintViolationExceptionMapper;
 import io.arlas.commons.exceptions.IllegalArgumentExceptionMapper;
 import io.arlas.commons.exceptions.JsonProcessingExceptionMapper;
 import io.arlas.commons.rest.utils.CORSUtil;
+import io.arlas.commons.utils.SafeConfigRenderer;
 import io.arlas.commons.rest.utils.InsensitiveCaseFilter;
 import io.arlas.commons.rest.utils.PrettyPrintFilter;
 import io.arlas.filter.config.TechnicalRoles;
@@ -99,7 +101,13 @@ public abstract class AbstractServer extends Application<ArlasAuthServerConfigur
     public void run(ArlasAuthServerConfiguration configuration, Environment environment) throws Exception {
 
         configuration.check();
-        LOGGER.info("Checked configuration: " + environment.getObjectMapper().writer().writeValueAsString(configuration));
+        if (LOGGER.isDebugEnabled()) {
+            ObjectMapper mapper = environment.getObjectMapper();
+            LOGGER.debug(
+                    "Checked configuration: {}",
+                    SafeConfigRenderer.render(mapper, mapper.valueToTree(configuration))
+            );
+        }
 
         environment.getObjectMapper().setSerializationInclusion(Include.NON_NULL);
         environment.jersey().register(MultiPartFeature.class);
